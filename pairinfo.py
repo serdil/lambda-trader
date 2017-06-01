@@ -1,7 +1,7 @@
 
 class PairInfo:
-    def __init__(self, pair_name, candlesticks):
-        self.pair_name = pair_name
+    def __init__(self, currency_pair, candlesticks):
+        self.currency_pair = currency_pair
         self.history = []
         for candlestick in candlesticks:
             self.history.append(candlestick)
