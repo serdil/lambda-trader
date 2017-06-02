@@ -1,8 +1,9 @@
 from typing import List, Dict
+
 from currencypair import CurrencyPair
 from currency import Currency
 from illegalorderexception import IllegalOrderException
-from order import Order
+from order import Order, OrderType
 from marketinfo import MarketInfo
 from candlestick import Candlestick
 
@@ -16,10 +17,28 @@ class Account:
         for order in orders:
             self.orders.append(order)
 
-    def new_order(self, order: Order):
-        if self.balances[order.currency] < order.amount:
+    def sell(self, currency: Currency, price, amount):
+        if self.balances[currency] < amount:
             raise IllegalOrderException
-        self.balances[order.currency] -= order.amount
+        self.balances[currency] -= amount
+        self.balances[Currency.BTC] += amount * price
+
+
+    def buy(self, currency, price, amount):
+        if self.balances[Currency.BTC] < amount * price:
+            raise IllegalOrderException
+        self.balances[currency] += amount
+        self.balances[Currency.BTC] -= amount * price
+
+    def new_order(self, order: Order):
+        if order.type == OrderType.SELL:
+            if self.balances[order.currency] < order.amount:
+                raise IllegalOrderException
+            self.balances[order.currency] -= order.amount
+        elif order.type == OrderType.BUY:
+            if self.balances[Currency.BTC] < order.amount * order.price:
+                raise IllegalOrderException
+            self.balances[Currency.BTC] -= order.amount * order.price
         self.orders.append(order)
 
     def execute_orders(self, market_info: MarketInfo):
