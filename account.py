@@ -57,3 +57,17 @@ class Account:
         btc_value = order.amount * order.price
         self.balances[order.currency] += btc_value
         order.fill()
+
+    def get_estimated_balance(self, market_info: MarketInfo):
+        estimated_balance = 0
+        for currency, balance in self.balances.items():
+            if currency == Currency.BTC:
+                estimated_balance += currency
+            else:
+                try:
+                    estimated_balance += balance * market_info.pairs[currency].history[-1].close
+                except KeyError as e:
+                    print(e)
+        for order in self.orders:
+            estimated_balance += order.amount * market_info.pairs[order.currency].history[-1].close
+        return estimated_balance
