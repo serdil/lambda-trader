@@ -1,18 +1,22 @@
 from currency import Currency
 from currencypair import CurrencyPair
+from marketinfo import MarketInfo
 from order import Order, OrderType
 from pairinfo import PairInfo
 
 
 def actor_market_buyer(account, market_info):
-    for pair, pair_info in market_info.pairs.items():
-        actor_pair_buyer(account, pair, pair_info)
+    for pair, _ in market_info.pairs():
+        actor_pair_buyer(account, market_info, pair)
 
-def actor_pair_buyer(account, pair: CurrencyPair, pair_info: PairInfo):
-    chunk_size = account.get_estimated_balance() / 25
-    price = pair_info.history[-1].close
-    timestamp = pair_info.history[-1].timestamp
-    if account.balances[Currency.BTC] >= chunk_size * 1.01:
-        account.buy(pair.second, price, chunk_size / price)
-        sell_order = Order(pair.second, OrderType.SELL, price, chunk_size / price, timestamp)
-        account.new_order(sell_order)
+
+def actor_pair_buyer(account, market_info: MarketInfo, pair: CurrencyPair):
+    chunk_size = account.get_estimated_balance(market_info) / 25
+    if chunk_size >= 0.00011:
+        latest_candlestick = market_info.get_pair_latest_candlestick(pair)
+        price = latest_candlestick.close
+        timestamp = latest_candlestick.timestamp
+        if account.get_balance(Currency.BTC) >= chunk_size * 1.01:
+            account.buy(pair.second, price, chunk_size / price)
+            sell_order = Order(pair.second, OrderType.SELL, price * 1.02, chunk_size / price, timestamp)
+            account.new_order(sell_order)
