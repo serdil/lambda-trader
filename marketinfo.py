@@ -3,6 +3,8 @@ class MarketInfo:
     def __init__(self, pair_infos=[]):
         self.market_time = 0
         self.__pairs = {}
+        self.__last_volume_calc_timestamp = {}
+        self.__last_volume_calc_volume = {}
         for pair_info in pair_infos:
             self.add_pair(pair_info)
 
@@ -23,6 +25,31 @@ class MarketInfo:
 
     def get_pair_latest_candlestick(self, currency_pair):
         return self.get_pair_candlestick(currency_pair, 0)
+
+    def get_pair_last_24h_btc_volume(self, currency_pair):
+        if currency_pair in self.__last_volume_calc_timestamp:
+            if self.__last_volume_calc_timestamp[currency_pair] == self.get_market_time():
+                return self.__last_volume_calc_volume[currency_pair]
+            elif self.__last_volume_calc_timestamp[currency_pair] == self.get_market_time() - 300:
+                total_volume = self.__last_volume_calc_volume[currency_pair]
+                try:
+                    total_volume -= self.get_pair_candlestick(currency_pair, 24*12-1).volume
+                except KeyError:
+                    pass
+                total_volume += self.get_pair_latest_candlestick(currency_pair).volume
+                self.__last_volume_calc_timestamp[currency_pair] = self.get_market_time()
+                self.__last_volume_calc_volume[currency_pair] = total_volume
+                return total_volume
+
+        total_volume = 0.0
+        for i in range(24 * 12):
+            try:
+                total_volume += self.get_pair_candlestick(currency_pair, i).volume
+            except KeyError:
+                pass
+        self.__last_volume_calc_timestamp[currency_pair] = self.get_market_time()
+        self.__last_volume_calc_volume[currency_pair] = total_volume
+        return total_volume
 
     def get_min_pair_start_time(self):
         return min(map(lambda v: v.get_start_time(), self.__pairs.values()))

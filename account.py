@@ -102,10 +102,11 @@ class Account:
                     candlestick = market_info.get_pair_latest_candlestick(self.pair_from(currency))
                     estimated_balance += balance * candlestick.close
                 except KeyError as e:
-                    print(e)
+                    print('KeyError: ', currency, e)
         for order in self.__orders:
-            candlestick = market_info.get_pair_latest_candlestick(self.pair_from(order.currency))
-            estimated_balance += order.amount * candlestick.close
+            if not order.is_filled:
+                candlestick = market_info.get_pair_latest_candlestick(self.pair_from(order.currency))
+                estimated_balance += order.amount * candlestick.close
         return estimated_balance
 
     @staticmethod
