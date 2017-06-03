@@ -7,10 +7,11 @@ from order import Order, OrderType
 
 
 def get_high_volume_pairs(market_info):
-    return filter(lambda kv: market_info.get_pair_last_24h_btc_volume(kv[0]) >= 2000, market_info.pairs())
+    return filter(lambda kv: market_info.get_pair_last_24h_btc_volume(kv[0]) >= 500, market_info.pairs())
 
 def actor_market_buyer(account, market_info):
-    high_volume_pairs = list(get_high_volume_pairs(market_info))
+    high_volume_pairs = sorted(list(get_high_volume_pairs(market_info)),
+                               key=lambda kv: -market_info.get_pair_last_24h_btc_volume(kv[0]))
     if len(high_volume_pairs) >= 10:
         for pair, _ in high_volume_pairs:
             actor_pair_buyer(account, market_info, pair)
