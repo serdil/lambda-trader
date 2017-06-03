@@ -27,8 +27,14 @@ class MarketInfo:
     def get_min_pair_start_time(self):
         return min(map(lambda v: v.get_start_time(), self.__pairs.values()))
 
+    def get_max_pair_start_time(self):
+        return max(map(lambda v: v.get_start_time(), self.__pairs.values()))
+
     def get_max_pair_end_time(self):
         return max(map(lambda v: v.get_end_time(), self.__pairs.values()))
+
+    def get_min_pair_end_time(self):
+        return min(map(lambda v: v.get_end_time(), self.__pairs.values()))
 
     def pairs(self):
         return filter(lambda p: p[1].get_start_time() < self.get_market_time() < p[1].get_end_time(), self.__pairs.items())

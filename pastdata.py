@@ -42,7 +42,8 @@ def get_past_market_info() -> MarketInfo:
                 _open = float(row['high'])
                 close = float(row['high'])
                 volume = float(row['high'])
+                quote_volume = float(row['quoteVolume'])
 
-                pair_info.add_candlestick(Candlestick(_open, close, high, low, volume, date))
+                pair_info.add_candlestick(Candlestick(_open, close, high, low, volume, quote_volume, date))
 
     return market_info

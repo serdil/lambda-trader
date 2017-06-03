@@ -21,13 +21,12 @@ class Account:
         if self.__balances[currency] < amount:
             raise IllegalOrderException
         self.__balances[currency] -= amount
-        self.__balances[Currency.BTC] += amount * price
-
+        self.__balances[Currency.BTC] += amount * price - self.get_fee(amount * price)
 
     def buy(self, currency, price, amount):
         if self.__balances[Currency.BTC] < amount * price:
             raise IllegalOrderException
-        self.__balances[currency] += amount
+        self.__balances[currency] += amount - self.get_fee(amount)
         self.__balances[Currency.BTC] -= amount * price
 
     def new_order(self, order: Order):
@@ -80,9 +79,15 @@ class Account:
         return candlestick.low <= order.price <= candlestick.high
 
     def fill_order(self, order):
-        btc_value = order.amount * order.price
-        self.__balances[order.currency] += btc_value
+        if order.type == OrderType.SELL:
+            btc_value = order.amount * order.price
+            self.__balances[Currency.BTC] += btc_value - self.get_fee(btc_value)
+        elif order.type == OrderType.BUY:
+            self.__balances[order.currency] += order.amount - self.get_fee(order.amount)
         order.fill()
+
+    def get_fee(self, amount):
+        return amount * 0.0025
 
     def get_balance(self, currency):
         return self.__balances[currency]
