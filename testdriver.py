@@ -14,4 +14,6 @@ utils.backtest(account, market_info, actors.actor_market_buyer)
 
 print(account.get_estimated_balance(market_info))
 print(account.get_balance(Currency.BTC))
-print(list(account.get_orders()))
+print(list(account.get_open_orders()))
+
+#print(account)

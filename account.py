@@ -61,11 +61,11 @@ class Account:
             self.__balances[order.currency] += order.amount
         elif order.type == OrderType.BUY:
             self.__balances[Currency.BTC] += order.amount * order.price
-        self.__orders.append(order)
 
-    def get_orders(self):
+    def get_open_orders(self):
         for order in self.__orders:
-            yield order
+            if not order.is_filled:
+                yield order
 
     def execute_orders(self, market_info: MarketInfo):
         for order in self.__orders:
@@ -76,9 +76,13 @@ class Account:
     @staticmethod
     def order_satisfied(order: Order, market_info: MarketInfo):
         candlestick = market_info.get_pair_latest_candlestick(CurrencyPair(Currency.BTC, order.currency))
-        return candlestick.low <= order.price <= candlestick.high
+        if order.type == OrderType.SELL:
+            return candlestick.high >= order.price
+        elif order.type == OrderType.BUY:
+            return candlestick.low <= order.price
 
     def fill_order(self, order):
+        print('executing')
         if order.type == OrderType.SELL:
             btc_value = order.amount * order.price
             self.__balances[Currency.BTC] += btc_value - self.get_fee(btc_value)
@@ -105,8 +109,14 @@ class Account:
                     print('KeyError: ', currency, e)
         for order in self.__orders:
             if not order.is_filled:
-                candlestick = market_info.get_pair_latest_candlestick(self.pair_from(order.currency))
-                estimated_balance += order.amount * candlestick.close
+                if order.type == OrderType.SELL:
+                    try:
+                        candlestick = market_info.get_pair_latest_candlestick(self.pair_from(order.currency))
+                        estimated_balance += order.amount * candlestick.close
+                    except KeyError as e:
+                        print('KeyError: ', order.currency, e)
+                elif order.type == OrderType.BUY:
+                    estimated_balance += order.amount * order.price
         return estimated_balance
 
     @staticmethod

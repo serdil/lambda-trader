@@ -13,7 +13,7 @@ def backtest(account: Account, market_info: MarketInfo, act: Callable[[Account, 
     print('start:', datetime.fromtimestamp(start_date))
     print('end:', datetime.fromtimestamp(end_date))
     market_info.set_market_time(start_date)
-    while market_info.get_market_time() < end_date:
+    while market_info.get_market_time() < end_date - 300 * 6:
         account.execute_orders(market_info)
         act(account, market_info)
         market_info.inc_market_time()
