@@ -48,6 +48,7 @@ class Strategy:
                 day_high_price = self.get_24h_high_price(market_info, pair)
                 #print(price, target_price, day_high_price)
                 if target_price < day_high_price and (target_price - price) / (day_high_price - price) <= self.RETRACEMENT_RATIO:
+                    print(datetime.fromtimestamp(market_info.get_market_time()))
                     account.buy(pair.second, price, chunk_size / price)
                     sell_order = Order(pair.second, OrderType.SELL, target_price,
                                        account.get_balance(pair.second), timestamp)
@@ -56,7 +57,6 @@ class Strategy:
                     self.balance_samples.append(current_balance)
                     max_drawback, avg_drawback = self.max_and_avg_drawback(self.balance_samples)
                     account.new_order(sell_order)
-                    print(datetime.fromtimestamp(market_info.get_market_time()))
                     print('balance', current_balance)
                     print('max-avg drawback', max_drawback, avg_drawback)
                     print('open orders:', len(list(account.get_open_orders())))
