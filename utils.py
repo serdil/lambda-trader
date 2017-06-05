@@ -8,7 +8,7 @@ from order import Order
 
 def backtest(account: Account, market_info: MarketInfo, strategy):
     start_date = market_info.get_min_pair_start_time()
-    end_date = market_info.get_max_pair_end_time()
+    end_date = market_info.get_min_pair_end_time()
     print('start:', datetime.fromtimestamp(start_date))
     print('end:', datetime.fromtimestamp(end_date))
     market_info.set_market_time(start_date)

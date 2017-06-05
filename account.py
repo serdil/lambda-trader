@@ -72,6 +72,7 @@ class Account:
             if not order.is_filled:
                 if self.order_satisfied(order, market_info):
                     self.fill_order(order)
+                    self.remove_filled_orders()
 
     @staticmethod
     def order_satisfied(order: Order, market_info: MarketInfo):
@@ -118,6 +119,9 @@ class Account:
                 elif order.type == OrderType.BUY:
                     estimated_balance += order.amount * order.price
         return estimated_balance
+
+    def remove_filled_orders(self):
+        self.__orders = list(filter(lambda order: not order.is_filled, self.__orders))
 
     @staticmethod
     def pair_from(currency):

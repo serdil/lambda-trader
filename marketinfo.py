@@ -5,6 +5,8 @@ class MarketInfo:
         self.__pairs = {}
         self.__last_volume_calc_timestamp = {}
         self.__last_volume_calc_volume = {}
+        self.__last_high_calc_timestamp = {}
+        self.__last_high_calc_high = {}
         for pair_info in pair_infos:
             self.add_pair(pair_info)
 
@@ -33,7 +35,7 @@ class MarketInfo:
             elif self.__last_volume_calc_timestamp[currency_pair] == self.get_market_time() - 300:
                 total_volume = self.__last_volume_calc_volume[currency_pair]
                 try:
-                    total_volume -= self.get_pair_candlestick(currency_pair, 24*12-1).volume
+                    total_volume -= self.get_pair_candlestick(currency_pair, 24 * 12).volume
                 except KeyError:
                     pass
                 total_volume += self.get_pair_latest_candlestick(currency_pair).volume
@@ -50,6 +52,36 @@ class MarketInfo:
         self.__last_volume_calc_timestamp[currency_pair] = self.get_market_time()
         self.__last_volume_calc_volume[currency_pair] = total_volume
         return total_volume
+
+    def get_pair_last_24h_high(self, currency_pair):
+        if currency_pair in self.__last_high_calc_timestamp:
+            if self.__last_high_calc_timestamp[currency_pair] == self.get_market_time():
+                return self.__last_high_calc_high[currency_pair]
+            elif self.__last_high_calc_timestamp[currency_pair] == self.get_market_time() - 300:
+                high = self.__last_high_calc_high[currency_pair]
+                try:
+                    high_omitted = self.get_pair_candlestick(currency_pair, 24 * 12).high
+                    if high_omitted > high:
+                        del self.__last_high_calc_timestamp[currency_pair]
+                        del self.__last_high_calc_high[currency_pair]
+                        return self.get_pair_last_24h_high(currency_pair)
+                except KeyError:
+                    pass
+                added_high = self.get_pair_latest_candlestick(currency_pair).high
+                high = max(high, added_high)
+                self.__last_high_calc_timestamp[currency_pair] = self.get_market_time()
+                self.__last_high_calc_high[currency_pair] = high
+                return high
+
+        high = 0.0
+        for i in range(24 * 12):
+            try:
+                high = max(high, self.get_pair_candlestick(currency_pair, i).high)
+            except KeyError:
+                pass
+        self.__last_high_calc_timestamp[currency_pair] = self.get_market_time()
+        self.__last_high_calc_high[currency_pair] = high
+        return high
 
     def get_min_pair_start_time(self):
         return min(map(lambda v: v.get_start_time(), self.__pairs.values()))
