@@ -18,17 +18,19 @@ class Account:
         for order in orders:
             self.__orders.append(order)
 
-    def sell(self, currency: Currency, price, amount):
+    def sell(self, currency: Currency, price, amount, market_info):
         if self.__balances[currency] < amount:
             raise IllegalOrderException
         self.__balances[currency] -= amount
         self.__balances[Currency.BTC] += amount * price - self.get_fee(amount * price)
+        self.sample_balance(market_info)
 
-    def buy(self, currency, price, amount):
+    def buy(self, currency, price, amount, market_info):
         if self.__balances[Currency.BTC] < amount * price:
             raise IllegalOrderException
         self.__balances[currency] += amount - self.get_fee(amount)
         self.__balances[Currency.BTC] -= amount * price
+        self.sample_balance(market_info)
 
     def new_order(self, order: Order):
         if order.type == OrderType.SELL:
@@ -74,6 +76,7 @@ class Account:
                 if self.order_satisfied(order, market_info):
                     self.fill_order(order)
                     self.remove_filled_orders()
+                    self.sample_balance(market_info)
 
     @staticmethod
     def order_satisfied(order: Order, market_info: MarketInfo):
