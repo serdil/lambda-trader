@@ -64,16 +64,20 @@ class Strategy:
 
     def cancel_old_orders(self, account, market_info):
         order_ids_to_cancel = []
+
         for order in account.get_open_orders():
             if market_info.get_market_time() - order.timestamp >= self.ORDER_TIMEOUT:
                 order_ids_to_cancel.append(order.id)
+
         for id in order_ids_to_cancel:
+
             print('cancelling')
+
             order = account.get_order(id)
             account.cancel_order(id)
             price = market_info.get_pair_latest_candlestick(
                 CurrencyPair(Currency.BTC, order.currency)).close
-            account.sell(order.currency, price, order.amount)
+            account.sell(order.currency, price, order.amount, market_info)
 
     def get_24h_high_price(self, market_info, pair):
         return market_info.get_pair_last_24h_high(pair)
