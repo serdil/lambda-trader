@@ -43,16 +43,20 @@ class Strategy:
             if account.get_balance(Currency.BTC) >= chunk_size * (1.0 + self.DELTA):
                 target_price = price * self.BUY_PROFIT_FACTOR
                 day_high_price = self.get_24h_high_price(market_info, pair)
-                #print(price, target_price, day_high_price)
+
                 if target_price < day_high_price and (target_price - price) / (day_high_price - price) <= self.RETRACEMENT_RATIO:
+
                     print(datetime.fromtimestamp(market_info.get_market_time()))
-                    account.buy(pair.second, price, chunk_size / price)
+
+                    account.buy(pair.second, price, chunk_size / price, market_info)
+
                     sell_order = Order(pair.second, OrderType.SELL, target_price,
                                        account.get_balance(pair.second), timestamp)
-                    #print(datetime.fromtimestamp(market_info.get_market_time()), sell_order)
+
                     current_balance = account.get_estimated_balance(market_info)
                     max_drawback, avg_drawback = account.max_avg_drawback()
                     account.new_order(sell_order)
+
                     print('balance', current_balance)
                     print('max-avg drawback', max_drawback, avg_drawback)
                     print('open orders:', len(list(account.get_open_orders())))
