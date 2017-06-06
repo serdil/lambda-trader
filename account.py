@@ -10,6 +10,7 @@ from marketinfo import MarketInfo
 
 class Account:
     def __init__(self, balances: Dict={Currency.BTC: 100}, orders: List[Order]=[]):
+        self.__balance_series = []
         self.__balances = defaultdict(int)
         for currency, balance in balances.items():
             self.__balances[currency] = balance
@@ -122,6 +123,25 @@ class Account:
 
     def remove_filled_orders(self):
         self.__orders = list(filter(lambda order: not order.is_filled, self.__orders))
+
+    def sample_balance(self, market_info):
+        self.__balance_series.append(self.get_estimated_balance(market_info))
+
+    def max_avg_drawback(self):
+        total_drawback = 0.0
+        num_drawbacks = 0
+        max_drawback = 0.0
+        max_balance_so_far = 0.0
+        for balance in self.__balance_series:
+            if balance > max_balance_so_far:
+                max_balance_so_far = balance
+            if balance < max_balance_so_far:
+                num_drawbacks += 1
+                current_drawback = (max_balance_so_far - balance) / max_balance_so_far * 100
+                total_drawback += current_drawback
+                if current_drawback > max_drawback:
+                    max_drawback = current_drawback
+        return max_drawback, (total_drawback / num_drawbacks if num_drawbacks > 0 else 0.0)
 
     @staticmethod
     def pair_from(currency):

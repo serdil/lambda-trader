@@ -21,9 +21,6 @@ class Strategy:
 
     RETRACEMENT_RATIO = 0.1
 
-
-    balance_samples = []
-
     def act(self, account, market_info):
         self.cancel_old_orders(account, market_info)
 
@@ -54,29 +51,12 @@ class Strategy:
                                        account.get_balance(pair.second), timestamp)
                     #print(datetime.fromtimestamp(market_info.get_market_time()), sell_order)
                     current_balance = account.get_estimated_balance(market_info)
-                    self.balance_samples.append(current_balance)
-                    max_drawback, avg_drawback = self.max_and_avg_drawback(self.balance_samples)
+                    max_drawback, avg_drawback = account.max_avg_drawback()
                     account.new_order(sell_order)
                     print('balance', current_balance)
                     print('max-avg drawback', max_drawback, avg_drawback)
                     print('open orders:', len(list(account.get_open_orders())))
 
-    @staticmethod
-    def max_and_avg_drawback(balance_samples):
-        total_drawback = 0.0
-        num_drawbacks = 0
-        max_drawback = 0.0
-        max_balance_so_far = 0.0
-        for balance in balance_samples:
-            if balance > max_balance_so_far:
-                max_balance_so_far = balance
-            if balance < max_balance_so_far:
-                num_drawbacks += 1
-                current_drawback = (max_balance_so_far - balance) / max_balance_so_far * 100
-                total_drawback += current_drawback
-                if current_drawback > max_drawback:
-                    max_drawback = current_drawback
-        return max_drawback, (total_drawback/num_drawbacks if num_drawbacks > 0 else 0.0)
 
     def cancel_old_orders(self, account, market_info):
         order_ids_to_cancel = []
