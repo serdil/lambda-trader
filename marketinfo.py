@@ -28,6 +28,9 @@ class MarketInfo:
     def get_pair_latest_candlestick(self, currency_pair):
         return self.get_pair_candlestick(currency_pair, 0)
 
+    def get_pair_ticker(self, currency_pair):
+        pass
+
     def get_pair_last_24h_btc_volume(self, currency_pair):
         if currency_pair in self.__last_volume_calc_timestamp:
             if self.__last_volume_calc_timestamp[currency_pair] == self.get_market_time():
