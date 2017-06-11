@@ -1,6 +1,5 @@
-from datetime import datetime
-
 import blist
+
 
 class PairInfo:
     def __init__(self, currency_pair, candlesticks=[]):
@@ -9,6 +8,9 @@ class PairInfo:
         for candlestick in candlesticks:
             self.add_candlestick(candlestick)
 
+    def get_pair(self):
+        return self.currency_pair
+
     def add_candlestick(self, candlestick):
         self.history[candlestick.timestamp] = candlestick
 
@@ -16,9 +18,8 @@ class PairInfo:
         return self.history[timestamp]
 
     def get_start_time(self):
-        #print(self.currency_pair.second, 'get_start_time', datetime.fromtimestamp(self.history[self.history.keys()[0]].timestamp))
         return self.history[self.history.keys()[0]].timestamp
 
     def get_end_time(self):
-        #print(self.currency_pair.second, 'get_end_time', datetime.fromtimestamp(self.history[self.history.keys()[-1]].timestamp))
         return self.history[self.history.keys()[-1]].timestamp
+

@@ -1,9 +1,8 @@
 from datetime import datetime
 
-from currency import Currency
-from currencypair import CurrencyPair
 from marketinfo import MarketInfo
 from order import Order, OrderType
+from utils import pair_second, pair_from
 
 
 class Strategy:
@@ -34,13 +33,13 @@ class Strategy:
                 if pair not in open_pairs:
                     self.act_on_pair(account, market_info, pair)
 
-    def act_on_pair(self, account, market_info: MarketInfo, pair: CurrencyPair):
+    def act_on_pair(self, account, market_info: MarketInfo, pair):
         chunk_size = account.get_estimated_balance(market_info) / self.NUM_CHUNKS
         if chunk_size >= self.MIN_CHUNK_SIZE:
             latest_candlestick = market_info.get_pair_latest_candlestick(pair)
             price = latest_candlestick.close
             timestamp = latest_candlestick.timestamp
-            if account.get_balance(Currency.BTC) >= chunk_size * (1.0 + self.DELTA):
+            if account.get_balance('BTC') >= chunk_size * (1.0 + self.DELTA):
                 target_price = price * self.BUY_PROFIT_FACTOR
                 day_high_price = self.get_24h_high_price(market_info, pair)
 
@@ -48,10 +47,10 @@ class Strategy:
 
                     print(datetime.fromtimestamp(market_info.get_market_time()))
 
-                    account.buy(pair.second, price, chunk_size / price, market_info)
+                    account.buy(pair_second(pair), price, chunk_size / price, market_info)
 
-                    sell_order = Order(pair.second, OrderType.SELL, target_price,
-                                       account.get_balance(pair.second), timestamp)
+                    sell_order = Order(pair_second(pair), OrderType.SELL, target_price,
+                                       account.get_balance(pair_second(pair)), timestamp)
 
                     current_balance = account.get_estimated_balance(market_info)
                     max_drawback, avg_drawback = account.max_avg_drawback()
@@ -63,27 +62,26 @@ class Strategy:
 
 
     def cancel_old_orders(self, account, market_info):
-        order_ids_to_cancel = []
+        order_numbers_to_cancel = []
 
         for order in account.get_open_orders():
-            if market_info.get_market_time() - order.timestamp >= self.ORDER_TIMEOUT:
-                order_ids_to_cancel.append(order.id)
+            if market_info.get_market_time() - order.get_timestamp() >= self.ORDER_TIMEOUT:
+                order_numbers_to_cancel.append(order.get_order_number())
 
-        for id in order_ids_to_cancel:
+        for order_number in order_numbers_to_cancel:
 
             print('cancelling')
 
-            order = account.get_order(id)
-            account.cancel_order(id)
-            price = market_info.get_pair_latest_candlestick(
-                CurrencyPair(Currency.BTC, order.currency)).close
-            account.sell(order.currency, price, order.amount, market_info)
+            order = account.get_order(order_number)
+            account.cancel_order(order_number)
+            price = market_info.get_pair_latest_candlestick(pair_from('BTC', order.get_currency())).close
+            account.sell(order.get_currency(), price, order.get_amount(), market_info)
 
     def get_24h_high_price(self, market_info, pair):
         return market_info.get_pair_last_24h_high(pair)
 
     def get_pairs_with_open_orders(self, account):
-        return set([CurrencyPair(Currency.BTC, order.currency) for order in account.get_open_orders()])
+        return set([pair_from('BTC', order.get_currency()) for order in account.get_open_orders()])
 
     def get_high_volume_pairs(self, market_info):
         return [kv[0] for kv in filter(lambda kv: market_info.get_pair_last_24h_btc_volume(kv[0]) >= self.HIGH_VOLUME_LIMIT,

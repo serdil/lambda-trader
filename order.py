@@ -1,8 +1,6 @@
 from enum import Enum
 from uuid import uuid1
 
-from currency import Currency
-
 
 class OrderType(Enum):
     BUY = 1
@@ -10,18 +8,39 @@ class OrderType(Enum):
 
 
 class Order:
-    def __init__(self, currency: Currency, type: OrderType, price, amount, timestamp, is_filled=False):
-        self.currency = currency
-        self.type = type
-        self.price = price
-        self.amount = amount
-        self.timestamp = timestamp
-        self.is_filled = is_filled
-        self.id = uuid1()
+    def __init__(self, currency, type: OrderType, price, amount, timestamp, is_filled=False):
+        self.__currency = currency
+        self.__type = type
+        self.__price = price
+        self.__amount = amount
+        self.__timestamp = timestamp
+        self.__is_filled = is_filled
+        self.__order_number = uuid1()
 
     def fill(self):
-        self.is_filled = True
+        self.__is_filled = True
 
     def __repr__(self):
-        return 'Order(' + str(self.currency) + ' ' + str(self.type) + ' price=' + str(self.price) + \
-               ' amount=' + str(self.amount) + ' timestamp=' + str(self.timestamp) + ' is_filled=' + str(self.is_filled) + ')'
+        return 'Order(' + str(self.__currency) + ' ' + str(self.__type) + ' price=' + str(self.__price) + \
+               ' amount=' + str(self.__amount) + ' timestamp=' + str(self.__timestamp) + ' is_filled=' + str(self.__is_filled) + ')'
+
+    def get_order_number(self):
+        return self.__order_number
+
+    def get_currency(self):
+        return self.__currency
+
+    def get_type(self):
+        return self.__type
+
+    def get_price(self):
+        return self.__price
+
+    def get_amount(self):
+        return self.__amount
+
+    def get_timestamp(self):
+        return self.__timestamp
+
+    def get_is_filled(self):
+        return self.__is_filled
