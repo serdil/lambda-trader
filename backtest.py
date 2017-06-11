@@ -1,10 +1,10 @@
 from datetime import datetime
 
 from account import Account
-from marketinfo import MarketInfo
+from marketinfo import BacktestMarketInfo
 
 
-def backtest(account: Account, market_info: MarketInfo, strategy):
+def backtest(account: Account, market_info: BacktestMarketInfo, strategy):
     start_date = market_info.get_min_pair_start_time()
     end_date = market_info.get_min_pair_end_time()
 

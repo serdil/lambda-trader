@@ -3,7 +3,7 @@ from typing import List, Dict, Iterable
 
 from illegalorderexception import IllegalOrderException
 from order import Order, OrderType
-from marketinfo import MarketInfo
+from marketinfo import BacktestMarketInfo
 from utils import pair_from
 
 
@@ -69,7 +69,7 @@ class Account:
             if not order.get_is_filled():
                 yield order
 
-    def execute_orders(self, market_info: MarketInfo):
+    def execute_orders(self, market_info: BacktestMarketInfo):
         for order in self.__orders:
             if not order.get_is_filled():
                 if self.order_satisfied(order, market_info):
@@ -78,7 +78,7 @@ class Account:
                     self.sample_balance(market_info)
 
     @staticmethod
-    def order_satisfied(order: Order, market_info: MarketInfo):
+    def order_satisfied(order: Order, market_info: BacktestMarketInfo):
         candlestick = market_info.get_pair_latest_candlestick(pair_from('BTC', order.get_currency()))
         if order.get_type() == OrderType.SELL:
             return candlestick.high >= order.get_price()
@@ -100,7 +100,7 @@ class Account:
     def get_balance(self, currency):
         return self.__balances[currency]
 
-    def get_estimated_balance(self, market_info: MarketInfo):
+    def get_estimated_balance(self, market_info: BacktestMarketInfo):
         estimated_balance = 0
         for currency, balance in self.__balances.items():
             if currency == 'BTC':

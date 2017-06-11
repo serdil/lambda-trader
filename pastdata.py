@@ -2,13 +2,13 @@ import csv
 import glob
 
 from candlestick import Candlestick
-from marketinfo import MarketInfo
+from marketinfo import BacktestMarketInfo
 from pairinfo import PairInfo
 from utils import pair_from
 
 
-def get_past_market_info() -> MarketInfo:
-    market_info = MarketInfo()
+def get_past_market_info() -> BacktestMarketInfo:
+    market_info = BacktestMarketInfo()
 
     files = glob.glob('./data/*.csv')
 
