@@ -183,7 +183,6 @@ class PolxStrategy:
     RETRACEMENT_RATIO = 0.1
 
     def act(self, account, market_info):
-        print('acting')
         self.cancel_old_orders(account, market_info)
 
         high_volume_pairs = sorted(self.get_high_volume_pairs(market_info),
@@ -191,7 +190,8 @@ class PolxStrategy:
 
         open_pairs = self.get_pairs_with_open_orders(account)
 
-        print('open pairs:', open_pairs)
+        #print('high_volume_pairs:', high_volume_pairs)
+        #print('open_pairs:', open_pairs)
 
         if len(high_volume_pairs) >= self.MIN_NUM_HIGH_VOLUME_PAIRS:
             for pair in high_volume_pairs:
@@ -221,30 +221,30 @@ class PolxStrategy:
 
                     transaction = [buy_order, sell_order]
 
+                    print('transaction:', transaction)
 
                     current_balance = account.get_estimated_balance()
                     max_drawback, avg_drawback = account.max_avg_drawback()
 
                     account.new_fill_or_kill_transaction(transaction)
 
-                    print('balance', current_balance)
-                    print('max-avg drawback', max_drawback, avg_drawback)
-                    print('open orders:', len(list(account.get_open_orders())))
+                    print('balance:', current_balance)
+                    print('max_avg_drawback:', max_drawback, avg_drawback)
+                    print('num_open_orders:', len(list(account.get_open_orders())))
 
     def cancel_old_orders(self, account, market_info):
-        print('cancel old orders')
         order_numbers_to_cancel = []
 
         for order in account.get_open_orders().values():
-            print('open order:', order)
             if market_info.get_market_time() - order.get_timestamp() >= self.ORDER_TIMEOUT:
                 order_numbers_to_cancel.append(order.get_order_number())
 
+        if order_numbers_to_cancel:
+            print('order_numbers_to_cancel:', order_numbers_to_cancel)
+
         for order_number in order_numbers_to_cancel:
-
-            print('cancelling')
-
             order = account.get_order(order_number)
+            print('cancelling:', order)
             account.cancel_sell_and_sell_now(order)
 
     def get_pairs_with_open_orders(self, account):

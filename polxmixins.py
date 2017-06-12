@@ -11,6 +11,35 @@ from ticker import Ticker
 from utils import pair_from, pair_second
 
 
+class APICallExecutor:
+    class __APICallExecutor:
+        def __init__(self):
+            self.queued_calls = Queue()
+            t = Thread(target=self.executor)
+            t.start()
+
+        def register(self, call, return_queue):
+            self.queued_calls.put((call, return_queue))
+
+        def executor(self):
+            while True:
+                try:
+                    function, return_queue = self.queued_calls.get(timeout=0.1)
+                    try:
+                        return_queue.put((function(), None))
+                    except Exception as e:
+                        return_queue.put((None, e))
+                except Empty:
+                    pass
+
+
+    __instance = __APICallExecutor()
+
+    @classmethod
+    def get_instance(cls):
+        return cls.__instance
+
+
 class PolxMarketInfo:
 
     def __init__(self):
@@ -53,14 +82,20 @@ class PolxMarketInfo:
         return pairs_list
 
     def fetcher(self):
-        print('PolxMarketInfo starting to fetch')
+        print('PolxMarketInfo fetching...')
         while True:
-            print('PolxMarketInfo fetching')
-            self.fetch_ticker()
-            sleep(1)
+            try:
+                self.fetch_ticker()
+                sleep(2)
+            except PoloniexError as e:
+                error_string = str(e)
+                if error_string.find('Nonce must be greater than') == 0:
+                    print(e)
+                else:
+                    raise e
 
     def fetch_ticker(self):
-        ticker_response = polo.returnTicker()
+        ticker_response = self.api_call(lambda: polo.returnTicker())
         ticker_dict = {}
         for currency, info in ticker_response.items():
             ticker_dict[currency] = self.ticker_info_to_ticker(info)
@@ -91,6 +126,15 @@ class PolxMarketInfo:
 
     def unlock_ticker(self):
         self.__ticker_lock.release()
+
+    def api_call(self, call):
+        result_queue = Queue()
+        APICallExecutor.get_instance().register(call, result_queue)
+        result = result_queue.get()
+        if result[1]:
+            raise result[1]
+        else:
+            return result[0]
 
 
 class UnableToFillException(Exception):
@@ -125,7 +169,7 @@ class PolxAccount:
     def sell(self, currency, amount, market_info):
         price = market_info.get_pair_ticker().highest_bid
         try:
-            sell_result = polo.sell(pair_from('BTC', currency), price, amount, orderType='fillOrKill')
+            sell_result = self.api_call(lambda: polo.sell(pair_from('BTC', currency), price, amount, orderType='fillOrKill'))
             print('sell result:', sell_result)
         except PoloniexError as e:
             if str(e) == 'Unable to fill order completely.':
@@ -136,7 +180,7 @@ class PolxAccount:
     def buy(self, currency, amount, market_info):
         price = market_info.get_pair_ticker().lowest_ask
         try:
-            buy_result = polo.buy(pair_from('BTC', currency), price, amount, orderType='fillOrKill')
+            buy_result = self.api_call(lambda: polo.buy(pair_from('BTC', currency), price, amount, orderType='fillOrKill'))
             print('buy result:', buy_result)
         except PoloniexError as e:
             if str(e) == 'Unable to fill order completely.':
@@ -211,16 +255,23 @@ class PolxAccount:
         return max_drawback, (total_drawback / num_drawbacks if num_drawbacks > 0 else 0.0)
 
     def fetcher(self):
-        print('PolxAccount starting to fetch')
+        print('PolxAccount fetching...')
         while True:
-            sleep(1)
-            self.fetch_open_orders()
-            self.fetch_balances()
-            self.fetch_complete_balances()
+            try:
+                self.fetch_open_orders()
+                self.fetch_balances()
+                self.fetch_complete_balances()
+                sleep(3)
+            except PoloniexError as e:
+                error_string = str(e)
+                if error_string.find('Nonce must be greater than') == 0:
+                    print(e)
+                else:
+                    raise e
 
     def fetch_open_orders(self):
-        print('PolxAccount fetching open orders')
-        open_orders_response = polo.returnOpenOrders()
+        #print('PolxAccount fetching open orders')
+        open_orders_response = self.api_call(lambda: polo.returnOpenOrders())
         open_orders = {}
         for key, value in open_orders_response.items():
             for item in value:
@@ -241,15 +292,15 @@ class PolxAccount:
         return Order(currency, type, price, amount, timestamp, order_number=order_number)
 
     def fetch_balances(self):
-        print('PolxAccount fetching balances')
-        balances = polo.returnBalances()
+        #print('PolxAccount fetching balances')
+        balances = self.api_call(lambda: polo.returnBalances())
         self.lock_balances()
         self.__balances = balances
         self.unlock_balances()
 
     def fetch_complete_balances(self):
-        print('PolxAccount fetching complete balances')
-        complete_balances = polo.returnCompleteBalances()
+        #print('PolxAccount fetching complete balances')
+        complete_balances = self.api_call(lambda: polo.returnCompleteBalances())
         self.lock_complete_balances()
         self.__complete_balances = complete_balances
         self.unlock_complete_balances()
@@ -276,7 +327,7 @@ class PolxAccount:
         print('Executing transaction')
         try:
             for order in transaction[:-1]:
-                    self.put_order_fill_or_kill(order)
+                self.put_order_fill_or_kill(order)
             self.put_order(transaction[-1])
         except UnableToFillException:
             pass
@@ -304,27 +355,27 @@ class PolxAccount:
 
     def __cancel_sell_order_sell_now(self, order):
         print('Cancelling order')
-        polo.cancelOrder(order.get_order_number())
+        self.api_call(lambda: polo.cancelOrder(order.get_order_number()))
         price = self.__market_info.get_pair_ticker(pair_from('BTC', order.get_currency())).highest_bid
         sell_order = Order(order.get_currency(), OrderType.SELL, price, order.get_amount(), self.__market_info.get_market_time())
         self.put_order(sell_order)
 
     def __polo_put(self, order, fill_or_kill=False):
-
+        print('Putting order:', order)
         if order.get_amount() == -1:
-            amount = float(polo.returnBalances()[order.get_currency()])
+            amount = float(self.api_call(lambda: polo.returnBalances())[order.get_currency()])
         else:
             amount = order.get_amount()
 
         if order.get_type() == OrderType.BUY:
-            buy_result = polo.buy(pair_from('BTC', order.get_currency()), order.get_price(),
+            buy_result = self.api_call(lambda: polo.buy(pair_from('BTC', order.get_currency()), order.get_price(),
                                   amount,
-                                  orderType='fillOrKill' if fill_or_kill else False)
+                                  orderType='fillOrKill' if fill_or_kill else False))
             print('buy result:', buy_result)
         elif order.get_type() == OrderType.SELL:
-            sell_result = polo.sell(pair_from('BTC', order.get_currency()), order.get_price(),
+            sell_result = self.api_call(lambda: polo.sell(pair_from('BTC', order.get_currency()), order.get_price(),
                                   amount,
-                                  orderType='fillOrKill' if fill_or_kill else False)
+                                  orderType='fillOrKill' if fill_or_kill else False))
             print('sell result:', sell_result)
 
     def lock_balances(self):
@@ -350,3 +401,13 @@ class PolxAccount:
 
     def unlock_transactions(self):
         self.__transactions_lock.release()
+
+    def api_call(self, call):
+        result_queue = Queue()
+        APICallExecutor.get_instance().register(call, result_queue)
+        result = result_queue.get()
+        if result[1]:
+            raise result[1]
+        else:
+            return result[0]
+
