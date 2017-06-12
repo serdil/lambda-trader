@@ -160,6 +160,8 @@ class PolxAccount:
         self.__complete_balances_lock = Lock()
         self.__transactions_lock = Lock()
         self.__balance_series = []
+        self.__orders_in_progress = {}
+        self.__orders_in_progress_lock = Lock()
         self.__start_fetcher_thread()
         self.__start_executor_thread()
 
@@ -227,6 +229,10 @@ class PolxAccount:
             for order in transaction:
                 open_and_pending_orders[order.get_order_number()] = order
         self.unlock_transactions()
+        self.lock_orders_in_progress()
+        for order in self.__orders_in_progress:
+            open_and_pending_orders[order.get_order_number()] = order
+        self.unlock_orders_in_progress()
         return open_and_pending_orders
 
     def get_estimated_balance(self):
@@ -323,6 +329,9 @@ class PolxAccount:
                 self.lock_transactions()
                 transaction = self.__transactions.get_nowait()
                 self.unlock_transactions()
+                self.lock_orders_in_progress()
+                self.__orders_in_progress = transaction[:]
+                self.unlock_orders_in_progress()
                 self.execute_transaction(transaction)
             except Empty:
                 self.unlock_transactions()
@@ -406,6 +415,12 @@ class PolxAccount:
 
     def unlock_transactions(self):
         self.__transactions_lock.release()
+
+    def lock_orders_in_progress(self):
+        self.__orders_in_progress_lock.acquire()
+
+    def unlock_orders_in_progress(self):
+        self.__orders_in_progress_lock.release()
 
     def api_call(self, call):
         return APICallExecutor.get_instance().call(call)
