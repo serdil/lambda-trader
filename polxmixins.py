@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime
 from queue import Queue, Empty
 from threading import Thread, Lock
@@ -15,18 +16,28 @@ class APICallExecutor:
     class __APICallExecutor:
         def __init__(self):
             self.queued_calls = Queue()
-            t = Thread(target=self.executor)
+            t = Thread(target=self.__executor)
             t.start()
 
-        def register(self, call, return_queue):
+        def call(self, call):
+            result_queue = Queue()
+            self.__register(call, result_queue)
+            result = result_queue.get()
+            if result[1]:
+                raise result[1]
+            else:
+                return result[0]
+
+        def __register(self, call, return_queue):
             self.queued_calls.put((call, return_queue))
 
-        def executor(self):
+        def __executor(self):
             while True:
                 try:
                     function, return_queue = self.queued_calls.get(timeout=0.1)
                     try:
                         return_queue.put((function(), None))
+                        print('.')
                     except Exception as e:
                         return_queue.put((None, e))
                 except Empty:
@@ -128,13 +139,7 @@ class PolxMarketInfo:
         self.__ticker_lock.release()
 
     def api_call(self, call):
-        result_queue = Queue()
-        APICallExecutor.get_instance().register(call, result_queue)
-        result = result_queue.get()
-        if result[1]:
-            raise result[1]
-        else:
-            return result[0]
+        return APICallExecutor.get_instance().call(call)
 
 
 class UnableToFillException(Exception):
@@ -403,11 +408,5 @@ class PolxAccount:
         self.__transactions_lock.release()
 
     def api_call(self, call):
-        result_queue = Queue()
-        APICallExecutor.get_instance().register(call, result_queue)
-        result = result_queue.get()
-        if result[1]:
-            raise result[1]
-        else:
-            return result[0]
+        return APICallExecutor.get_instance().call(call)
 
