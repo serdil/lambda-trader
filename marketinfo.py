@@ -112,4 +112,4 @@ class BacktestMarketInfo:
         return min(map(lambda v: v.get_end_time(), self.__pairs.values()))
 
     def pairs(self):
-        return filter(lambda p: p[1].get_start_time() < self.get_market_time() < p[1].get_end_time(), self.__pairs.items())
+        return list(map(lambda p: p[0], filter(lambda p: p[1].get_start_time() < self.get_market_time() < p[1].get_end_time(), self.__pairs.items())))
