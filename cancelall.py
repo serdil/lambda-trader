@@ -24,5 +24,3 @@ while True:
                     print('sold')
             except Exception as e:
                 print(e)
-
-

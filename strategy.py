@@ -73,7 +73,7 @@ class Strategy:
             print('cancelling')
 
             order = account.get_order(order_number)
-            account.cancel_sell_and_sell_now(order_number)
+            account.cancel_order(order_number)
             price = market_info.get_pair_ticker(pair_from('BTC', order.get_currency())).highest_bid
             account.sell(order.get_currency(), price, order.get_amount(), market_info)
 
