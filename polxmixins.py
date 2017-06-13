@@ -37,7 +37,6 @@ class APICallExecutor:
                     function, return_queue = self.queued_calls.get(timeout=0.1)
                     try:
                         return_queue.put((function(), None))
-                        print('.')
                     except Exception as e:
                         return_queue.put((None, e))
                 except Empty:
