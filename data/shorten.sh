@@ -1,4 +1,4 @@
-
+#!/usr/bin/env bash
 
 for file in orig/*csv
 do
