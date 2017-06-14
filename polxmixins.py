@@ -137,6 +137,7 @@ class PolxMarketInfo:
     def unlock_ticker(self):
         self.__ticker_lock.release()
 
+    @staticmethod
     def api_call(self, call):
         return APICallExecutor.get_instance().call(call)
 

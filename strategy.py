@@ -26,14 +26,14 @@ class Strategy:
                                    key=lambda pair: -market_info.get_pair_last_24h_btc_volume(pair))
 
         open_pairs = self.get_pairs_with_open_orders(account)
+        chunk_size = account.get_estimated_balance(market_info) / self.NUM_CHUNKS
 
         if len(high_volume_pairs) >= self.MIN_NUM_HIGH_VOLUME_PAIRS:
             for pair in high_volume_pairs:
                 if pair not in open_pairs:
-                    self.act_on_pair(account, market_info, pair)
+                    self.act_on_pair(account, market_info, pair, chunk_size)
 
-    def act_on_pair(self, account, market_info, pair):
-        chunk_size = account.get_estimated_balance(market_info) / self.NUM_CHUNKS
+    def act_on_pair(self, account, market_info, pair, chunk_size):
         if chunk_size >= self.MIN_CHUNK_SIZE:
 
             latest_ticker = market_info.get_pair_ticker(pair)
@@ -57,6 +57,7 @@ class Strategy:
                     max_drawback, avg_drawback = account.max_avg_drawback()
                     account.new_order(sell_order)
 
+                    print('BUY', pair)
                     print('balance', current_balance)
                     print('max-avg drawback', max_drawback, avg_drawback)
                     print('open orders:', len(list(account.get_open_orders())))
