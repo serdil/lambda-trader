@@ -1,4 +1,4 @@
 data/*
 !data/shorten.sh
 
-poloniexclient.py
+config.py
