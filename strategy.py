@@ -1,7 +1,8 @@
 from datetime import datetime
 
 from order import Order, OrderType
-from utils import pair_second, pair_from
+from polxdriver import PolxAccount, UnableToFillException
+from utils import pair_second, pair_from, get_now_timestamp
 
 
 class Strategy:
@@ -104,74 +105,149 @@ class PolxStrategy:
 
     RETRACEMENT_RATIO = 0.1
 
-    def act(self, account, market_info):
-        self.cancel_old_orders(account, market_info)
+    def __init__(self, market_info, account: PolxAccount):
+        self.market_info = market_info
+        self.account = account
 
-        high_volume_pairs = sorted(self.get_high_volume_pairs(market_info),
-                                   key=lambda pair: -market_info.get_pair_last_24h_btc_volume(pair))
+        self.__balances = {}
+        self.__balances_last_updated = 0
 
-        open_pairs = self.get_pairs_with_open_orders(account)
+        self.__estimated_balance = 0
+        self.__estimated_balance_last_updated = 0
 
-        #print('high_volume_pairs:', high_volume_pairs)
-        #print('open_pairs:', open_pairs)
+        self.__balance_series = []
+
+    def act(self):
+        self.__cancel_old_orders()
+
+        high_volume_pairs = self.__get_high_volume_pairs()
+
+        open_pairs = self.__get_pairs_with_open_orders()
+        self.__num_open_pairs = len(open_pairs)
+
+        self.__update_balances()
+        self.__update_estimated_balance()
+
+        self.__sample_balance()
 
         if len(high_volume_pairs) >= self.MIN_NUM_HIGH_VOLUME_PAIRS:
             for pair in high_volume_pairs:
                 if pair not in open_pairs:
-                    self.act_on_pair(account, market_info, pair)
+                    self.act_on_pair(pair)
 
-    def act_on_pair(self, account, market_info, pair):
-        chunk_size = account.get_estimated_balance() / self.NUM_CHUNKS
+    def act_on_pair(self, pair):
+        self.__update_balances_if_outdated()
+        chunk_size = self.__get_estimated_balance() / self.NUM_CHUNKS
         if chunk_size >= self.MIN_CHUNK_SIZE:
 
-            latest_ticker = market_info.get_pair_ticker(pair)
+            latest_ticker = self.market_info.get_pair_ticker(pair)
             price = latest_ticker.lowest_ask
-            timestamp = market_info.get_market_time()
+            timestamp = self.market_info.get_market_time()
 
-            if account.get_balance('BTC') >= chunk_size * (1.0 + self.DELTA):
+            if self.__get_balance('BTC') >= chunk_size * (1.0 + self.DELTA):
                 target_price = price * self.BUY_PROFIT_FACTOR
                 day_high_price = latest_ticker.high24h
 
                 if target_price < day_high_price and (target_price - price) / (day_high_price - price) <= self.RETRACEMENT_RATIO:
 
-                    print(datetime.fromtimestamp(market_info.get_market_time()))
+                    print(datetime.fromtimestamp(self.market_info.get_market_time()))
 
-                    buy_order = Order(pair_second(pair), OrderType.BUY, price, chunk_size / price, timestamp)
+                    try:
+                        buy_order = Order(pair_second(pair), OrderType.BUY, price,
+                                          chunk_size / price, timestamp)
+                        print(buy_order)
+                        self.account.new_order(buy_order, fill_or_kill=True)
+                        sell_order = Order(pair_second(pair), OrderType.SELL, target_price, -1, timestamp)
+                        self.account.new_order(sell_order)
+                        self.__update_balances()
 
-                    sell_order = Order(pair_second(pair), OrderType.SELL, target_price,
-                                       -1, timestamp) # PROBLEM TO SOLVE
+                        current_balance = self.__get_estimated_balance()
+                        max_drawback, avg_drawback = self.__max_avg_drawback()
 
-                    transaction = [buy_order, sell_order]
+                        print('balance:', current_balance)
+                        print('max_avg_drawback:', max_drawback, avg_drawback)
 
-                    print('transaction:', transaction)
+                        self.__num_open_pairs += 1
+                        print('num_open_orders:', self.__num_open_pairs)
+                        print('')
+                    except UnableToFillException:
+                        print('Unable to fill order immediately.')
 
-                    current_balance = account.get_estimated_balance()
-                    max_drawback, avg_drawback = account.max_avg_drawback()
+    def __cancel_old_orders(self):
+        orders_to_cancel = []
 
-                    account.new_fill_or_kill_transaction(transaction)
+        for order in self.account.get_open_orders().values():
+            if self.market_info.get_market_time() - order.get_timestamp() >= self.ORDER_TIMEOUT:
+                orders_to_cancel.append(order)
 
-                    print('balance:', current_balance)
-                    print('max_avg_drawback:', max_drawback, avg_drawback)
-                    print('num_open_orders:', len(list(account.get_open_orders())))
+        if orders_to_cancel:
+            print('orders_to_cancel:', orders_to_cancel)
 
-    def cancel_old_orders(self, account, market_info):
-        order_numbers_to_cancel = []
-
-        for order in account.get_open_orders().values():
-            if market_info.get_market_time() - order.get_timestamp() >= self.ORDER_TIMEOUT:
-                order_numbers_to_cancel.append(order.get_order_number())
-
-        if order_numbers_to_cancel:
-            print('order_numbers_to_cancel:', order_numbers_to_cancel)
-
-        for order_number in order_numbers_to_cancel:
-            order = account.get_order(order_number)
+        for order in orders_to_cancel:
             print('cancelling:', order)
-            account.cancel_sell_and_sell_now(order)
+            self.account.cancel_order(order.get_order_number())
+            price = self.market_info.get_pair_ticker(pair_from('BTC',order.get_currency())).lowest_ask
+            sell_order = self.make_order(order.get_currency(), price,
+                                         -1, OrderType.SELL,
+                                         self.market_info.get_market_time())
+            self.account.new_order(sell_order)
+            self.__update_balances()
 
-    def get_pairs_with_open_orders(self, account):
-        return set([pair_from('BTC', order.get_currency()) for order in account.get_open_and_pending_orders().values()])
+    def __get_pairs_with_open_orders(self):
+        return set([pair_from('BTC', order.get_currency()) for order in self.account.get_open_orders().values()])
 
-    def get_high_volume_pairs(self, market_info):
-        return list(filter(lambda p: market_info.get_pair_last_24h_btc_volume(p) >= self.HIGH_VOLUME_LIMIT,
-                      market_info.pairs()))
+    def __get_high_volume_pairs(self):
+        return sorted(
+            list(
+                filter(
+                    lambda p: self.market_info.get_pair_last_24h_btc_volume(p) >= self.HIGH_VOLUME_LIMIT,
+                    self.market_info.pairs()
+                )
+            ),
+            key=lambda pair: -self.market_info.get_pair_last_24h_btc_volume(pair)
+        )
+
+    def __get_balance(self, currency):
+        return float(self.__balances[currency])
+
+    def __update_balances_if_outdated(self):
+        if get_now_timestamp() - self.__balances_last_updated > 5:
+            self.__update_balances()
+
+    def __update_balances(self):
+        self.__balances = self.account.get_balances()
+        self.__balances_last_updated = get_now_timestamp()
+
+    def __get_estimated_balance(self):
+        return self.__estimated_balance
+
+    def __update_estimated_balance_if_outdated(self):
+        if get_now_timestamp() - self.__estimated_balance_last_updated > 5:
+            self.__update_estimated_balance()
+
+    def __update_estimated_balance(self):
+        self.__estimated_balance = self.account.get_estimated_balance()
+        self.__estimated_balance_last_updated = get_now_timestamp()
+
+    def __sample_balance(self):
+        self.__balance_series.append(self.__get_estimated_balance())
+
+    def __max_avg_drawback(self):
+        total_drawback = 0.0
+        num_drawbacks = 0
+        max_drawback = 0.0
+        max_balance_so_far = 0.0
+        for balance in self.__balance_series:
+            if balance > max_balance_so_far:
+                max_balance_so_far = balance
+            if balance < max_balance_so_far:
+                num_drawbacks += 1
+                current_drawback = (max_balance_so_far - balance) / max_balance_so_far * 100
+                total_drawback += current_drawback
+                if current_drawback > max_drawback:
+                    max_drawback = current_drawback
+        return max_drawback, (total_drawback / num_drawbacks if num_drawbacks > 0 else 0.0)
+
+    @staticmethod
+    def make_order(currency, price, amount, order_type, timestamp):
+        return Order(currency=currency, price=price, amount=amount, type=order_type, timestamp=timestamp)

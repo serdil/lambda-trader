@@ -22,7 +22,8 @@ class Order:
 
     def __repr__(self):
         return 'Order(' + str(self.__currency) + ' ' + str(self.__type) + ' price=' + str(self.__price) + \
-               ' amount=' + str(self.__amount) + ' timestamp=' + str(self.__timestamp) + ' is_filled=' + str(self.__is_filled) + ')'
+               ' amount=' + str(self.__amount) + ' timestamp=' + str(self.__timestamp) + ' is_filled=' + str(self.__is_filled) + \
+               ' order_number=' + str(self.__order_number) + ')'
 
     def get_order_number(self):
         return self.__order_number
