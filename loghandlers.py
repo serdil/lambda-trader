@@ -2,13 +2,13 @@ import logging.handlers
 
 from telegram_handler import TelegramHandler
 
-from config import TELEGRAM_CHAT_ID, TELEGRAM_TOKEN
+from config import TELEGRAM_CHAT_ID, TELEGRAM_TOKEN, BOT_NAME
 
 _1MB = 1024 * 1024 * 1024
 _5MB = 5 * _1MB
 _1GB = 1024 * _1MB
 
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter(BOT_NAME + ': ' + '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 file_handler_debug = logging.handlers.RotatingFileHandler('log/debug.log', maxBytes=_1GB, backupCount=2)
 file_handler_debug.setLevel(logging.DEBUG)
