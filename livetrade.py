@@ -16,5 +16,8 @@ strategy = PolxStrategy(market_info, account)
 
 logger.info('PolxStrategy running...')
 while True:
-    strategy.act()
+    try:
+        strategy.act()
+    except Exception as e:
+        logger.exception('unhandled exception')
     sleep(10)

@@ -105,7 +105,9 @@ class PolxMarketInfo:
                 if error_string.find('Nonce must be greater than') == 0:
                     self.logger.warning(error_string)
                 else:
-                    raise e
+                    self.logger.exception('unhandled exception')
+            except Exception as e:
+                self.logger.exception('unhandled exception')
 
     def fetch_ticker(self):
         self.logger.debug('fetching_ticker')
