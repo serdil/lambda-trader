@@ -1,6 +1,8 @@
 data/*
 data/shorten.sh
 
+tmp
+
 config.py
 
 log/*
