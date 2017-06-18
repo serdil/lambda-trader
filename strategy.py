@@ -1,5 +1,7 @@
+import logging
 from datetime import datetime
 
+import loghandlers
 from order import Order, OrderType
 from polxdriver import PolxAccount, UnableToFillException
 from utils import pair_second, pair_from, get_now_timestamp
@@ -97,7 +99,7 @@ class PolxStrategy:
     PERIOD = 300
     ORDER_TIMEOUT = 1 * 24 * 3600
 
-    NUM_CHUNKS = 20
+    NUM_CHUNKS = 15
     HIGH_VOLUME_LIMIT = 20
     MIN_CHUNK_SIZE = 0.00011
     MIN_NUM_HIGH_VOLUME_PAIRS = 1
@@ -117,18 +119,35 @@ class PolxStrategy:
 
         self.__balance_series = []
 
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+
+        loghandlers.add_all_handlers(self.logger)
+
     def act(self):
+        self.logger.debug('acting')
+
         self.__cancel_old_orders()
 
         high_volume_pairs = self.__get_high_volume_pairs()
 
+        self.logger.debug('num_high_volume_pairs: %d', len(high_volume_pairs))
+
         open_pairs = self.__get_pairs_with_open_orders()
         self.__num_open_pairs = len(open_pairs)
+
+        self.logger.debug('open_pairs: %s', self.join(open_pairs))
 
         self.__update_balances()
         self.__update_estimated_balance()
 
         self.__sample_balance()
+
+        estimated_balance = self.__get_estimated_balance()
+        chunk_size = estimated_balance / self.NUM_CHUNKS
+
+        self.logger.debug('estimated_balance: %f', estimated_balance)
+        self.logger.debug('chunk_size: %f', chunk_size)
 
         if len(high_volume_pairs) >= self.MIN_NUM_HIGH_VOLUME_PAIRS:
             for pair in high_volume_pairs:
@@ -136,26 +155,46 @@ class PolxStrategy:
                     self.act_on_pair(pair)
 
     def act_on_pair(self, pair):
+        self.logger.debug('acting_on: %s', pair)
         self.__update_balances_if_outdated()
         chunk_size = self.__get_estimated_balance() / self.NUM_CHUNKS
+        self.logger.debug('chunk_size: %f', chunk_size)
         if chunk_size >= self.MIN_CHUNK_SIZE:
+            self.logger.debug('chunk size enough')
 
             latest_ticker = self.market_info.get_pair_ticker(pair)
+            self.logger.debug('latest_ticker: %s', str(latest_ticker))
+
             price = latest_ticker.lowest_ask
+            self.logger.debug('price: %f', price)
+
             timestamp = self.market_info.get_market_time()
+            self.logger.debug('timestamp: %d', timestamp)
 
             if self.__get_balance('BTC') >= chunk_size * (1.0 + self.DELTA):
+                self.logger.debug('btc balance is enough')
+
                 target_price = price * self.BUY_PROFIT_FACTOR
                 day_high_price = latest_ticker.high24h
 
-                if target_price < day_high_price and (target_price - price) / (day_high_price - price) <= self.RETRACEMENT_RATIO:
+                self.logger.debug('target_price: %f', target_price)
+                self.logger.debug('day_high_price: %f', day_high_price)
 
-                    print(datetime.fromtimestamp(self.market_info.get_market_time()))
+                if day_high_price > price:
+                    target_day_high_ratio = (target_price - price) / (day_high_price - price)
+                else:
+                    target_day_high_ratio = float('inf')
+
+                self.logger.debug('target_day_high_ratio: %f', target_day_high_ratio)
+
+                if target_price < day_high_price and target_day_high_ratio <= self.RETRACEMENT_RATIO:
+                    self.logger.info('retracement ratio satisfied, attempting trade')
 
                     try:
                         buy_order = Order(pair_second(pair), OrderType.BUY, price,
                                           chunk_size / price, timestamp)
-                        print(buy_order)
+                        self.logger.info('buy_order: %s', str(buy_order))
+
                         self.account.new_order(buy_order, fill_or_kill=True)
                         sell_order = Order(pair_second(pair), OrderType.SELL, target_price, -1, timestamp)
                         self.account.new_order(sell_order)
@@ -164,39 +203,46 @@ class PolxStrategy:
                         current_balance = self.__get_estimated_balance()
                         max_drawback, avg_drawback = self.__max_avg_drawback()
 
-                        print('balance:', current_balance)
-                        print('max_avg_drawback:', max_drawback, avg_drawback)
+                        self.logger.info('balance: %f', current_balance)
+                        self.logger.info('max_avg_drawback: %f %f', max_drawback, avg_drawback)
 
                         self.__num_open_pairs += 1
-                        print('num_open_orders:', self.__num_open_pairs)
-                        print('')
+                        self.logger.info('num_open_orders: %d', self.__num_open_pairs)
                     except UnableToFillException:
-                        print('Unable to fill order immediately.')
+                        self.logger.warning('unable to fill order immediately')
 
     def __cancel_old_orders(self):
+        self.logger.debug('cancel_old_orders')
+
         orders_to_cancel = []
 
         for order in self.account.get_open_orders().values():
             if self.market_info.get_market_time() - order.get_timestamp() >= self.ORDER_TIMEOUT:
                 orders_to_cancel.append(order)
 
-        if orders_to_cancel:
-            print('orders_to_cancel:', orders_to_cancel)
+        self.logger.debug('orders_to_cancel: %s', self.join(orders_to_cancel))
 
         for order in orders_to_cancel:
-            print('cancelling:', order)
+            self.logger.info('cancelling_order: %s', str(order))
             self.account.cancel_order(order.get_order_number())
+
             price = self.market_info.get_pair_ticker(pair_from('BTC',order.get_currency())).lowest_ask
+            self.logger.info('cancelling_price: %f', price)
+
             sell_order = self.make_order(order.get_currency(), price,
                                          -1, OrderType.SELL,
                                          self.market_info.get_market_time())
             self.account.new_order(sell_order)
+            self.logger.info('sell_order_put')
+
             self.__update_balances()
 
     def __get_pairs_with_open_orders(self):
+        self.logger.debug('get_pairs_with_open_orders')
         return set([pair_from('BTC', order.get_currency()) for order in self.account.get_open_orders().values()])
 
     def __get_high_volume_pairs(self):
+        self.logger.debug('get_high_volume_pairs')
         return sorted(
             list(
                 filter(
@@ -211,10 +257,14 @@ class PolxStrategy:
         return float(self.__balances[currency])
 
     def __update_balances_if_outdated(self):
+        self.logger.debug('update_balances_if_outdated')
+
         if get_now_timestamp() - self.__balances_last_updated > 5:
             self.__update_balances()
 
     def __update_balances(self):
+        self.logger.debug('updating_balances')
+
         self.__balances = self.account.get_balances()
         self.__balances_last_updated = get_now_timestamp()
 
@@ -222,15 +272,22 @@ class PolxStrategy:
         return self.__estimated_balance
 
     def __update_estimated_balance_if_outdated(self):
+        self.logger.debug('update_estimated_balance_if_outdated')
+
         if get_now_timestamp() - self.__estimated_balance_last_updated > 5:
             self.__update_estimated_balance()
 
     def __update_estimated_balance(self):
+        self.logger.debug('updating_estimated_balance')
+
         self.__estimated_balance = self.account.get_estimated_balance()
         self.__estimated_balance_last_updated = get_now_timestamp()
 
     def __sample_balance(self):
-        self.__balance_series.append(self.__get_estimated_balance())
+        estimated_balance = self.__get_estimated_balance()
+        self.logger.debug('sampling_balance: %f', estimated_balance)
+
+        self.__balance_series.append(estimated_balance)
 
     def __max_avg_drawback(self):
         total_drawback = 0.0
@@ -251,3 +308,8 @@ class PolxStrategy:
     @staticmethod
     def make_order(currency, price, amount, order_type, timestamp):
         return Order(currency=currency, price=price, amount=amount, type=order_type, timestamp=timestamp)
+
+    @staticmethod
+    def join(items):
+        return ' '.join(items)
+

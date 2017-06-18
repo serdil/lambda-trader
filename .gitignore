@@ -2,3 +2,6 @@ data/*
 data/shorten.sh
 
 config.py
+
+log/*
+!log/.gitkeep
