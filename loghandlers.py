@@ -2,7 +2,9 @@ import logging.handlers
 
 from telegram_handler import TelegramHandler
 
-from config import TELEGRAM_CHAT_ID, TELEGRAM_TOKEN, BOT_NAME
+from config import (
+    TELEGRAM_TOKEN, BOT_NAME, TELEGRAM_CHAT_ID_1, TELEGRAM_CHAT_ID_2,
+)
 
 _1MB = 1024 * 1024 * 1024
 _5MB = 5 * _1MB
@@ -22,16 +24,21 @@ console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
 console_handler.setFormatter(formatter)
 
-telegram_handler = TelegramHandler(token=TELEGRAM_TOKEN, chat_id=TELEGRAM_CHAT_ID)
-telegram_handler.setLevel(logging.INFO)
-telegram_handler.setFormatter(formatter)
+telegram_handler_1 = TelegramHandler(token=TELEGRAM_TOKEN, chat_id=TELEGRAM_CHAT_ID_1)
+telegram_handler_1.setLevel(logging.INFO)
+telegram_handler_1.setFormatter(formatter)
+
+telegram_handler_2 = TelegramHandler(token=TELEGRAM_TOKEN, chat_id=TELEGRAM_CHAT_ID_2)
+telegram_handler_2.setLevel(logging.INFO)
+telegram_handler_2.setFormatter(formatter)
 
 
 def add_all_handlers(logger):
     logger.addHandler(file_handler_debug)
     logger.addHandler(file_handler_info)
     logger.addHandler(console_handler)
-    logger.addHandler(telegram_handler)
+    logger.addHandler(telegram_handler_1)
+    logger.addHandler(telegram_handler_2)
 
 
 def get_logger_with_all_handlers(name):
