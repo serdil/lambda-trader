@@ -1,4 +1,6 @@
 from datetime import datetime
+from threading import Thread
+from time import sleep
 
 from loghandlers import get_logger_with_all_handlers
 from order import Order, OrderType
@@ -119,6 +121,13 @@ class PolxStrategy:
         self.__balance_series = []
 
         self.logger = get_logger_with_all_handlers(__name__)
+
+        self.__update_estimated_balance()
+        self.__start_heartbeat_thread()
+
+    def __start_heartbeat_thread(self):
+        t = Thread(target=self.heartbeat_thread)
+        t.start()
 
     def act(self):
         self.logger.debug('acting')
@@ -300,6 +309,11 @@ class PolxStrategy:
                 if current_drawback > max_drawback:
                     max_drawback = current_drawback
         return max_drawback, (total_drawback / num_drawbacks if num_drawbacks > 0 else 0.0)
+
+    def heartbeat_thread(self):
+        while True:
+            self.logger.info('HEARTBEAT: estimated_balance: %d', self.__get_estimated_balance())
+            sleep(1800) # half an hour
 
     @staticmethod
     def make_order(currency, price, amount, order_type, timestamp):
