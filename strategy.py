@@ -1,7 +1,6 @@
-import logging
 from datetime import datetime
 
-import loghandlers
+from loghandlers import get_logger_with_all_handlers
 from order import Order, OrderType
 from polxdriver import PolxAccount, UnableToFillException
 from utils import pair_second, pair_from, get_now_timestamp
@@ -105,7 +104,7 @@ class PolxStrategy:
     MIN_NUM_HIGH_VOLUME_PAIRS = 1
     BUY_PROFIT_FACTOR = 1.03
 
-    RETRACEMENT_RATIO = 0.1
+    RETRACEMENT_RATIO = 0.2
 
     def __init__(self, market_info, account: PolxAccount):
         self.market_info = market_info
@@ -119,10 +118,7 @@ class PolxStrategy:
 
         self.__balance_series = []
 
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
-
-        loghandlers.add_all_handlers(self.logger)
+        self.logger = get_logger_with_all_handlers(__name__)
 
     def act(self):
         self.logger.debug('acting')

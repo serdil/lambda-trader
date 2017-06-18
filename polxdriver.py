@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from queue import Queue, Empty
 from threading import Thread, Lock
@@ -5,6 +6,7 @@ from time import sleep
 
 from poloniex import PoloniexError
 
+from loghandlers import get_logger_with_all_handlers
 from order import OrderType, Order
 from poloniexclient import polo
 from ticker import Ticker
@@ -52,6 +54,8 @@ class APICallExecutor:
 class PolxMarketInfo:
 
     def __init__(self):
+        self.logger = get_logger_with_all_handlers(__name__)
+
         self.__ticker = {}
         self.__ticker_lock = Lock()
         self.__start_fetcher_thread()
@@ -91,7 +95,7 @@ class PolxMarketInfo:
         return pairs_list
 
     def fetcher(self):
-        print('PolxMarketInfo fetching...')
+        self.logger.info('starting to fetch ticker...')
         while True:
             try:
                 self.fetch_ticker()
@@ -99,11 +103,12 @@ class PolxMarketInfo:
             except PoloniexError as e:
                 error_string = str(e)
                 if error_string.find('Nonce must be greater than') == 0:
-                    print(e)
+                    self.logger.warning(error_string)
                 else:
                     raise e
 
     def fetch_ticker(self):
+        self.logger.debug('fetching_ticker')
         ticker_response = self.__api_call(lambda: polo.returnTicker())
         ticker_dict = {}
         for currency, info in ticker_response.items():
@@ -147,7 +152,11 @@ class UnableToFillException(Exception):
 
 class PolxAccount:
 
+    def __init__(self):
+        self.logger = get_logger_with_all_handlers(__name__)
+
     def new_order(self, order, fill_or_kill=False):
+        self.logger.info('new_order: %s', str(order))
         try:
             order_result = self.__polo_put(order, fill_or_kill=fill_or_kill)
             return order_result
@@ -158,13 +167,16 @@ class PolxAccount:
                 raise e
 
     def cancel_order(self, order_number):
+        self.logger.info('cancel_order: %d', order_number)
         return self.__api_call(lambda: polo.cancelOrder(order_number))
 
     def get_balances(self):
+        self.logger.debug('get_balances')
         balances = self.__api_call(lambda: polo.returnBalances())
         return balances
 
     def get_open_orders(self):
+        self.logger.debug('get_open_orders')
         open_orders_response = self.__api_call(lambda: polo.returnOpenOrders())
         open_orders = {}
         for key, value in open_orders_response.items():
@@ -184,6 +196,7 @@ class PolxAccount:
         return Order(currency, type, price, amount, timestamp, order_number=order_number)
 
     def get_estimated_balance(self):
+        self.logger.debug('get_estimated_balance')
         complete_balances = self.__api_call(lambda: polo.returnCompleteBalances())
 
         estimated_balance = 0.0

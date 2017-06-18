@@ -23,3 +23,11 @@ def add_all_handlers(logger):
     logger.addHandler(file_handler_debug)
     logger.addHandler(file_handler_info)
     logger.addHandler(console_handler)
+
+
+def get_logger_with_all_handlers(name):
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+    if not len(logger.handlers):
+        add_all_handlers(logger)
+    return logger
