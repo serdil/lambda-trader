@@ -104,7 +104,7 @@ class PolxStrategy:
     MIN_NUM_HIGH_VOLUME_PAIRS = 1
     BUY_PROFIT_FACTOR = 1.03
 
-    RETRACEMENT_RATIO = 0.2
+    RETRACEMENT_RATIO = 0.1
 
     def __init__(self, market_info, account: PolxAccount):
         self.market_info = market_info
