@@ -209,6 +209,7 @@ class PolxStrategy:
                         current_balance = self.__get_estimated_balance()
                         max_drawback, avg_drawback = self.__max_avg_drawback()
 
+                        self.logger.info('trade successful')
                         self.logger.info('balance: %f', current_balance)
                         self.logger.info('max_avg_drawback: %f %f', max_drawback, avg_drawback)
 
