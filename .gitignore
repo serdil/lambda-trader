@@ -1,4 +1,4 @@
 data/*
-!data/shorten.sh
+data/shorten.sh
 
 config.py
