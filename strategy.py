@@ -126,6 +126,7 @@ class PolxStrategy:
         self.__start_heartbeat_thread()
 
     def __start_heartbeat_thread(self):
+        self.logger.debug('starting_heartbeat_thread')
         t = Thread(target=self.heartbeat_thread)
         t.start()
 
@@ -312,7 +313,7 @@ class PolxStrategy:
 
     def heartbeat_thread(self):
         while True:
-            self.logger.info('HEARTBEAT: estimated_balance: %d', self.__get_estimated_balance())
+            self.logger.info('HEARTBEAT: estimated_balance: %f', self.__get_estimated_balance())
             sleep(1800) # half an hour
 
     @staticmethod
