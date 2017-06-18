@@ -43,11 +43,12 @@ class APICallExecutor:
                 except Empty:
                     pass
 
-
-    __instance = __APICallExecutor()
+    __instance = None
 
     @classmethod
     def get_instance(cls):
+        if cls.__instance is None:
+            cls.__instance = cls.__APICallExecutor()
         return cls.__instance
 
 
