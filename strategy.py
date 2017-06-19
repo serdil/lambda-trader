@@ -314,7 +314,11 @@ class PolxStrategy:
 
     def heartbeat_thread(self):
         while True:
-            self.logger.info('HEARTBEAT: estimated_balance: %f', self.__get_estimated_balance())
+            self.logger.info(
+                'HEARTBEAT: estimated_balance: %f num_open_orders: %d',
+                self.__get_estimated_balance(),
+                len(self.__get_pairs_with_open_orders())
+            )
             sleep(1800) # half an hour
 
     @staticmethod
