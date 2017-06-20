@@ -3,11 +3,12 @@ from queue import Queue, Empty
 from threading import Thread, Lock
 from time import sleep
 
-from loghandlers import get_logger_with_all_handlers
-from order import OrderType, Order
 from poloniex import PoloniexError
+from models.ticker import Ticker
+
+from loghandlers import get_logger_with_all_handlers
+from models.order import OrderType, Order
 from polx.poloniexclient import polo
-from ticker import Ticker
 from utils import pair_from, pair_second, get_now_timestamp
 
 

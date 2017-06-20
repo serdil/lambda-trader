@@ -1,9 +1,9 @@
 import csv
 import glob
 
-from candlestick import Candlestick
 from marketinfo import BacktestMarketInfo
-from pairinfo import PairInfo
+from models.candlestick import Candlestick
+from models.pairinfo import PairInfo
 from utils import pair_from
 
 

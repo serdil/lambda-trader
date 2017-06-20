@@ -2,8 +2,8 @@ from collections import defaultdict
 from typing import List, Dict, Iterable
 
 from illegalorderexception import IllegalOrderException
-from order import Order, OrderType
 from marketinfo import BacktestMarketInfo
+from models.order import Order, OrderType
 from utils import pair_from
 
 
