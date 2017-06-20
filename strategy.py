@@ -4,7 +4,7 @@ from time import sleep
 
 from loghandlers import get_logger_with_all_handlers
 from order import Order, OrderType
-from polxdriver import PolxAccount, UnableToFillException
+from polx.polxdriver import PolxAccount, UnableToFillException
 from utils import pair_second, pair_from, get_now_timestamp
 
 

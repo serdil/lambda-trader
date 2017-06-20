@@ -1,14 +1,12 @@
-import logging
 from datetime import datetime
 from queue import Queue, Empty
 from threading import Thread, Lock
 from time import sleep
 
-from poloniex import PoloniexError
-
 from loghandlers import get_logger_with_all_handlers
 from order import OrderType, Order
-from poloniexclient import polo
+from poloniex import PoloniexError
+from polx.poloniexclient import polo
 from ticker import Ticker
 from utils import pair_from, pair_second, get_now_timestamp
 

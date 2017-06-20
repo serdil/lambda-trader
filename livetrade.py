@@ -1,9 +1,8 @@
 from time import sleep
 
-from poloniex import PoloniexError
-
 from loghandlers import get_logger_with_all_handlers
-from polxdriver import PolxMarketInfo, PolxAccount
+from poloniex import PoloniexError
+from polx.polxdriver import PolxMarketInfo, PolxAccount
 from strategy import PolxStrategy
 
 logger = get_logger_with_all_handlers(__name__)
