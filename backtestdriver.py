@@ -2,7 +2,7 @@ from backtesting import backtest
 from backtesting.pastdata import get_past_market_info
 
 from backtesting.account import Account
-from strategy import Strategy
+from strategy.strategy import Strategy
 
 market_info = get_past_market_info()
 

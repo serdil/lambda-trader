@@ -3,7 +3,7 @@ from time import sleep
 from loghandlers import get_logger_with_all_handlers
 from poloniex import PoloniexError
 from polx.polxdriver import PolxMarketInfo, PolxAccount
-from strategy import PolxStrategy
+from strategy.strategy import PolxStrategy
 
 logger = get_logger_with_all_handlers(__name__)
 
