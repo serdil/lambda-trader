@@ -314,12 +314,25 @@ class PolxStrategy:
 
     def heartbeat_thread(self):
         while True:
-            self.logger.info(
-                'HEARTBEAT: estimated_balance: %f num_open_orders: %d',
-                self.__get_estimated_balance(),
-                len(self.__get_pairs_with_open_orders())
-            )
-            sleep(1800) # half an hour
+            self.__log_heartbeat_info(log_if_no_open_orders=True)
+            sleep(1800)
+            self.__log_heartbeat_info(log_if_no_open_orders=False)
+            sleep(1800)
+            self.__log_heartbeat_info(log_if_no_open_orders=False)
+            sleep(1800)
+            self.__log_heartbeat_info(log_if_no_open_orders=False)
+            sleep(1800)
+
+    def __log_heartbeat_info(self, log_if_no_open_orders=False):
+        num_open_orders = len(self.__get_pairs_with_open_orders())
+        if num_open_orders == 0 and not log_if_no_open_orders:
+            return
+        estimated_balance = self.__get_estimated_balance()
+        self.__log_heartbeat_info(estimated_balance, num_open_orders)
+
+    def __log_heartbeat_info(self, estimated_balance, num_open_orders):
+        self.logger.info('HEARTBEAT: estimated_balance: %f num_open_orders: %d',
+            self.__get_estimated_balance(), len(self.__get_pairs_with_open_orders()))
 
     @staticmethod
     def make_order(currency, price, amount, order_type, timestamp):
