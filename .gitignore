@@ -1,8 +1,8 @@
+tmp/*
+exclude/*
+
 data/*
-
-tmp
-
-config.py
+!data/.gitkeep
 
 log/*
 !log/.gitkeep
