@@ -327,5 +327,5 @@ class PolxStrategy:
 
     @staticmethod
     def join(items):
-        return ' '.join(items)
+        return ' '.join([str(item) for item in items])
 
