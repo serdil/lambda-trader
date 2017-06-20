@@ -314,16 +314,16 @@ class PolxStrategy:
 
     def heartbeat_thread(self):
         while True:
-            self.__log_heartbeat_info(log_if_no_open_orders=True)
+            self.__log_heartbeat_info_conditionally(log_if_no_open_orders=True)
             sleep(1800)
-            self.__log_heartbeat_info(log_if_no_open_orders=False)
+            self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
             sleep(1800)
-            self.__log_heartbeat_info(log_if_no_open_orders=False)
+            self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
             sleep(1800)
-            self.__log_heartbeat_info(log_if_no_open_orders=False)
+            self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
             sleep(1800)
 
-    def __log_heartbeat_info(self, log_if_no_open_orders=False):
+    def __log_heartbeat_info_conditionally(self, log_if_no_open_orders=False):
         num_open_orders = len(self.__get_pairs_with_open_orders())
         if num_open_orders == 0 and not log_if_no_open_orders:
             return
