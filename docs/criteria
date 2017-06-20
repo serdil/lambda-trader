@@ -1,0 +1,19 @@
+parameters for strategy evaluation
+===================================
+
+[candidates]
+
+parameters over a period
+-------------------------
+number of trades
+maximum drawdown
+return of investment
+success rate (num of winning trades / losing trades)
+average risk (average of % loss of losing trades)
+
+non-clearly-defined
+-------------------
+time-uniformity of trading decisions:
+    are there long periods with no trades?
+time-uniformity of profits
+time-uniformity of losses
