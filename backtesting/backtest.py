@@ -1,7 +1,8 @@
 from datetime import datetime
 
-from account import Account
-from marketinfo import BacktestMarketInfo
+from backtesting.marketinfo import BacktestMarketInfo
+
+from backtesting.account import Account
 
 
 def backtest(account: Account, market_info: BacktestMarketInfo, strategy):

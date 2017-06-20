@@ -1,7 +1,7 @@
 import csv
 import glob
 
-from marketinfo import BacktestMarketInfo
+from backtesting.marketinfo import BacktestMarketInfo
 from models.candlestick import Candlestick
 from models.pairinfo import PairInfo
 from utils import pair_from

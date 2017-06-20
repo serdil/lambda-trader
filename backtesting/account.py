@@ -1,11 +1,12 @@
 from collections import defaultdict
 from typing import List, Dict, Iterable
 
-from illegalorderexception import IllegalOrderException
-from marketinfo import BacktestMarketInfo
+from backtesting.marketinfo import BacktestMarketInfo
 from models.order import Order, OrderType
 from utils import pair_from
 
+class IllegalOrderException(Exception):
+    pass
 
 class Account:
     def __init__(self, balances: Dict={'BTC': 100}, orders: List[Order]=[]):
