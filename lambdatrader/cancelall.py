@@ -1,5 +1,5 @@
-from polx.poloniexclient import polo
-from utils import pair_from
+from lambdatrader.polx.poloniexclient import polo
+from lambdatrader.utils import pair_from
 
 DELTA = 0.00001
 

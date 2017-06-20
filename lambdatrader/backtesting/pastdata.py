@@ -1,10 +1,11 @@
 import csv
 import glob
 
-from backtesting.marketinfo import BacktestMarketInfo
-from models.candlestick import Candlestick
-from models.pairinfo import PairInfo
-from utils import pair_from
+from lambdatrader.backtesting.marketinfo import BacktestMarketInfo
+
+from lambdatrader.models.candlestick import Candlestick
+from lambdatrader.models.pairinfo import PairInfo
+from lambdatrader.utils import pair_from
 
 
 def get_past_market_info() -> BacktestMarketInfo:

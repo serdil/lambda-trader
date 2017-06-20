@@ -2,10 +2,11 @@ from datetime import datetime
 from threading import Thread
 from time import sleep
 
-from loghandlers import get_logger_with_all_handlers
-from models.order import Order, OrderType
-from polx.polxdriver import PolxAccount, UnableToFillException
-from utils import pair_second, pair_from, get_now_timestamp
+from lambdatrader.loghandlers import get_logger_with_all_handlers
+from lambdatrader.models.order import Order, OrderType
+
+from lambdatrader.polx.polxdriver import PolxAccount, UnableToFillException
+from lambdatrader.utils import pair_second, pair_from, get_now_timestamp
 
 
 class Strategy:
