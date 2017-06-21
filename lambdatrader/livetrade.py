@@ -22,7 +22,7 @@ while True:
         strategy.act()
     except PoloniexError as e: # TODO convert to own error type
         if str(e).find('Connection timed out.') >= 0:
-            logger.error(str(e))
+            logger.warning(str(e))
         else:
             logger.exception('unhandled exception')
     except Exception as e:
