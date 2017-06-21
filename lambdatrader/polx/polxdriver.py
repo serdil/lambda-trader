@@ -3,13 +3,13 @@ from queue import Queue, Empty
 from threading import Thread, Lock
 from time import sleep
 
-from lambdatrader.loghandlers import get_logger_with_all_handlers
-from lambdatrader.models.order import OrderType, Order
-from lambdatrader.models.ticker import Ticker
+from loghandlers import get_logger_with_all_handlers
+from models.order import OrderType, Order
+from models.ticker import Ticker
 from poloniex import PoloniexError
 
-from lambdatrader.polx.poloniexclient import polo
-from lambdatrader.utils import pair_from, pair_second, get_now_timestamp
+from polx.poloniexclient import polo
+from utils import pair_from, pair_second, get_now_timestamp
 
 
 class APICallExecutor:

@@ -2,7 +2,7 @@ import logging.handlers
 
 from telegram_handler import TelegramHandler
 
-from lambdatrader.config import (
+from config import (
     TELEGRAM_TOKEN, BOT_NAME, TELEGRAM_CHAT_ID_1, TELEGRAM_CHAT_ID_2,
 )
 

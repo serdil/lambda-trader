@@ -2,7 +2,7 @@ from backtesting.account import Account
 from backtesting.pastdata import get_past_market_info
 from strategy.strategy import Strategy
 
-from lambdatrader.backtesting import backtest
+from backtesting import backtest
 
 market_info = get_past_market_info()
 

@@ -1,10 +1,10 @@
 from time import sleep
 
 from poloniex import PoloniexError
-from lambdatrader.strategy.strategy import PolxStrategy
+from strategy.strategy import PolxStrategy
 
-from lambdatrader.loghandlers import get_logger_with_all_handlers
-from lambdatrader.polx.polxdriver import PolxMarketInfo, PolxAccount
+from loghandlers import get_logger_with_all_handlers
+from polx.polxdriver import PolxMarketInfo, PolxAccount
 
 logger = get_logger_with_all_handlers(__name__)
 

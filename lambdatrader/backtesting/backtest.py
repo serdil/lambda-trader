@@ -2,7 +2,7 @@ from datetime import datetime
 
 from backtesting.marketinfo import BacktestMarketInfo
 
-from lambdatrader.backtesting.account import Account
+from backtesting.account import Account
 
 
 def backtest(account: Account, market_info: BacktestMarketInfo, strategy):
