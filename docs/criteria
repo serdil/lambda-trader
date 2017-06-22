@@ -1,15 +1,37 @@
-parameters for strategy evaluation
+metrics for strategy evaluation
 ===================================
+
+legend
+-------
+P: positive
+N: negative
+m: minor importance
 
 [candidates]
 
-parameters over a period
+metrics over a period
 -------------------------
-number of trades
-maximum drawdown
-return of investment
-success rate (num of winning trades / losing trades)
-average risk (average of % loss of losing trades)
+number of trades P
+maximum drawdown N
+ROI (return of investment) (including negative) P
+success rate (num of winning trades / losing trades) P m
+median risk (median of % loss of losing trades) N m
+median reward (median of % profit of winning trades) P m
+median risk:reward ratio (median risk / median reward) N m
+shortest no-drawdown window N
+
+metrics over multiple periods
+------------------------------
+shortest no-drawdown window (expressed in number of periods) (based on period ROI's) N
+median ROI P
+1q (first quartile) ROI P
+minimum ROI P
+median number of trades P
+1q number of trades P
+minimum number of trades P
+median success rate P m
+1q success rate P m
+minimum success rate P m
 
 non-clearly-defined
 -------------------
