@@ -9,6 +9,120 @@ from polx.polxdriver import PolxAccount, UnableToFillException
 from utils import pair_second, pair_from, get_now_timestamp
 
 
+class VolumeStrategy:
+
+    DELTA = 0.0001
+
+    PERIOD = 300
+
+    ORDER_TIMEOUT = 6 * 3600  # in seconds
+
+    NUM_CHUNKS = 10
+    HIGH_VOLUME_LIMIT = 0
+    MIN_CHUNK_SIZE = 0.00011
+    MIN_NUM_HIGH_VOLUME_PAIRS = 0
+
+    RECENT_VOLUME_PERIOD = 6  # in number of candlesticks
+    LOOKBACK_VOLUME_PERIOD = 6 * 6
+    RECENT_VOLUME_THRESHOLD_PERCENT = 0
+
+    LOOKBACK_PRICE_PERIOD =  6  # in number of candlesticks
+    PRICE_INCREASE_THRESHOLD_PERCENT = -6
+
+    PROFIT_TARGET_PERCENT = 3
+
+    def act(self, account, market_info):
+        self.cancel_old_orders(account, market_info)
+
+        high_volume_pairs = sorted(self.get_high_volume_pairs(market_info),
+                                   key=lambda pair: -market_info.get_pair_last_24h_btc_volume(pair))
+
+        open_pairs = self.get_pairs_with_open_orders(account)
+
+        estimated_balance = account.get_estimated_balance(market_info)
+
+        if len(high_volume_pairs) >= self.MIN_NUM_HIGH_VOLUME_PAIRS:
+            for pair in high_volume_pairs:
+                if pair not in open_pairs:
+                    try:
+                        self.act_on_pair(account, market_info, pair, estimated_balance)
+                    except KeyError:
+                        pass
+
+    def act_on_pair(self, account, market_info, pair, estimated_balance):
+        chunk_size = estimated_balance / self.NUM_CHUNKS
+
+        if chunk_size >= self.MIN_CHUNK_SIZE:
+
+            if account.get_balance('BTC') >= chunk_size * (1.0 + self.DELTA):
+
+                old_candlestick = market_info.get_pair_candlestick(pair, self.LOOKBACK_PRICE_PERIOD)
+                latest_ticker = market_info.get_pair_ticker(pair)
+
+                old_price = old_candlestick.close
+                current_price = latest_ticker.lowest_ask
+                timestamp = market_info.get_market_time()
+
+                recent_volume = self.calc_pair_recent_volume(market_info, pair,
+                                                             self.RECENT_VOLUME_PERIOD)
+
+                if recent_volume == 0:
+                    return
+
+                lookback_volume = self.calc_pair_recent_volume(market_info, pair,
+                                                               self.LOOKBACK_VOLUME_PERIOD)
+
+                target_price = current_price * ((100 + self.PROFIT_TARGET_PERCENT) / 100)
+
+                volume_percent = (recent_volume / lookback_volume) * 100
+                price_increase_percent = (current_price - old_price) / current_price * 100
+
+                if volume_percent >= self.RECENT_VOLUME_THRESHOLD_PERCENT and price_increase_percent <= self.PRICE_INCREASE_THRESHOLD_PERCENT:
+                    print(datetime.fromtimestamp(market_info.get_market_time()))
+                    account.buy(pair_second(pair), current_price, chunk_size / current_price, market_info)
+
+                    sell_order = Order(pair_second(pair), OrderType.SELL, target_price,
+                                       account.get_balance(pair_second(pair)), timestamp)
+
+                    current_balance = estimated_balance
+                    max_drawback, avg_drawback = account.max_avg_drawback()
+                    account.new_order(sell_order)
+
+                    print('BUY', pair)
+                    print('balance', current_balance)
+                    print('max-avg drawback', max_drawback, avg_drawback)
+                    print('open orders:', len(list(account.get_open_orders())))
+
+    def cancel_old_orders(self, account, market_info):
+        order_numbers_to_cancel = []
+
+        for order in account.get_open_orders():
+            if market_info.get_market_time() - order.get_timestamp() >= self.ORDER_TIMEOUT:
+                order_numbers_to_cancel.append(order.get_order_number())
+
+        for order_number in order_numbers_to_cancel:
+
+            print('cancelling')
+
+            order = account.get_order(order_number)
+            account.cancel_order(order_number)
+            price = market_info.get_pair_ticker(pair_from('BTC', order.get_currency())).highest_bid
+            account.sell(order.get_currency(), price, order.get_amount(), market_info)
+
+    def get_pairs_with_open_orders(self, account):
+        return set([pair_from('BTC', order.get_currency()) for order in account.get_open_orders()])
+
+    def get_high_volume_pairs(self, market_info):
+        return list(filter(lambda p: market_info.get_pair_last_24h_btc_volume(p) >= self.HIGH_VOLUME_LIMIT,
+                      market_info.pairs()))
+
+    def calc_pair_recent_volume(self, market_info, pair, lookback):
+        recent_volume = 0
+        for i in range(lookback):
+            recent_volume += market_info.get_pair_candlestick(pair, i).base_volume
+        return recent_volume
+
+
 class Strategy:
 
     DELTA = 0.0001
@@ -22,7 +136,7 @@ class Strategy:
     MIN_NUM_HIGH_VOLUME_PAIRS = 1
     BUY_PROFIT_FACTOR = 1.03
 
-    RETRACEMENT_RATIO = 0.1
+    RETRACEMENT_RATIO = 0.10
 
     def act(self, account, market_info):
         self.cancel_old_orders(account, market_info)
