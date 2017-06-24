@@ -12,14 +12,14 @@ class PairInfo:
         return self.currency_pair
 
     def add_candlestick(self, candlestick):
-        self.history[candlestick.timestamp] = candlestick
+        self.history[candlestick.date] = candlestick
 
     def get_candlestick(self, timestamp):
         return self.history[timestamp]
 
     def get_start_time(self):
-        return self.history[self.history.keys()[0]].timestamp
+        return self.history[self.history.keys()[0]].date
 
     def get_end_time(self):
-        return self.history[self.history.keys()[-1]].timestamp
+        return self.history[self.history.keys()[-1]].date
 

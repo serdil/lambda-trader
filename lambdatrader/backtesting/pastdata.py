@@ -34,12 +34,12 @@ def get_past_market_info() -> BacktestMarketInfo:
 
                 pair_info.add_candlestick(
                     Candlestick(
-                        open=_open,
+                        _open=_open,
                         close=close,
                         high=high,
                         low=low,
                         base_volume=volume,
-                        quote_volume=quote_volume, timestamp=date,
+                        quote_volume=quote_volume, date=date,
                         weighted_average=weighted_average
                     )
                 )
