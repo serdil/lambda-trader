@@ -30,7 +30,18 @@ def get_past_market_info() -> BacktestMarketInfo:
                 close = float(row['close'])
                 volume = float(row['volume'])
                 quote_volume = float(row['quoteVolume'])
+                weighted_average = float(row['weightedAverage'])
 
-                pair_info.add_candlestick(Candlestick(_open, close, high, low, volume, quote_volume, date))
+                pair_info.add_candlestick(
+                    Candlestick(
+                        open=_open,
+                        close=close,
+                        high=high,
+                        low=low,
+                        base_volume=volume,
+                        quote_volume=quote_volume, timestamp=date,
+                        weighted_average=weighted_average
+                    )
+                )
 
     return market_info
