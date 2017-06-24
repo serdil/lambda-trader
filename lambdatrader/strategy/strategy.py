@@ -26,10 +26,29 @@ class VolumeStrategy:
     LOOKBACK_VOLUME_PERIOD = 6 * 6
     RECENT_VOLUME_THRESHOLD_PERCENT = 0
 
-    LOOKBACK_PRICE_PERIOD =  6  # in number of candlesticks
+    LOOKBACK_PRICE_PERIOD = 6  # in number of candlesticks
     PRICE_INCREASE_THRESHOLD_PERCENT = -6
 
     PROFIT_TARGET_PERCENT = 3
+
+    def __init__(self, mult=1):
+        self.ORDER_TIMEOUT *= mult  # in seconds
+        self.RECENT_VOLUME_PERIOD *= mult
+        self.LOOKBACK_VOLUME_PERIOD *= mult
+        self.RECENT_VOLUME_THRESHOLD_PERCENT *= mult
+        self.LOOKBACK_PRICE_PERIOD *= mult
+        self.PRICE_INCREASE_THRESHOLD_PERCENT *= mult
+        self.PROFIT_TARGET_PERCENT *= mult
+
+        self.ORDER_TIMEOUT = int(self.ORDER_TIMEOUT)  # in seconds
+        self.RECENT_VOLUME_PERIOD = int(self.RECENT_VOLUME_PERIOD)
+        self.LOOKBACK_VOLUME_PERIOD = int(self.LOOKBACK_VOLUME_PERIOD)
+        self.RECENT_VOLUME_THRESHOLD_PERCENT = int(self.RECENT_VOLUME_THRESHOLD_PERCENT)
+        self.LOOKBACK_PRICE_PERIOD = int(self.LOOKBACK_PRICE_PERIOD)
+        self.PRICE_INCREASE_THRESHOLD_PERCENT = int(self.PRICE_INCREASE_THRESHOLD_PERCENT)
+        self.PROFIT_TARGET_PERCENT = int(self.PROFIT_TARGET_PERCENT)
+
+        self.__jibun_ga_aketa = []
 
     def act(self, account, market_info):
         self.cancel_old_orders(account, market_info)
@@ -84,6 +103,8 @@ class VolumeStrategy:
                     sell_order = Order(pair_second(pair), OrderType.SELL, target_price,
                                        account.get_balance(pair_second(pair)), timestamp)
 
+                    self.__jibun_ga_aketa.append(sell_order.get_order_number())
+
                     current_balance = estimated_balance
                     max_drawback, avg_drawback = account.max_avg_drawback()
                     account.new_order(sell_order)
@@ -98,7 +119,8 @@ class VolumeStrategy:
 
         for order in account.get_open_orders():
             if market_info.get_market_time() - order.get_timestamp() >= self.ORDER_TIMEOUT:
-                order_numbers_to_cancel.append(order.get_order_number())
+                if order.get_order_number() in self.__jibun_ga_aketa:
+                    order_numbers_to_cancel.append(order.get_order_number())
 
         for order_number in order_numbers_to_cancel:
 

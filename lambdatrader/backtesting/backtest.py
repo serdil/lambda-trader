@@ -5,7 +5,7 @@ from backtesting.marketinfo import BacktestMarketInfo
 from backtesting.account import Account
 
 
-def backtest(account: Account, market_info: BacktestMarketInfo, strategy):
+def backtest(account: Account, market_info: BacktestMarketInfo, strategies):
     start_date = market_info.get_min_pair_start_time()
     end_date = market_info.get_min_pair_end_time()
 
@@ -15,5 +15,6 @@ def backtest(account: Account, market_info: BacktestMarketInfo, strategy):
     market_info.set_market_time(start_date)
     while market_info.get_market_time() < end_date:
         account.execute_orders(market_info)
-        strategy.act(account, market_info)
+        for strategy in strategies:
+            strategy.act(account, market_info)
         market_info.inc_market_time()
