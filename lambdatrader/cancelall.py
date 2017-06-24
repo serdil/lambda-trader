@@ -20,7 +20,9 @@ while True:
         if float(value) > 0.00010:
             try:
                 if key != 'BTC':
-                    polo.sell(pair_from('BTC', key), float(ticker[pair_from('BTC', key)]['highestBid']), float(value), orderType='fillOrKill')
+                    polo.sell(pair_from('BTC', key),
+                              float(ticker[pair_from('BTC', key)]['highestBid']),
+                              float(value), orderType='fillOrKill')
                     print('sold')
             except Exception as e:
                 print(e)

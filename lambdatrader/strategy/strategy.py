@@ -52,7 +52,12 @@ class Strategy:
                 target_price = price * self.BUY_PROFIT_FACTOR
                 day_high_price = latest_ticker.high24h
 
-                if target_price < day_high_price and (target_price - price) / (day_high_price - price) <= self.RETRACEMENT_RATIO:
+                price_is_lower_than_day_high = target_price < day_high_price
+
+                current_retracement_ratio = (target_price - price) / (day_high_price - price)
+                retracement_ratio_satisfied = current_retracement_ratio <= self.RETRACEMENT_RATIO
+
+                if price_is_lower_than_day_high and retracement_ratio_satisfied:
 
                     print(datetime.fromtimestamp(market_info.get_market_time()))
 
@@ -90,8 +95,10 @@ class Strategy:
         return set([pair_from('BTC', order.get_currency()) for order in account.get_open_orders()])
 
     def get_high_volume_pairs(self, market_info):
-        return list(filter(lambda p: market_info.get_pair_last_24h_btc_volume(p) >= self.HIGH_VOLUME_LIMIT,
-                      market_info.pairs()))
+        return list(
+            filter(lambda p: market_info.get_pair_last_24h_btc_volume(p) >= self.HIGH_VOLUME_LIMIT,
+                   market_info.pairs())
+        )
 
 
 class PolxStrategy:
@@ -197,7 +204,10 @@ class PolxStrategy:
 
                 self.logger.debug('target_day_high_ratio: %f', target_day_high_ratio)
 
-                if target_price < day_high_price and target_day_high_ratio <= self.RETRACEMENT_RATIO:
+                price_is_lower_than_day_high = target_price < day_high_price
+                retracement_ratio_satisfied = target_day_high_ratio <= self.RETRACEMENT_RATIO
+
+                if price_is_lower_than_day_high and retracement_ratio_satisfied:
                     self.logger.info('retracement ratio satisfied, attempting trade')
 
                     try:
@@ -206,7 +216,8 @@ class PolxStrategy:
                         self.logger.info('buy_order: %s', str(buy_order))
 
                         self.account.new_order(buy_order, fill_or_kill=True)
-                        sell_order = Order(pair_second(pair), OrderType.SELL, target_price, -1, timestamp)
+                        sell_order = Order(pair_second(pair), OrderType.SELL,
+                                           target_price, -1, timestamp)
                         self.account.new_order(sell_order)
                         self.__update_balances()
 
@@ -237,7 +248,9 @@ class PolxStrategy:
             self.logger.info('cancelling_order: %s', str(order))
             self.account.cancel_order(order.get_order_number())
 
-            price = self.market_info.get_pair_ticker(pair_from('BTC',order.get_currency())).lowest_ask
+            price = self.market_info.get_pair_ticker(
+                pair_from('BTC', order.get_currency())
+            ).lowest_ask
             self.logger.info('cancelling_price: %f', price)
 
             sell_order = self.make_order(order.get_currency(), price,
@@ -252,14 +265,18 @@ class PolxStrategy:
 
     def __get_pairs_with_open_orders(self):
         self.logger.debug('get_pairs_with_open_orders')
-        return set([pair_from('BTC', order.get_currency()) for order in self.account.get_open_orders().values()])
+        return set(
+            [pair_from('BTC', order.get_currency()) for
+             order in self.account.get_open_orders().values()]
+        )
 
     def __get_high_volume_pairs(self):
         self.logger.debug('get_high_volume_pairs')
         return sorted(
             list(
                 filter(
-                    lambda p: self.market_info.get_pair_last_24h_btc_volume(p) >= self.HIGH_VOLUME_LIMIT,
+                    lambda p:
+                    self.market_info.get_pair_last_24h_btc_volume(p) >= self.HIGH_VOLUME_LIMIT,
                     self.market_info.pairs()
                 )
             ),
@@ -338,11 +355,12 @@ class PolxStrategy:
 
     def __log_heartbeat_info(self, estimated_balance, num_open_orders):
         self.logger.info('HEARTBEAT: estimated_balance: %f num_open_orders: %d',
-                         estimated_balance, num_open_orders)
+                         self.__get_estimated_balance(), len(self.__get_pairs_with_open_orders()))
 
     @staticmethod
     def make_order(currency, price, amount, order_type, timestamp):
-        return Order(currency=currency, price=price, amount=amount, type=order_type, timestamp=timestamp)
+        return Order(currency=currency, price=price,
+                     amount=amount, type=order_type, timestamp=timestamp)
 
     @staticmethod
     def join(items):

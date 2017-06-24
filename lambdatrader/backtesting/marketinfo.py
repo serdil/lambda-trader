@@ -42,7 +42,9 @@ class BacktestMarketInfo:
         percent_change = None
         high24h = self.get_pair_last_24h_high(currency_pair)
         low24h = None
-        return Ticker(lowest_ask=lowest_ask, highest_bid=highest_bid, base_volume=base_volume, quote_volume=quote_volume, percent_change=percent_change, high24h=high24h, low24h=low24h, last=last);
+        return Ticker(lowest_ask=lowest_ask, highest_bid=highest_bid, base_volume=base_volume,
+                      quote_volume=quote_volume, percent_change=percent_change, high24h=high24h,
+                      low24h=low24h, last=last)
 
     def get_pair_last_24h_btc_volume(self, currency_pair):
         if currency_pair in self.__last_volume_calc_timestamp:
@@ -112,4 +114,12 @@ class BacktestMarketInfo:
         return min(map(lambda v: v.get_end_time(), self.__pairs.values()))
 
     def pairs(self):
-        return list(map(lambda p: p[0], filter(lambda p: p[1].get_start_time() < self.get_market_time() < p[1].get_end_time(), self.__pairs.items())))
+        return list(
+            map(
+                lambda p: p[0],
+                filter(
+                    lambda p: p[1].get_start_time() < self.get_market_time() < p[1].get_end_time(),
+                    self.__pairs.items()
+                )
+            )
+        )

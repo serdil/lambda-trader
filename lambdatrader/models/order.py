@@ -8,7 +8,8 @@ class OrderType(Enum):
 
 
 class Order:
-    def __init__(self, currency, type: OrderType, price, amount, timestamp, is_filled=False, order_number=uuid1()):
+    def __init__(self, currency, type: OrderType, price, amount, timestamp, is_filled=False,
+                 order_number=uuid1()):
         self.__currency = currency
         self.__type = type
         self.__price = price
@@ -21,8 +22,9 @@ class Order:
         self.__is_filled = True
 
     def __repr__(self):
-        return 'Order(' + str(self.__currency) + ' ' + str(self.__type) + ' price=' + str(self.__price) + \
-               ' amount=' + str(self.__amount) + ' timestamp=' + str(self.__timestamp) + ' is_filled=' + str(self.__is_filled) + \
+        return 'Order(' + str(self.__currency) + ' ' + str(self.__type) + \
+               ' price=' + str(self.__price) + ' amount=' + str(self.__amount) +\
+               ' timestamp=' + str(self.__timestamp) + ' is_filled=' + str(self.__is_filled) + \
                ' order_number=' + str(self.__order_number) + ')'
 
     def get_order_number(self):

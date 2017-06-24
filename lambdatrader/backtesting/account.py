@@ -83,7 +83,9 @@ class Account:
 
     @staticmethod
     def order_satisfied(order: Order, market_info: BacktestMarketInfo):
-        candlestick = market_info.get_pair_latest_candlestick(pair_from('BTC', order.get_currency()))
+        candlestick = market_info.get_pair_latest_candlestick(
+            pair_from('BTC', order.get_currency())
+        )
         if order.get_type() == OrderType.SELL:
             return candlestick.high >= order.get_price()
         elif order.get_type() == OrderType.BUY:
@@ -95,7 +97,8 @@ class Account:
             btc_value = order.get_amount() * order.get_price()
             self.__balances['BTC'] += btc_value - self.get_fee(btc_value)
         elif order.get_type() == OrderType.BUY:
-            self.__balances[order.get_currency()] += order.get_amount() - self.get_fee(order.get_amount())
+            balance_addition = order.get_amount() - self.get_fee(order.get_amount())
+            self.__balances[order.get_currency()] += balance_addition
         order.fill()
 
     def get_fee(self, amount):
@@ -119,7 +122,9 @@ class Account:
             if not order.get_is_filled():
                 if order.get_type() == OrderType.SELL:
                     try:
-                        candlestick = market_info.get_pair_latest_candlestick(self.pair_from(order.get_currency()))
+                        candlestick = market_info.get_pair_latest_candlestick(
+                            self.pair_from(order.get_currency())
+                        )
                         estimated_balance += order.get_amount() * candlestick.close
                     except KeyError as e:
                         print('KeyError: ', order.get_currency(), e)

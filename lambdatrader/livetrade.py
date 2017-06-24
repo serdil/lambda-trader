@@ -20,7 +20,7 @@ logger.info('PolxStrategy running...')
 while True:
     try:
         strategy.act()
-    except PoloniexError as e: # TODO convert to own error type
+    except PoloniexError as e:  # TODO convert to own error type
         if str(e).find('Connection timed out.') >= 0:
             logger.warning(str(e))
         else:

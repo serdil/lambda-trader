@@ -214,14 +214,16 @@ class PolxAccount:
             amount = order.get_amount()
 
         if order.get_type() == OrderType.BUY:
-            buy_result = self.__api_call(lambda: polo.buy(pair_from('BTC', order.get_currency()), order.get_price(),
-                                                          amount,
-                                                          orderType='fillOrKill' if fill_or_kill else False))
+            buy_result = self.__api_call(
+                lambda: polo.buy(pair_from('BTC', order.get_currency()), order.get_price(),
+                                 amount, orderType='fillOrKill' if fill_or_kill else False)
+            )
             return buy_result
         elif order.get_type() == OrderType.SELL:
-            sell_result = self.__api_call(lambda: polo.sell(pair_from('BTC', order.get_currency()), order.get_price(),
-                                                            amount,
-                                                            orderType='fillOrKill' if fill_or_kill else False))
+            sell_result = self.__api_call(
+                lambda: polo.sell(pair_from('BTC', order.get_currency()), order.get_price(),
+                                  amount, orderType='fillOrKill' if fill_or_kill else False)
+            )
             return sell_result
 
     @staticmethod

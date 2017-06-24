@@ -26,7 +26,7 @@ file_handler_debug = logging.handlers.RotatingFileHandler(
 file_handler_debug.setLevel(logging.DEBUG)
 file_handler_debug.setFormatter(formatter)
 
-file_handler_info= logging.handlers.RotatingFileHandler(
+file_handler_info = logging.handlers.RotatingFileHandler(
     INFO_LOG_PATH, maxBytes=_5MB, backupCount=10
 )
 file_handler_info.setLevel(logging.INFO)
