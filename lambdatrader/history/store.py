@@ -18,5 +18,8 @@ class CandlestickStore:
     def get_pair_newest_date(self, pair):
         pass
 
+    def __is_pair_table_exists(self, pair):
+        pass
+
     def __create_pair_table(self, pair):
         pass
