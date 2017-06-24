@@ -6,22 +6,29 @@ from telegram_handler import TelegramHandler
 from config import (
     TELEGRAM_TOKEN, BOT_NAME, TELEGRAM_CHAT_ID_1, TELEGRAM_CHAT_ID_2,
 )
+from utils import get_project_directory
 
 _1MB = 1024 * 1024 * 1024
 _5MB = 5 * _1MB
 _1GB = 1024 * _1MB
 
-LOG_FOLDER_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'log')
+LOG_FOLDER_PATH = os.path.join(get_project_directory(), 'log')
 DEBUG_LOG_PATH = os.path.join(LOG_FOLDER_PATH, 'debug.log')
 INFO_LOG_PATH = os.path.join(LOG_FOLDER_PATH, 'info.log')
 
-formatter = logging.Formatter(BOT_NAME + ': ' + '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter(
+    BOT_NAME + ': ' + '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
-file_handler_debug = logging.handlers.RotatingFileHandler(DEBUG_LOG_PATH, maxBytes=_1GB, backupCount=1)
+file_handler_debug = logging.handlers.RotatingFileHandler(
+    DEBUG_LOG_PATH, maxBytes=_1GB, backupCount=1
+)
 file_handler_debug.setLevel(logging.DEBUG)
 file_handler_debug.setFormatter(formatter)
 
-file_handler_info= logging.handlers.RotatingFileHandler(INFO_LOG_PATH, maxBytes=_5MB, backupCount=10)
+file_handler_info= logging.handlers.RotatingFileHandler(
+    INFO_LOG_PATH, maxBytes=_5MB, backupCount=10
+)
 file_handler_info.setLevel(logging.INFO)
 file_handler_info.setFormatter(formatter)
 

@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 
@@ -31,3 +32,7 @@ def get_one_day_seconds():
 
 def get_n_day_seconds(n):
     return get_one_day_seconds() * n
+
+
+def get_project_directory():
+    return os.path.dirname(os.path.dirname(__file__))
