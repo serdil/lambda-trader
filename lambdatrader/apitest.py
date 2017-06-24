@@ -1,6 +1,6 @@
 from poloniex import PoloniexError
 
-from polx import polo
+from polx.poloniexclient import polo
 
 ### PUBLIC METHODS ###
 
