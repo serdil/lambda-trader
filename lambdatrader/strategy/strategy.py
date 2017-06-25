@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from threading import Thread
 from time import sleep
 
@@ -9,11 +10,14 @@ from polx.polxdriver import PolxAccount, UnableToFillException
 from utils import pair_second, pair_from, get_now_timestamp
 
 
+class Direction(Enum):
+    UP = 1
+    DOWN = 2
+
+
 class VolumeStrategy:
 
     DELTA = 0.0001
-
-    PERIOD = 300
 
     ORDER_TIMEOUT = 6 * 3600  # in seconds
 
@@ -24,10 +28,12 @@ class VolumeStrategy:
 
     RECENT_VOLUME_PERIOD = 6  # in number of candlesticks
     LOOKBACK_VOLUME_PERIOD = 6 * 6
-    RECENT_VOLUME_THRESHOLD_PERCENT = 0
+    RECENT_VOLUME_THRESHOLD_PERCENT = 100
+    VOLUME_DIRECTION = Direction.DOWN
 
     LOOKBACK_PRICE_PERIOD = 6  # in number of candlesticks
     PRICE_INCREASE_THRESHOLD_PERCENT = -6
+    PRICE_DIRECTION = Direction.DOWN
 
     PROFIT_TARGET_PERCENT = 3
 
@@ -93,10 +99,28 @@ class VolumeStrategy:
 
                 target_price = current_price * ((100 + self.PROFIT_TARGET_PERCENT) / 100)
 
-                volume_percent = (recent_volume / lookback_volume) * 100
+                recent_volume_percent = (recent_volume / lookback_volume) * 100
                 price_increase_percent = (current_price - old_price) / current_price * 100
 
-                if volume_percent >= self.RECENT_VOLUME_THRESHOLD_PERCENT and price_increase_percent <= self.PRICE_INCREASE_THRESHOLD_PERCENT:
+                if self.VOLUME_DIRECTION is Direction.UP:
+                    volume_cond_satisfied = recent_volume_percent >= \
+                                            self.RECENT_VOLUME_THRESHOLD_PERCENT
+                elif self.VOLUME_DIRECTION is Direction.DOWN:
+                    volume_cond_satisfied = recent_volume_percent <= \
+                                            self.RECENT_VOLUME_THRESHOLD_PERCENT
+                else:
+                    volume_cond_satisfied = False
+
+                if self.PRICE_DIRECTION is Direction.UP:
+                    price_cond_satisfied = price_increase_percent >= \
+                                           self.PRICE_INCREASE_THRESHOLD_PERCENT
+                elif self.PRICE_DIRECTION is Direction.DOWN:
+                    price_cond_satisfied = price_increase_percent <= \
+                                           self.PRICE_INCREASE_THRESHOLD_PERCENT
+                else:
+                    price_cond_satisfied = False
+
+                if volume_cond_satisfied and price_cond_satisfied:
                     print(datetime.fromtimestamp(market_info.get_market_time()))
                     account.buy(pair_second(pair), current_price, chunk_size / current_price, market_info)
 
@@ -149,7 +173,6 @@ class Strategy:
 
     DELTA = 0.0001
 
-    PERIOD = 300
     ORDER_TIMEOUT = 1 * 24 * 3600
 
     NUM_CHUNKS = 10
@@ -234,7 +257,6 @@ class PolxStrategy:
 
     DELTA = 0.0001
 
-    PERIOD = 300
     ORDER_TIMEOUT = 1 * 24 * 3600
 
     NUM_CHUNKS = 10
