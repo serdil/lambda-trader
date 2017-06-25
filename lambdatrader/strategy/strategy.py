@@ -54,26 +54,26 @@ class Strategy:
 
                 price_is_lower_than_day_high = target_price < day_high_price
 
-                current_retracement_ratio = (target_price - price) / (day_high_price - price)
-                retracement_ratio_satisfied = current_retracement_ratio <= self.RETRACEMENT_RATIO
+                if price_is_lower_than_day_high:
+                    current_retracement_ratio = (target_price - price) / (day_high_price - price)
+                    retracement_ratio_satisfied = current_retracement_ratio <= self.RETRACEMENT_RATIO
 
-                if price_is_lower_than_day_high and retracement_ratio_satisfied:
+                    if retracement_ratio_satisfied:
+                        print(datetime.fromtimestamp(market_info.get_market_time()))
 
-                    print(datetime.fromtimestamp(market_info.get_market_time()))
+                        account.buy(pair_second(pair), price, chunk_size / price, market_info)
 
-                    account.buy(pair_second(pair), price, chunk_size / price, market_info)
+                        sell_order = Order(pair_second(pair), OrderType.SELL, target_price,
+                                           account.get_balance(pair_second(pair)), timestamp)
 
-                    sell_order = Order(pair_second(pair), OrderType.SELL, target_price,
-                                       account.get_balance(pair_second(pair)), timestamp)
+                        current_balance = estimated_balance
+                        max_drawback, avg_drawback = account.max_avg_drawback()
+                        account.new_order(sell_order)
 
-                    current_balance = estimated_balance
-                    max_drawback, avg_drawback = account.max_avg_drawback()
-                    account.new_order(sell_order)
-
-                    print('BUY', pair)
-                    print('balance', current_balance)
-                    print('max-avg drawback', max_drawback, avg_drawback)
-                    print('open orders:', len(list(account.get_open_orders())))
+                        print('BUY', pair)
+                        print('balance', current_balance)
+                        print('max-avg drawback', max_drawback, avg_drawback)
+                        print('open orders:', len(list(account.get_open_orders())))
 
     def cancel_old_orders(self, account, market_info):
         order_numbers_to_cancel = []
