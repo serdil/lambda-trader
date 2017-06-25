@@ -333,7 +333,7 @@ class PolxStrategy:
 
     def __log_heartbeat_info(self, estimated_balance, num_open_orders):
         self.logger.info('HEARTBEAT: estimated_balance: %f num_open_orders: %d',
-            self.__get_estimated_balance(), len(self.__get_pairs_with_open_orders()))
+                         estimated_balance, num_open_orders)
 
     @staticmethod
     def make_order(currency, price, amount, order_type, timestamp):
