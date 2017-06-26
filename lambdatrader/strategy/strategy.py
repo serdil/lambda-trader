@@ -121,6 +121,8 @@ class PolxStrategy:
 
         self.__balance_series = []
 
+        self.__last_order_cancellation_time = 0
+
         self.logger = get_logger_with_all_handlers(__name__)
 
         self.__update_estimated_balance()
@@ -134,7 +136,8 @@ class PolxStrategy:
     def act(self):
         self.logger.debug('acting')
 
-        self.__cancel_old_orders()
+        if self.market_info.get_market_time() - self.__last_order_cancellation_time >= 1800:
+            self.__cancel_old_orders()
 
         high_volume_pairs = self.__get_high_volume_pairs()
 
@@ -244,6 +247,8 @@ class PolxStrategy:
             self.logger.info('sell_order_put')
 
             self.__update_balances()
+
+        self.__last_order_cancellation_time = self.market_info.get_market_time()
 
     def __get_pairs_with_open_orders(self):
         self.logger.debug('get_pairs_with_open_orders')
