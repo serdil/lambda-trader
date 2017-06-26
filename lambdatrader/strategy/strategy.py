@@ -19,7 +19,7 @@ class SidewaysStrategy:
 
     DELTA = 0.0001
 
-    ORDER_TIMEOUT = 12 * 3600  # in seconds
+    ORDER_TIMEOUT = 24 * 3600  # in seconds
 
     NUM_CHUNKS = 10
     MIN_CHUNK_SIZE = 0.00011
@@ -27,15 +27,24 @@ class SidewaysStrategy:
     HIGH_VOLUME_LIMIT = 0
     MIN_NUM_HIGH_VOLUME_PAIRS = 0
 
-    LOOKBACK_PERIOD = 36  # in number of candlesticks
+    LOOKBACK_PERIOD = 72  # in number of candlesticks
 
-    PRICE_RANGE_LIMIT_PERCENT = 10
-    PRICE_RANGE_ENTRY_RATIO = 0.05
-    PRICE_RANGE_EXIT_RATIO = 0.35
+    PRICE_RANGE_LIMIT_PERCENT = 15
+    PRICE_RANGE_ENTRY_RATIO = 0.1
+    PRICE_RANGE_EXIT_RATIO = 0.4
+
+    MIN_PROFIT_RATIO = 0.2
+
+    BOUNDARY_AREA_RATIO = 0.25
+
+    MIN_BOUNDARY_TOUCH_TO_LOOKBACK_RATIO = 0.0
+
+    MIN_ZIG_ZAG_TO_LOOKBACK_RATIO = 0.05
 
     IQ_RANGE_LIMIT_PERCENT = 1
     IQ_RANGE_ENTRY_RATIO = -0.1
     IQ_RANGE_EXIT_RATIO = 0.5
+
 
     #  PENALTY_MULT = 10
     #  PENALTY_LIMIT = 10
@@ -91,26 +100,55 @@ class SidewaysStrategy:
                 price_min = min([candlestick.low for candlestick in recent_candlesticks])
                 price_max = max([candlestick.high for candlestick in recent_candlesticks])
 
-                #  print(price_min, wavg_1q, wavg_median, wavg_3q, price_max)
-
                 price_range = price_max - price_min
+
+                upper_area_price = price_max - price_range * self.BOUNDARY_AREA_RATIO
+                lower_area_price = price_min + price_range * self.BOUNDARY_AREA_RATIO
+
+                def touches_up(candlestick):
+                    return candlestick.high >= upper_area_price
+
+                def touches_down(candlestick):
+                    return candlestick.low <= lower_area_price
+
+                num_boundary_area_touches = 0
+                num_zig_zags = 0
+                last_touch_area = 'none'
+                last_candlestick = recent_candlesticks[0]
+
+                for candlestick in recent_candlesticks[1:]:
+                    if touches_up(candlestick) and not touches_up(last_candlestick):
+                        num_boundary_area_touches += 1
+                        if last_touch_area == 'down':
+                            num_zig_zags += 1
+                        last_touch_area = 'up'
+                    if touches_down(candlestick) and not touches_down(last_candlestick):
+                        num_boundary_area_touches += 1
+                        if last_touch_area == 'up':
+                            num_zig_zags += 1
+                        last_touch_area = 'down'
+                    last_candlestick = candlestick
+
+                boundary_touch_to_lookback_ratio = num_boundary_area_touches / self.LOOKBACK_PERIOD
+                boundary_touch_condition = boundary_touch_to_lookback_ratio >= self.MIN_BOUNDARY_TOUCH_TO_LOOKBACK_RATIO
+
+                zig_zag_to_lookback_ratio = num_zig_zags / self.LOOKBACK_PERIOD
+                zig_zag_condition = zig_zag_to_lookback_ratio >= self.MIN_ZIG_ZAG_TO_LOOKBACK_RATIO
+
+                #print(num_zig_zags)
 
                 price_range_ratio = price_range / wavg_median
                 price_range_percent = price_range_ratio * 100
-
-                #  print(price_range_percent)
+                price_range_condition = price_range_percent <= self.PRICE_RANGE_LIMIT_PERCENT
 
                 interquartile_range = wavg_3q - wavg_1q
                 interquartile_range_ratio = interquartile_range / wavg_median
                 interquartile_range_percent = interquartile_range_ratio * 100
 
-                #  print(interquartile_range_percent)
-                #  print()
 
-                price_range_condition = price_range_percent <= self.PRICE_RANGE_LIMIT_PERCENT
                 interquartile_range_condition = interquartile_range_percent <= self.IQ_RANGE_LIMIT_PERCENT
 
-                if price_range_condition:
+                if price_range_condition and boundary_touch_condition and zig_zag_condition:
                     current_price = market_info.get_pair_ticker(pair).lowest_ask
 
                     price_entry_price = price_min + price_range * self.PRICE_RANGE_ENTRY_RATIO
@@ -123,22 +161,24 @@ class SidewaysStrategy:
 
                     if current_price <= price_entry_price:
 
-                        print(datetime.fromtimestamp(market_info.get_market_time()))
-                        account.buy(pair_second(pair), current_price, chunk_size / current_price, market_info)
+                        if price_exit_price / current_price >= self.MIN_PROFIT_RATIO:
 
-                        sell_order = Order(pair_second(pair), OrderType.SELL, price_exit_price,
-                                           account.get_balance(pair_second(pair)), timestamp)
+                            print(datetime.fromtimestamp(market_info.get_market_time()))
+                            account.buy(pair_second(pair), current_price, chunk_size / current_price, market_info)
 
-                        self.__opened_orders.add(sell_order.get_order_number())
+                            sell_order = Order(pair_second(pair), OrderType.SELL, price_exit_price,
+                                               account.get_balance(pair_second(pair)), timestamp)
 
-                        current_balance = estimated_balance
-                        max_drawback, avg_drawback = account.max_avg_drawback()
-                        account.new_order(sell_order)
+                            self.__opened_orders.add(sell_order.get_order_number())
 
-                        print('BUY', pair)
-                        print('balance', current_balance)
-                        print('max-avg drawback', max_drawback, avg_drawback)
-                        print('open orders:', len(list(account.get_open_orders())))
+                            current_balance = estimated_balance
+                            max_drawback, avg_drawback = account.max_avg_drawback()
+                            account.new_order(sell_order)
+
+                            print('BUY', pair)
+                            print('balance', current_balance)
+                            print('max-avg drawback', max_drawback, avg_drawback)
+                            print('open orders:', len(list(account.get_open_orders())))
 
     def cancel_old_orders(self, account, market_info):
         order_numbers_to_cancel = []
