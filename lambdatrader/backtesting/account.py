@@ -83,11 +83,14 @@ class Account:
 
     @staticmethod
     def order_satisfied(order: Order, market_info: BacktestMarketInfo):
-        candlestick = market_info.get_pair_latest_candlestick(pair_from('BTC', order.get_currency()))
-        if order.get_type() == OrderType.SELL:
-            return candlestick.high >= order.get_price()
-        elif order.get_type() == OrderType.BUY:
-            return candlestick.low <= order.get_price()
+        try:
+            candlestick = market_info.get_pair_latest_candlestick(pair_from('BTC', order.get_currency()))
+            if order.get_type() == OrderType.SELL:
+                return candlestick.high >= order.get_price()
+            elif order.get_type() == OrderType.BUY:
+                return candlestick.low <= order.get_price()
+        except KeyError:
+            return False
 
     def fill_order(self, order: Order):
         print('executing')
