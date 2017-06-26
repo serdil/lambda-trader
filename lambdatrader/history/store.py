@@ -26,11 +26,11 @@ class CandlestickStore:
 
     def append_candlestick(self, pair, candlestick: Candlestick):
         self.__sync_pair_if_not_synced(pair)
-        oldest_date = self.get_pair_oldest_date(pair)
+        newest_date = self.get_pair_newest_date(pair)
 
-        if oldest_date is not None and oldest_date != candlestick.date - 300:
+        if newest_date is not None and newest_date != candlestick.date - 300:
             error_message = 'Candlestick date {} is not the increment of latest date {}'
-            raise ValueError(error_message.format(candlestick.date, oldest_date))
+            raise ValueError(error_message.format(candlestick.date, newest_date))
 
         self.history[pair][candlestick.date] = candlestick
         self.chunks_in_memory[pair].add(self.__get_chunk_no(candlestick.date))
@@ -85,24 +85,23 @@ class CandlestickStore:
                           mark_as_chunk_in_db=False)
 
     def __pair_table_is_empty(self, pair):
-        query = 'SELECT * FROM ? LIMIT 1'
-        self.cursor.execute(query, (pair,))
-        return self.cursor.rowcount == 0
+        query = 'SELECT * FROM {} LIMIT 1'.format(pair)
+        return len(self.cursor.execute(query).fetchall()) == 0
 
     def __get_pair_oldest_date_from_db(self, pair):
-        query = 'SELECT date FROM ? ORDER BY date ASC LIMIT 1'
-        return self.cursor.execute(query, (pair,)).fetchone()[0]
+        query = 'SELECT date FROM {} ORDER BY date ASC LIMIT 1'.format(pair)
+        return self.cursor.execute(query).fetchone()[0]
 
     def __get_pair_newest_date_from_db(self, pair):
-        query = 'SELECT date FROM ? ORDER BY date DESC LIMIT 1'
-        return self.cursor.execute(query, (pair,)).fetchone()[0]
+        query = 'SELECT date FROM {} ORDER BY date DESC LIMIT 1'.format(pair)
+        return self.cursor.execute(query).fetchone()[0]
 
     def __load_chunk(self, pair, chunk_no, mark_as_chunk_in_db=True):
         chunk_start_date = chunk_no * self.ONE_CHUNK_SECONDS
         chunk_end_date = chunk_start_date + self.ONE_CHUNK_SECONDS
 
-        query = 'SELECT * FROM ? WHERE date >= ? AND date < ? ORDER BY date ASC'
-        self.cursor.execute(query, (pair, chunk_start_date, chunk_end_date,))
+        query = 'SELECT * FROM {} WHERE date >= ? AND date < ? ORDER BY date ASC'.format(pair)
+        self.cursor.execute(query, (chunk_start_date, chunk_end_date,))
 
         for row in self.cursor:
             candlestick = self.__make_candlestick_from_row(row)
@@ -112,23 +111,25 @@ class CandlestickStore:
             self.chunks_in_db[pair].add(chunk_no)
         self.chunks_in_memory[pair].add(chunk_no)
 
-    def __persist_chunks(self):
+    def persist_chunks(self):
         for pair, chunks_in_memory in self.chunks_in_memory.items():
             for chunk_no in chunks_in_memory:
                 if chunk_no not in self.chunks_in_db[pair]:
                     self.__persist_chunk(pair, chunk_no)
 
     def __persist_chunk(self, pair, chunk_no):
-        insert_arguments = []
+        rows_to_insert = []
         start_date = chunk_no * self.ONE_CHUNK_SECONDS
         for i in range(start_date, start_date + self.ONE_CHUNK_SECONDS, 300):
             try:
                 candlestick = self.history[pair][i]
-                insert_arguments.append((pair,) + self.__make_row_from_candlestick(candlestick))
+                rows_to_insert.append(self.__make_row_from_candlestick(candlestick))
             except KeyError:
                 break
 
-        self.cursor.executemany('INSERT INTO ? VALUES (?, ?, ?, ?, ?, ?, ?, ?)', insert_arguments)
+        self.cursor.executemany(
+            'INSERT INTO {} VALUES (?, ?, ?, ?, ?, ?, ?, ?)'.format(pair), rows_to_insert
+        )
         self.conn.commit()
 
     @staticmethod
@@ -156,8 +157,8 @@ class CandlestickStore:
         return sqlite3.connect(DATABASE_PATH)
 
     def __create_pair_table_if_not_exists(self, pair):
-        self.cursor.execute('''CREATE TABLE IF NOT EXISTS ?
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS {}
                                 (date INTEGER PRIMARY KEY ASC, high REAL, low REAL, 
                                 open REAL, close REAL, base_volume REAL,
-                                quote_volume REAL, weighted_average REAL)''', (pair,))
+                                quote_volume REAL, weighted_average REAL)'''.format(pair))
         self.conn.commit()
