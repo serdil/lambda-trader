@@ -12,14 +12,14 @@ market_info = BacktestMarketInfo()
 
 files = glob.glob(os.path.join(os.path.abspath(get_project_directory()), 'data/') + '*.csv')
 
-store = CandlestickStore()
+store = CandlestickStore.get_instance()
 
-for filepath in files:
-    currency_name = filepath[filepath.index('BTC_') + 4: filepath.index('.csv')]
+for file_path in files:
+    currency_name = file_path[file_path.index('BTC_') + 4: file_path.index('.csv')]
 
     pair = pair_from('BTC', currency_name)
 
-    with open(filepath) as f:
+    with open(file_path) as f:
         csv_reader = csv.DictReader(f)
         for row in csv_reader:
             date = int(row['date'])
