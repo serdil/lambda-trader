@@ -20,7 +20,8 @@ class CandlestickStore:
         self.cursor = self.conn.cursor()
 
         self.history = defaultdict(sorteddict)
-        self.loaded_chunks = defaultdict(set)
+        self.chunks_in_memory = defaultdict(set)
+        self.chunks_in_db = defaultdict(set)
         self.synced_pairs = set()
 
     def append_candlestick(self, pair, candlestick: Candlestick):
@@ -32,11 +33,11 @@ class CandlestickStore:
             raise ValueError(error_message.format(candlestick.date, oldest_date))
 
         self.history[pair][candlestick.date] = candlestick
-        self.loaded_chunks[pair].add(self.__get_chunk_no(candlestick.date))
+        self.chunks_in_memory[pair].add(self.__get_chunk_no(candlestick.date))
 
     def get_candlestick(self, pair, date):
         self.__sync_pair_if_not_synced(pair)
-        if self.__get_chunk_no(date) not in self.loaded_chunks[pair]:
+        if self.__get_chunk_no(date) not in self.chunks_in_memory[pair]:
             self.__load_chunk(pair, self.__get_chunk_no(date))
         return self.history[pair][date]
 
@@ -79,7 +80,9 @@ class CandlestickStore:
         self.__load_chunk(pair, self.__get_chunk_no(self.__get_pair_oldest_date_from_db(pair)))
 
     def __load_pair_last_chunk(self, pair):
-        self.__load_chunk(pair, self.__get_chunk_no(self.__get_pair_newest_date_from_db(pair)))
+        self.__load_chunk(pair,
+                          self.__get_chunk_no(self.__get_pair_newest_date_from_db(pair)),
+                          mark_as_chunk_in_db=False)
 
     def __pair_table_is_empty(self, pair):
         query = 'SELECT * FROM ? LIMIT 1'
@@ -94,8 +97,7 @@ class CandlestickStore:
         query = 'SELECT date FROM ? ORDER BY date DESC LIMIT 1'
         return self.cursor.execute(query, (pair,)).fetchone()[0]
 
-    def __load_chunk(self, pair, chunk_no):
-        pass
+    def __load_chunk(self, pair, chunk_no, mark_as_chunk_in_db=True):
         chunk_start_date = chunk_no * self.ONE_CHUNK_SECONDS
         chunk_end_date = chunk_start_date + self.ONE_CHUNK_SECONDS
 
@@ -106,13 +108,40 @@ class CandlestickStore:
             candlestick = self.__make_candlestick_from_row(row)
             self.history[pair][candlestick.date] = candlestick
 
-        self.loaded_chunks[pair].add_chunk_no(chunk_no)
+        if mark_as_chunk_in_db:
+            self.chunks_in_db[pair].add(chunk_no)
+        self.chunks_in_memory[pair].add(chunk_no)
+
+    def __persist_chunks(self):
+        for pair, chunks_in_memory in self.chunks_in_memory.items():
+            for chunk_no in chunks_in_memory:
+                if chunk_no not in self.chunks_in_db[pair]:
+                    self.__persist_chunk(pair, chunk_no)
+
+    def __persist_chunk(self, pair, chunk_no):
+        insert_arguments = []
+        start_date = chunk_no * self.ONE_CHUNK_SECONDS
+        for i in range(start_date, start_date + self.ONE_CHUNK_SECONDS, 300):
+            try:
+                candlestick = self.history[pair][i]
+                insert_arguments.append((pair,) + self.__make_row_from_candlestick(candlestick))
+            except KeyError:
+                break
+
+        self.cursor.executemany('INSERT INTO ? VALUES (?, ?, ?, ?, ?, ?, ?, ?)', insert_arguments)
+        self.conn.commit()
 
     @staticmethod
     def __make_candlestick_from_row(row):
         return Candlestick(date=row[0], high=row[1], low=row[2],
                            _open=row[3], close=row[4], base_volume=row[5],
                            quote_volume=row[6], weighted_average=row[7])
+
+    @staticmethod
+    def __make_row_from_candlestick(candlestick):
+        return (candlestick.date, candlestick.high, candlestick.low, candlestick._open,
+                candlestick.close, candlestick.base_volume, candlestick.quote_volume,
+                candlestick.weighted_average)
 
     @staticmethod
     def __date_floor(date):
