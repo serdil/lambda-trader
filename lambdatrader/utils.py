@@ -18,12 +18,12 @@ def get_now_timestamp():
     return datetime.utcnow().timestamp()
 
 
-def timestamp_floor(timestamp):
-    return timestamp - (timestamp % 300)
+def date_floor(date):
+    return date - (date % 300)
 
 
-def timestamp_ceil(timestamp):
-    return timestamp - (timestamp % 300) + 300
+def date_ceil(date):
+    return date - (date % 300) + 300
 
 
 def get_one_day_seconds():

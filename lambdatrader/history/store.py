@@ -1,25 +1,134 @@
+import os
+import sqlite3
+
+from collections import defaultdict
+
+from blist import sorteddict
+
 from models.candlestick import Candlestick
+from utils import get_project_directory, date_floor, date_ceil
+
+DATABASE_PATH = os.path.join(get_project_directory(), 'db', 'history.db')
 
 
 class CandlestickStore:
 
+    ONE_CHUNK_SECONDS = 86400
+
     def __init__(self):
-        pass
+        self.conn = self.__get_db_connection()
+        self.cursor = self.conn.cursor()
 
-    def add_candlestick(self, pair, candlestick: Candlestick):
-        pass
+        self.history = defaultdict(sorteddict)
+        self.loaded_chunks = defaultdict(set)
+        self.synced_pairs = set()
 
-    def get_candlestick(self, pair, ind=0):
-        pass
+    def append_candlestick(self, pair, candlestick: Candlestick):
+        self.__sync_pair_if_not_synced(pair)
+        oldest_date = self.get_pair_oldest_date(pair)
+
+        if oldest_date is not None and oldest_date != candlestick.date - 300:
+            error_message = 'Candlestick date {} is not the increment of latest date {}'
+            raise ValueError(error_message.format(candlestick.date, oldest_date))
+
+        self.history[pair][candlestick.date] = candlestick
+        self.loaded_chunks[pair].add(self.__get_chunk_no(candlestick.date))
+
+    def get_candlestick(self, pair, date):
+        self.__sync_pair_if_not_synced(pair)
+        if self.__get_chunk_no(date) not in self.loaded_chunks[pair]:
+            self.__load_chunk(pair, self.__get_chunk_no(date))
+        return self.history[pair][date]
 
     def get_pair_oldest_date(self, pair):
-        pass
+        self.__sync_pair_if_not_synced(pair)
+        pair_history = self.history[pair]
+
+        if len(pair_history.keys()) == 0:
+            return None
+
+        return pair_history[pair_history.keys()[0]].date
 
     def get_pair_newest_date(self, pair):
-        pass
+        self.__sync_pair_if_not_synced(pair)
+        pair_history = self.history[pair]
 
-    def __is_pair_table_exists(self, pair):
-        pass
+        if len(pair_history.keys()) == 0:
+            return None
 
-    def __create_pair_table(self, pair):
+        return pair_history[pair_history.keys()[-1]].date
+
+    @staticmethod
+    def __get_chunk_no(date):
+        return date % 86400
+
+    def __sync_pair_if_not_synced(self, pair):
+        if pair not in self.synced_pairs:
+            self.__sync_pair(pair)
+
+    def __sync_pair(self, pair):
+        self.__create_pair_table_if_not_exists(pair)
+
+        if self.__pair_table_is_empty(pair):
+            return
+
+        self.__load_pair_first_chunk(pair)
+        self.__load_pair_last_chunk(pair)
+
+    def __load_pair_first_chunk(self, pair):
+        self.__load_chunk(pair, self.__get_chunk_no(self.__get_pair_oldest_date_from_db(pair)))
+
+    def __load_pair_last_chunk(self, pair):
+        self.__load_chunk(pair, self.__get_chunk_no(self.__get_pair_newest_date_from_db(pair)))
+
+    def __pair_table_is_empty(self, pair):
+        query = 'SELECT * FROM ? LIMIT 1'
+        self.cursor.execute(query, (pair,))
+        return self.cursor.rowcount == 0
+
+    def __get_pair_oldest_date_from_db(self, pair):
+        query = 'SELECT date FROM ? ORDER BY date ASC LIMIT 1'
+        return self.cursor.execute(query, (pair,)).fetchone()[0]
+
+    def __get_pair_newest_date_from_db(self, pair):
+        query = 'SELECT date FROM ? ORDER BY date DESC LIMIT 1'
+        return self.cursor.execute(query, (pair,)).fetchone()[0]
+
+    def __load_chunk(self, pair, chunk_no):
         pass
+        chunk_start_date = chunk_no * self.ONE_CHUNK_SECONDS
+        chunk_end_date = chunk_start_date + self.ONE_CHUNK_SECONDS
+
+        query = 'SELECT * FROM ? WHERE date >= ? AND date < ? ORDER BY date ASC'
+        self.cursor.execute(query, (pair, chunk_start_date, chunk_end_date,))
+
+        for row in self.cursor:
+            candlestick = self.__make_candlestick_from_row(row)
+            self.history[pair][candlestick.date] = candlestick
+
+        self.loaded_chunks[pair].add_chunk_no(chunk_no)
+
+    @staticmethod
+    def __make_candlestick_from_row(row):
+        return Candlestick(date=row[0], high=row[1], low=row[2],
+                           _open=row[3], close=row[4], base_volume=row[5],
+                           quote_volume=row[6], weighted_average=row[7])
+
+    @staticmethod
+    def __date_floor(date):
+        return date_floor(date)
+
+    @staticmethod
+    def __date_ceil(date):
+        return date_ceil(date)
+
+    @staticmethod
+    def __get_db_connection():
+        return sqlite3.connect(DATABASE_PATH)
+
+    def __create_pair_table_if_not_exists(self, pair):
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS ?
+                                (date INTEGER PRIMARY KEY ASC, high REAL, low REAL, 
+                                open REAL, close REAL, base_volume REAL,
+                                quote_volume REAL, weighted_average REAL)''', (pair,))
+        self.conn.commit()
