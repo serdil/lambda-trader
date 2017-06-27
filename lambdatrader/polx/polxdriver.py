@@ -8,7 +8,7 @@ from models.order import OrderType, Order
 from models.ticker import Ticker
 from poloniex import PoloniexError
 
-from polx.poloniexclient import polo
+from polx.polxclient import polo
 from utils import pair_from, pair_second, get_now_timestamp
 
 

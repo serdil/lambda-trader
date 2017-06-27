@@ -1,4 +1,4 @@
-from polx.poloniexclient import polo
+from polx.polxclient import polo
 from utils import pair_from
 
 DELTA = 0.00001
