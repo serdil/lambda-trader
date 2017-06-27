@@ -1,10 +1,11 @@
 from backtesting.account import Account
-from backtesting.pastdata import get_past_market_info
+from backtesting.marketinfo import BacktestMarketInfo
+from history.store import CandlestickStore
 from strategy.strategy import Strategy
 
 from backtesting import backtest
 
-market_info = get_past_market_info()
+market_info = BacktestMarketInfo(CandlestickStore.get_instance())
 
 account = Account({'BTC': 100})
 

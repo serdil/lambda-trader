@@ -2,18 +2,13 @@ from models.ticker import Ticker
 
 
 class BacktestMarketInfo:
-    def __init__(self, pair_infos=[]):
+    def __init__(self, candlestick_store):
         self.market_time = 0
-        self.__pairs = {}
+        self.candlestick_store = candlestick_store
         self.__last_volume_calc_timestamp = {}
         self.__last_volume_calc_volume = {}
         self.__last_high_calc_timestamp = {}
         self.__last_high_calc_high = {}
-        for pair_info in pair_infos:
-            self.add_pair(pair_info)
-
-    def add_pair(self, pair_info):
-        self.__pairs[pair_info.currency_pair] = pair_info
 
     def set_market_time(self, timestamp):
         self.market_time = timestamp
@@ -24,13 +19,13 @@ class BacktestMarketInfo:
     def inc_market_time(self):
         self.market_time += 300
 
-    def get_pair_candlestick(self, currency_pair, ind=0):
-        return self.__pairs[currency_pair].get_candlestick(self.market_time - ind * 300)
+    def get_pair_candlestick(self, pair, ind=0):
+        return self.candlestick_store.get_candlestick(pair, self.market_time - ind * 300)
 
     def get_pair_latest_candlestick(self, currency_pair):
         return self.get_pair_candlestick(currency_pair, 0)
 
-    # Return fake ticker
+    #  return fake ticker
     def get_pair_ticker(self, currency_pair):
         latest_candlestick = self.get_pair_latest_candlestick(currency_pair)
         close_price = latest_candlestick.close
@@ -102,24 +97,39 @@ class BacktestMarketInfo:
         return high
 
     def get_min_pair_start_time(self):
-        return min(map(lambda v: v.get_start_time(), self.__pairs.values()))
+        return min(map(
+            lambda p: self.__get_pair_start_time_from_store(p), self.__get_pairs_from_store()))
 
     def get_max_pair_start_time(self):
-        return max(map(lambda v: v.get_start_time(), self.__pairs.values()))
+        return max(map(
+            lambda p: self.__get_pair_start_time_from_store(p), self.__get_pairs_from_store()))
 
     def get_max_pair_end_time(self):
-        return max(map(lambda v: v.get_end_time(), self.__pairs.values()))
+        return max(map(
+            lambda p: self.__get_pair_end_time_from_store(p), self.__get_pairs_from_store()))
 
     def get_min_pair_end_time(self):
-        return min(map(lambda v: v.get_end_time(), self.__pairs.values()))
+        return min(map(
+            lambda p: self.__get_pair_end_time_from_store(p), self.__get_pairs_from_store()))
+
+    def __get_pairs_from_store(self):
+        return self.candlestick_store.get_pairs()
+
+    def __get_pair_start_time_from_store(self, pair):
+        return self.candlestick_store.get_pair_oldest_date(pair)
+
+    def __get_pair_end_time_from_store(self, pair):
+        return self.candlestick_store.get_pair_newest_date(pair)
 
     def pairs(self):
         return list(
-            map(
-                lambda p: p[0],
-                filter(
-                    lambda p: p[1].get_start_time() < self.get_market_time() < p[1].get_end_time(),
-                    self.__pairs.items()
-                )
+            filter(
+                self.__pair_exists_in_current_market_time,
+                self.__get_pairs_from_store()
             )
         )
+
+    def __pair_exists_in_current_market_time(self, pair):
+        return self.__get_pair_start_time_from_store(pair) < \
+               self.get_market_time() < \
+               self.__get_pair_end_time_from_store(pair)
