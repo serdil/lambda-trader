@@ -2,13 +2,10 @@ import csv
 import glob
 import os
 
-from backtesting.marketinfo import BacktestMarketInfo
 from history.store import CandlestickStore
 
 from models.candlestick import Candlestick
 from utils import pair_from, get_project_directory
-
-market_info = BacktestMarketInfo()
 
 files = glob.glob(os.path.join(os.path.abspath(get_project_directory()), 'data/') + '*.csv')
 
@@ -44,4 +41,4 @@ for file_path in files:
                 )
             )
 
-store.persist_chunks()
+store._CandlestickStore__persist_chunks()  # TODO Do this in CandlestickStore.
