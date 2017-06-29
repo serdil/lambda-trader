@@ -2,6 +2,8 @@ from datetime import datetime
 from threading import Thread
 from time import sleep
 
+from poloniex import PoloniexError, logger
+
 from loghandlers import get_logger_with_all_handlers
 from models.order import Order, OrderType
 
@@ -337,14 +339,23 @@ class PolxStrategy:
 
     def heartbeat_thread(self):
         while True:
-            self.__log_heartbeat_info_conditionally(log_if_no_open_orders=True)
-            sleep(1800)
-            self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
-            sleep(1800)
-            self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
-            sleep(1800)
-            self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
-            sleep(1800)
+            try:
+                self.__log_heartbeat_info_conditionally(log_if_no_open_orders=True)
+                sleep(1800)
+                self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
+                sleep(1800)
+                self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
+                sleep(1800)
+                self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
+                sleep(1800)
+            except PoloniexError as e:  # TODO convert to own error type
+                if str(e).find('Connection timed out.') >= 0:
+                    self.logger.warning(str(e))
+                else:
+                    self.logger.exception('exception in heartbeat thread')
+            except Exception as e:
+                logger.exception('exception in heartbeat thread')
+
 
     def __log_heartbeat_info_conditionally(self, log_if_no_open_orders=False):
         num_open_orders = len(self.__get_pairs_with_open_orders())
