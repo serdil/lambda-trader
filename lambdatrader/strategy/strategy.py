@@ -1,6 +1,3 @@
-from blist import sorteddict
-
-
 class Trade:
     def __init__(self, id, start_date, end_date, profit):
         self.id = id
@@ -9,13 +6,21 @@ class Trade:
         self.profit_amount = profit
 
 
+class TradingInfo:
+    def __init__(self, history_start, history_end, balances, trades):
+        self.history_start = history_start
+        self.history_end = history_end
+        self.balances = balances
+        self.trades = trades
+
+
 class BaseStrategy:
     def __init__(self):
         self.__trade_starts = {}
         self.__trades = []
         self.__history_start = None
         self.__history_end = None
-        self.__balances = sorteddict()
+        self.__balances = {}
 
     def set_history_start(self, date):
         self.__history_start = date
@@ -36,9 +41,5 @@ class BaseStrategy:
         self.__balances[date] = balance
 
     def get_trading_info(self):
-        return {
-            'trades': list(self.__trades),
-            'history_start': self.__history_start,
-            'history_end': self.__history_end,
-            'balances': sorteddict(self.__balances)
-        }
+        return TradingInfo(history_start=self.__history_start, history_end=self.__history_end,
+                           balances=dict(self.__balances), trades=list(self.__trades))
