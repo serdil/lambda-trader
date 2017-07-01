@@ -1,8 +1,11 @@
+from blist import sorteddict
 
 class Evaluator:
 
     def __init__(self, trading_info):
         self.__trading_info = trading_info
+        self.__trades = sorted(trading_info.trades)
+        self.__balances = sorteddict(trading_info.balances)
 
     def get_trading_info(self):
         return self.__trading_info
@@ -35,6 +38,12 @@ class Evaluator:
         pass
 
     def __shortest_no_drawdown_window(self, start_date, end_date):
+        pass
+
+    def __iterate_over_period_trades(self, start_date, end_date):
+        pass
+
+    def __iterate_over_period_balances(self, start_date, end_date):
         pass
 
     @classmethod
