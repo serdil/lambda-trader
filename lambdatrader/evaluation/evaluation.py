@@ -2,6 +2,7 @@ from _bisect import bisect_left, bisect_right
 
 from blist import sorteddict
 
+
 class Evaluator:
 
     def __init__(self, trading_info):
@@ -44,10 +45,21 @@ class Evaluator:
         return max_drawdown
 
     def __roi(self, start_date, end_date):
-        pass
+        start_balance = self.__balance_after(start_date)
+        end_balance = self.__balance_before(end_date)
+
+        return (end_balance - start_balance) / start_balance
 
     def __success_rate(self, start_date, end_date):
-        pass
+        num_positive = 0
+        num_non_positive = 0
+        for trade in self.__period_trades(start_date, end_date):
+            if trade.profit_amount > 0:
+                num_positive += 1
+            else:
+                num_non_positive += 1
+
+        return num_positive / num_positive + num_non_positive
 
     def __shortest_no_drawdown_window(self, start_date, end_date):
         pass
@@ -66,6 +78,12 @@ class Evaluator:
 
         for i in range(start_ind, end_ind):
             yield self.__balances[keys[i]]
+
+    def __balance_after(self, date):
+        return self.__balances[self.__balances.keys().bisect_left(date)]
+
+    def __balance_before(self, date):
+        return self.__balances[self.__balances.keys().bisect_right(date)]
 
     @classmethod
     def calc_metrics_over_periods(cls, period_metrics):
