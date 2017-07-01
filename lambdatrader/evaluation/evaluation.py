@@ -1,3 +1,5 @@
+from _bisect import bisect_left, bisect_right
+
 from blist import sorteddict
 
 class Evaluator:
@@ -5,6 +7,7 @@ class Evaluator:
     def __init__(self, trading_info):
         self.__trading_info = trading_info
         self.__trades = sorted(trading_info.trades)
+        self.__trade_start_dates = [trade.start_date for trade in self.__trades]
         self.__balances = sorteddict(trading_info.balances)
 
     def get_trading_info(self):
@@ -26,10 +29,19 @@ class Evaluator:
         }
 
     def __number_of_trades(self, start_date, end_date):
-        pass
+        return sum([1 for _ in self.__period_trades(start_date, end_date)])
 
     def __max_drawdown(self, start_date, end_date):
-        pass
+        max_so_far = 0
+        min_since_max_so_far = max_so_far
+        max_drawdown = 0
+
+        for balance in self.__period_balances(start_date, end_date):
+            max_so_far = max(max_so_far, balance)
+            min_since_max_so_far = min(min_since_max_so_far, balance)
+            max_drawdown = min(max_drawdown, min_since_max_so_far)
+
+        return max_drawdown
 
     def __roi(self, start_date, end_date):
         pass
@@ -40,11 +52,20 @@ class Evaluator:
     def __shortest_no_drawdown_window(self, start_date, end_date):
         pass
 
-    def __iterate_over_period_trades(self, start_date, end_date):
-        pass
+    def __period_trades(self, start_date, end_date):
+        start_ind = bisect_left(self.__trade_start_dates, start_date)
+        end_ind = bisect_right(self.__trade_start_dates, end_date)
 
-    def __iterate_over_period_balances(self, start_date, end_date):
-        pass
+        for i in range(start_ind, end_ind):
+            yield self.__trades[i]
+
+    def __period_balances(self, start_date, end_date):
+        keys = self.__balances.keys()
+        start_ind = keys.bisect_left(start_date)
+        end_ind = keys.bisect_right(end_date)
+
+        for i in range(start_ind, end_ind):
+            yield self.__balances[keys[i]]
 
     @classmethod
     def calc_metrics_over_periods(cls, period_metrics):
