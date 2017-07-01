@@ -1,17 +1,5 @@
-class Trade:
-    def __init__(self, id, start_date, end_date, profit):
-        self.id = id
-        self.start_date = start_date
-        self.end_date = end_date
-        self.profit_amount = profit
-
-
-class TradingInfo:
-    def __init__(self, history_start, history_end, balances, trades):
-        self.history_start = history_start
-        self.history_end = history_end
-        self.balances = balances
-        self.trades = trades
+from models.trade import Trade
+from models.tradinginfo import TradingInfo
 
 
 class BaseStrategy:
