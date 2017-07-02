@@ -43,7 +43,7 @@ class BacktestStrategy(BaseStrategy):
 
         estimated_balance = account.get_estimated_balance(market_info)
 
-        self.declare_balance(market_info.get_market_time, estimated_balance)
+        self.declare_balance(market_info.get_market_time(), estimated_balance)
 
         if len(high_volume_pairs) >= self.MIN_NUM_HIGH_VOLUME_PAIRS:
             for pair in high_volume_pairs:
