@@ -72,6 +72,19 @@ class Account:
         for order in self.__orders:
             if not order.get_is_filled():
                 yield order
+        return
+
+    def get_open_sell_orders(self):
+        for order in self.get_open_orders():
+            if order.get_type() == OrderType.SELL:
+                yield order
+        return
+
+    def get_open_buy_orders(self):
+        for order in self.get_open_orders():
+            if order.get_type() == OrderType.BUY:
+                yield order
+        return
 
     def execute_orders(self, market_info: BacktestMarketInfo):
         for order in self.__orders:
