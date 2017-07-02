@@ -37,5 +37,6 @@ print(trading_info)
 evaluator = Evaluator(trading_info)
 stats = evaluator.calc_stats_for_period(start_date, end_date)
 
+print()
 print('Statistics over whole Trading Period:')
 print(stats)
