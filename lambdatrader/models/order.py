@@ -9,14 +9,18 @@ class OrderType(Enum):
 
 class Order:
     def __init__(self, currency, type: OrderType, price, amount, timestamp, is_filled=False,
-                 order_number=uuid1()):
+                 order_number=None):
         self.__currency = currency
         self.__type = type
         self.__price = price
         self.__amount = amount
         self.__timestamp = timestamp
         self.__is_filled = is_filled
-        self.__order_number = order_number
+
+        if order_number is not None:
+            self.__order_number = order_number
+        else:
+            self.__order_number = uuid1()
 
     def fill(self):
         self.__is_filled = True
