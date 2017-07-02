@@ -62,7 +62,20 @@ class Evaluator:
         return num_positive / num_positive + num_non_positive
 
     def __shortest_no_drawdown_window(self, start_date, end_date):
-        pass
+        dates_balances = [(date, balance) for date, balance
+         in self.__period_dates_and_balances(start_date, end_date)]
+
+        longest_drawdown = 0
+
+        for i, (date1, balance1) in enumerate(dates_balances):
+            for j, (date2, balance2) in enumerate(reversed(dates_balances), start=1):
+                if len(dates_balances) - j == i:
+                    break
+                if balance2 < balance1:
+                    longest_drawdown = max(longest_drawdown, date2 - date1)
+                    break
+
+        return longest_drawdown
 
     def __period_trades(self, start_date, end_date):
         start_ind = bisect_left(self.__trade_start_dates, start_date)
@@ -72,12 +85,16 @@ class Evaluator:
             yield self.__trades[i]
 
     def __period_balances(self, start_date, end_date):
+        for date, balance in self.__period_dates_and_balances(start_date, end_date):
+            yield balance
+
+    def __period_dates_and_balances(self, start_date, end_date):
         keys = self.__balances.keys()
         start_ind = keys.bisect_left(start_date)
         end_ind = keys.bisect_right(end_date)
 
         for i in range(start_ind, end_ind):
-            yield self.__balances[keys[i]]
+            yield keys[i], self.__balances[keys[i]]
 
     def __balance_after(self, date):
         return self.__balances[self.__balances.keys().bisect_left(date)]
