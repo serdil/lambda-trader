@@ -62,7 +62,7 @@ class Evaluator:
             else:
                 num_non_positive += 1
 
-        return num_positive / num_positive + num_non_positive
+        return num_positive / (num_positive + num_non_positive)
 
     def __longest_drawdown_period(self, start_date, end_date):
         dates_balances = [(date, balance) for date, balance
