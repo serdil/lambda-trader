@@ -19,9 +19,13 @@ backtest.backtest(account, market_info, strategy, start=start_date)
 
 print()
 print('Backtest Complete!')
+
+print()
 print('Estimated Balance:', account.get_estimated_balance(market_info))
 print('Open Orders:', list(account.get_open_orders()))
 
 print()
 print('Trading Info:')
+
+print()
 print(strategy.get_trading_info())
