@@ -23,3 +23,5 @@ def backtest(account: Account, market_info: BacktestMarketInfo, strategy, start=
         account.execute_orders(market_info)
         strategy.act(account, market_info)
         market_info.inc_market_time()
+
+    account.execute_orders(market_info)
