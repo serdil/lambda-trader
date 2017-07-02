@@ -36,13 +36,14 @@ class Evaluator:
 
     def __max_drawdown(self, start_date, end_date):
         max_so_far = 0
-        min_since_max_so_far = max_so_far
         max_drawdown = 0
 
         for balance in self.__period_balances(start_date, end_date):
-            max_so_far = max(max_so_far, balance)
-            min_since_max_so_far = min(min_since_max_so_far, balance)
-            max_drawdown = min(max_drawdown, min_since_max_so_far)
+            if balance > max_so_far:
+                max_so_far = balance
+            else:
+                current_drawdown = (max_so_far - balance) / max_so_far
+                max_drawdown = max(max_drawdown, current_drawdown)
 
         return max_drawdown
 
