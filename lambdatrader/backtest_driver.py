@@ -1,7 +1,7 @@
 from backtesting.account import Account
 from backtesting.marketinfo import BacktestMarketInfo
 from history.store import CandlestickStore
-from strategy.backtesting import BacktestStrategy
+from strategy.backtest import BacktestStrategy
 
 from backtesting import backtest
 
