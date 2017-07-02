@@ -1,6 +1,8 @@
+from pprint import pprint
+
 from backtesting.account import Account
 from backtesting.marketinfo import BacktestMarketInfo
-from evaluation.evaluation import Evaluator
+from evaluation.statistics import Statistics
 from history.store import CandlestickStore
 from strategy.backtest import BacktestStrategy
 
@@ -12,7 +14,7 @@ market_info = BacktestMarketInfo(CandlestickStore.get_instance())
 
 account = Account({'BTC': 100})
 
-start_date = market_info.get_max_pair_end_time() - ONE_DAY * 1
+start_date = market_info.get_max_pair_end_time() - ONE_DAY * 70
 end_date = market_info.get_max_pair_end_time()
 
 strategy = BacktestStrategy()
@@ -29,14 +31,26 @@ print('Open Orders:', list(account.get_open_orders()))
 trading_info = strategy.get_trading_info()
 
 print()
-print('Trading Info:')
-
-print()
 print(trading_info)
 
-evaluator = Evaluator(trading_info)
-stats = evaluator.calc_stats_for_period(start_date, end_date)
+statistics = Statistics(trading_info)
+stats = statistics.calc_stats_for_period(start_date, end_date)
 
 print()
-print('Statistics over whole Trading Period:')
-print(stats)
+print('Statistics over whole trading period:')
+pprint(stats)
+
+periods = []
+period_stats = []
+
+for date in range(start_date, end_date, 7 * ONE_DAY):
+    periods.append((date, date + 7 * ONE_DAY))
+
+for period in periods:
+    period_stats.append(statistics.calc_stats_for_period(period[0], period[1]))
+
+stats_over_periods = statistics.calc_stats_over_periods(period_stats)
+
+print()
+print('Statistics over weekly periods:')
+pprint(stats_over_periods)

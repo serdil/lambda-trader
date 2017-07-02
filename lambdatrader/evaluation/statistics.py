@@ -5,7 +5,7 @@ import numpy
 from blist import sorteddict
 
 
-class Evaluator:
+class Statistics:
 
     def __init__(self, trading_info):
         self.__trading_info = trading_info
