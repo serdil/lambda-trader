@@ -14,7 +14,7 @@ market_info = BacktestMarketInfo(CandlestickStore.get_instance())
 
 account = Account({'BTC': 100})
 
-start_date = market_info.get_max_pair_end_time() - ONE_DAY * 70
+start_date = market_info.get_max_pair_end_time() - ONE_DAY * 1
 end_date = market_info.get_max_pair_end_time()
 
 strategy = BacktestStrategy()
