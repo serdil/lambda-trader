@@ -20,14 +20,14 @@ class Evaluator:
         maximum_drawdown = self.__max_drawdown(start_date, end_date)
         roi = self.__roi(start_date, end_date)
         success_rate = self.__success_rate(start_date, end_date)
-        shortest_no_drawdown_window = self.__shortest_no_drawdown_window(start_date, end_date)
+        longest_drawdown_period = self.__longest_drawdown_period(start_date, end_date)
 
         return {
             'num_of_trades': num_of_trades,
             'maximum_drawdown': maximum_drawdown,
             'roi': roi,
             'success_rate': success_rate,
-            'shortest_no_drawdown_window': shortest_no_drawdown_window
+            'longest_drawdown_period': longest_drawdown_period
         }
 
     def __num_of_trades(self, start_date, end_date):
@@ -62,7 +62,7 @@ class Evaluator:
 
         return num_positive / num_positive + num_non_positive
 
-    def __shortest_no_drawdown_window(self, start_date, end_date):
+    def __longest_drawdown_period(self, start_date, end_date):
         dates_balances = [(date, balance) for date, balance
          in self.__period_dates_and_balances(start_date, end_date)]
 
@@ -105,7 +105,7 @@ class Evaluator:
 
     @classmethod
     def calc_stats_over_periods(cls, period_stats):
-        shortest_no_drawdown_window = cls.__periods_shortest_no_drawdown_window(period_stats)
+        longest_drawdown_period = cls.__periods_longest_drawdown_period(period_stats)
         median_roi = cls.__periods_median_roi(period_stats)
         first_q_roi = cls.__periods_first_first_q_roi(period_stats)
         minimum_roi = cls.__periods_minimum_roi(period_stats)
@@ -117,7 +117,7 @@ class Evaluator:
         minimum_success_rate = cls.__periods_minimum_success_rate(period_stats)
 
         return {
-            'shortest_no_drawdown_window': shortest_no_drawdown_window,
+            'longest_drawdown_period': longest_drawdown_period,
             'median_roi': median_roi,
             'first_q_roi': first_q_roi,
             'minimum_roi': minimum_roi,
@@ -130,7 +130,7 @@ class Evaluator:
         }
 
     @classmethod
-    def __periods_shortest_no_drawdown_window(cls, period_stats):
+    def __periods_longest_drawdown_period(cls, period_stats):
         longest_subseq_len = 0
         subseq_len = 0
 
