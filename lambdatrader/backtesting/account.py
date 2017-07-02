@@ -151,7 +151,7 @@ class Account:
     def sample_balance(self, market_info):
         self.__balance_series.append(self.get_estimated_balance(market_info))
 
-    def max_avg_drawback(self):
+    def max_avg_drawdown(self):
         total_drawback = 0.0
         num_drawbacks = 0
         max_drawback = 0.0

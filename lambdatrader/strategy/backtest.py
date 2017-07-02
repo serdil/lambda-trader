@@ -88,14 +88,14 @@ class BacktestStrategy(BaseStrategy):
                             InternalTrade(currency, bought_amount, price, target_price)
 
                         current_balance = estimated_balance
-                        max_drawback, avg_drawback = account.max_avg_drawback()
+                        max_drawback, avg_drawdown = account.max_avg_drawdown()
                         account.new_order(sell_order)
 
                         self.declare_trade_start(market_date, order_number)
 
                         print('BUY', pair)
                         print('balance', current_balance)
-                        print('max-avg drawback', max_drawback, avg_drawback)
+                        print('max-avg drawdown', max_drawback, avg_drawdown)
                         print('open orders:', len(list(account.get_open_sell_orders())))
 
     def cancel_old_orders(self, account, market_info):
