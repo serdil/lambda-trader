@@ -131,22 +131,35 @@ class Evaluator:
 
     @classmethod
     def __periods_shortest_no_drawdown_window(cls, period_stats):
-        pass
+        longest_subseq_len = 0
+        subseq_len = 0
+
+        rois = cls.__periods_roi_list(period_stats)
+
+        for i, roi in enumerate(rois):
+            if roi < 0:
+                subseq_len += 1
+                if subseq_len > longest_subseq_len:
+                    longest_subseq_len = subseq_len
+            else:
+                subseq_len = 0
+
+        return longest_subseq_len
 
     @classmethod
     def __periods_median_roi(cls, period_stats):
-        roi_list = cls.__periods_roi_list(period_stats)
-        return numpy.median(roi_list)
+        rois = cls.__periods_roi_list(period_stats)
+        return numpy.median(rois)
 
     @classmethod
     def __periods_first_first_q_roi(cls, period_stats):
-        roi_list = cls.__periods_roi_list(period_stats)
-        return numpy.percentile(roi_list, 25)
+        rois = cls.__periods_roi_list(period_stats)
+        return numpy.percentile(rois, 25)
 
     @classmethod
     def __periods_minimum_roi(cls, period_stats):
-        roi_list = cls.__periods_roi_list(period_stats)
-        return min(roi_list)
+        rois = cls.__periods_roi_list(period_stats)
+        return min(rois)
 
     @classmethod
     def __periods_median_num_of_trades(cls, period_stats):
