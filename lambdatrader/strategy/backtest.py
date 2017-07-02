@@ -130,7 +130,7 @@ class BacktestStrategy(BaseStrategy):
         )
 
     def __declare_successfuly_closed_trades(self, market_info, account):
-        open_orders_set = set(account.get_open_orders)
+        open_orders_set = set(account.get_open_orders())
 
         for trade_number, trade in self.__trades.items():
             if trade_number not in open_orders_set:  # trade hit TP
