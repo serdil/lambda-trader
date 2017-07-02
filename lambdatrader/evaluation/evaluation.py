@@ -1,4 +1,5 @@
 from _bisect import bisect_left, bisect_right
+from operator import attrgetter
 
 import numpy
 from blist import sorteddict
@@ -8,7 +9,7 @@ class Evaluator:
 
     def __init__(self, trading_info):
         self.__trading_info = trading_info
-        self.__trades = sorted(trading_info.trades)
+        self.__trades = sorted(trading_info.trades, key=attrgetter('start_date'))
         self.__trade_start_dates = [trade.start_date for trade in self.__trades]
         self.__balances = sorteddict(trading_info.balances)
 
@@ -98,10 +99,15 @@ class Evaluator:
             yield keys[i], self.__balances[keys[i]]
 
     def __balance_after(self, date):
-        return self.__balances[self.__balances.keys().bisect_left(date)]
+        keys = self.__balances.keys()
+        return self.__balances[keys[keys.bisect_left(date)]]
 
     def __balance_before(self, date):
-        return self.__balances[self.__balances.keys().bisect_right(date)]
+        keys = self.__balances.keys()
+        key_ind = keys.bisect_right(date)
+        if key_ind == len(keys):
+            key_ind -= 1
+        return self.__balances[keys[key_ind]]
 
     @classmethod
     def calc_stats_over_periods(cls, period_stats):
