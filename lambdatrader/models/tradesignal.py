@@ -22,7 +22,7 @@ class PriceEntry(Entry):
 class SuccessExitType(Enum):
     COMBINED_AND = 1
     COMBINED_OR = 2
-    VALUE_TAKE_PROFIT = 3
+    PRICE_TAKE_PROFIT = 3
 
 
 class SuccessExit:
@@ -40,6 +40,12 @@ class CombinedOrSuccessExit(SuccessExit):
     def __init__(self, success_exits):
         super().__init__(_type=SuccessExitType.COMBINED_OR)
         self.success_exits = success_exits[:]
+
+
+class PriceTakeProfitSuccessExit(SuccessExit):
+    def __init__(self, price):
+        super().__init__(_type=SuccessExitType.PRICE_TAKE_PROFIT)
+        self.price = price
 
 
 class FailureExitType(Enum):
@@ -72,8 +78,9 @@ class TimeoutStopLossFailureExit(FailureExit):
 
 
 class TradeSignal:
-    def __init__(self, exchange, pair, entry: Entry, success_exit: SuccessExit,
+    def __init__(self, date, exchange, pair, entry: Entry, success_exit: SuccessExit,
                  failure_exit: FailureExit, good_for=FIVE_MINUTES):
+        self.date = date
         self.exchange = exchange
         self.pair = pair
         self.entry = entry
