@@ -2,7 +2,7 @@ from pprint import pprint
 
 from backtesting.account import Account
 from backtesting.marketinfo import BacktestMarketInfo
-from evaluation.statistics import Statistics
+from evaluation.utils import statistics_over_periods, period_statistics
 from history.store import CandlestickStore
 from strategy.backtest import BacktestStrategy
 
@@ -33,23 +33,13 @@ trading_info = strategy.get_trading_info()
 print()
 print(trading_info)
 
-statistics = Statistics(trading_info)
-stats = statistics.calc_stats_for_period(start_date, end_date)
+stats = period_statistics(trading_info)
 
 print()
 print('Statistics over whole trading period:')
 pprint(stats)
 
-periods = []
-period_stats = []
-
-for date in range(start_date, end_date, 7 * ONE_DAY):
-    periods.append((date, date + 7 * ONE_DAY))
-
-for period in periods:
-    period_stats.append(statistics.calc_stats_for_period(period[0], period[1]))
-
-stats_over_periods = statistics.calc_stats_over_periods(period_stats)
+stats_over_periods = statistics_over_periods(trading_info)
 
 print()
 print('Statistics over weekly periods:')
