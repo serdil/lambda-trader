@@ -22,7 +22,7 @@ class BaseStrategy:
     def declare_trade_end(self, date, trade_id, profit_amount):
         start_date = self.__trade_starts[trade_id]
         end_date = date
-        trade = Trade(id=trade_id, start_date=start_date, end_date=end_date, profit=profit_amount)
+        trade = Trade(_id=trade_id, start_date=start_date, end_date=end_date, profit=profit_amount)
         self.__trades.append(trade)
 
     def declare_balance(self, date, balance):

@@ -8,10 +8,10 @@ class OrderType(Enum):
 
 
 class Order:
-    def __init__(self, currency, type: OrderType, price, amount, timestamp, is_filled=False,
+    def __init__(self, currency, _type: OrderType, price, amount, timestamp, is_filled=False,
                  order_number=None):
         self.__currency = currency
-        self.__type = type
+        self.__type = _type
         self.__price = price
         self.__amount = amount
         self.__timestamp = timestamp

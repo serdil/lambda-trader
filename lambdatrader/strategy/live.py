@@ -276,7 +276,7 @@ class PolxStrategy:
     @staticmethod
     def make_order(currency, price, amount, order_type, timestamp):
         return Order(currency=currency, price=price,
-                     amount=amount, type=order_type, timestamp=timestamp)
+                     amount=amount, _type=order_type, timestamp=timestamp)
 
     @staticmethod
     def join(items):
