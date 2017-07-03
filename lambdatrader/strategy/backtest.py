@@ -5,14 +5,6 @@ from utils import pair_from, pair_second
 from .strategy import BaseStrategy
 
 
-class InternalTrade:
-    def __init__(self, currency, amount, rate, target_rate):
-        self.currency = currency
-        self.amount = amount
-        self.rate = rate
-        self.target_rate = target_rate
-
-
 class BacktestStrategy(BaseStrategy):
 
     DELTA = 0.0001
@@ -85,7 +77,7 @@ class BacktestStrategy(BaseStrategy):
                         order_number = sell_order.get_order_number()
 
                         self.__trades[order_number] = \
-                            InternalTrade(currency, bought_amount, price, target_price)
+                            self.InternalTrade(currency, bought_amount, price, target_price)
 
                         current_balance = estimated_balance
                         max_drawback, avg_drawdown = account.max_avg_drawdown()
@@ -145,3 +137,10 @@ class BacktestStrategy(BaseStrategy):
 
         for trade_number in trades_to_delete:
             del self.__trades[trade_number]
+
+    class InternalTrade:
+        def __init__(self, currency, amount, rate, target_rate):
+            self.currency = currency
+            self.amount = amount
+            self.rate = rate
+            self.target_rate = target_rate
