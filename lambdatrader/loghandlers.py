@@ -10,6 +10,7 @@ from utils import get_project_directory
 
 _1MB = 1024 * 1024 * 1024
 _5MB = 5 * _1MB
+_256MB = 256 * _1MB
 _1GB = 1024 * _1MB
 
 LOG_FOLDER_PATH = os.path.join(get_project_directory(), 'log')
@@ -21,7 +22,7 @@ formatter = logging.Formatter(
 )
 
 file_handler_debug = logging.handlers.RotatingFileHandler(
-    DEBUG_LOG_PATH, maxBytes=_1GB, backupCount=1
+    DEBUG_LOG_PATH, maxBytes=_256MB, backupCount=1
 )
 file_handler_debug.setLevel(logging.DEBUG)
 file_handler_debug.setFormatter(formatter)
