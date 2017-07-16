@@ -1,5 +1,5 @@
 from enum import Enum
-
+from uuid import uuid1
 
 FIVE_MINUTES = 5 * 60
 
@@ -79,7 +79,7 @@ class TimeoutStopLossFailureExit(FailureExit):
 
 class TradeSignal:
     def __init__(self, date, exchange, pair, entry: Entry, success_exit: SuccessExit,
-                 failure_exit: FailureExit, good_for=FIVE_MINUTES):
+                 failure_exit: FailureExit, good_for=FIVE_MINUTES, _id=None):
         self.date = date
         self.exchange = exchange
         self.pair = pair
@@ -87,3 +87,11 @@ class TradeSignal:
         self.success_exit = success_exit
         self.failure_exit = failure_exit
         self.good_for = good_for
+
+        if _id:
+            self.id = _id
+        else:
+            self.id = uuid1()
+
+    def __repr__(self):
+        return 'TradeSignal(date={},pair={})'.format(self.date, self.pair)
