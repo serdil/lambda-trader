@@ -62,7 +62,11 @@ class Statistics:
             else:
                 num_non_positive += 1
 
-        return num_positive / (num_positive + num_non_positive)
+        num_total = num_positive + num_non_positive
+        if num_total == 0:
+            return 1.0
+        else:
+            return num_positive / (num_positive + num_non_positive)
 
     def __longest_drawdown_period(self, start_date, end_date):
         dates_balances = [(date, balance) for date, balance

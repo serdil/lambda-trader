@@ -12,28 +12,23 @@ class IllegalOrderException(Exception):
 
 
 class Account:
-    def __init__(self, balances: Dict={'BTC': 100}, orders: List[Order]=[]):
-        self.__balance_series = []
+    def __init__(self, balances: Dict={'BTC': 100}):
         self.__balances = defaultdict(int)
         for currency, balance in balances.items():
             self.__balances[currency] = balance
         self.__orders = []
-        for order in orders:
-            self.__orders.append(order)
 
-    def sell(self, currency, price, amount, market_info):
+    def sell(self, currency, price, amount):
         if self.__balances[currency] < amount:
             raise IllegalOrderException
         self.__balances[currency] -= amount
         self.__balances['BTC'] += amount * price - self.get_fee(amount * price)
-        self.sample_balance(market_info)
 
-    def buy(self, currency, price, amount, market_info):
+    def buy(self, currency, price, amount):
         if self.__balances['BTC'] < amount * price:
             raise IllegalOrderException
         self.__balances[currency] += amount - self.get_fee(amount)
         self.__balances['BTC'] -= amount * price
-        self.sample_balance(market_info)
 
     def new_order(self, order: Order):
         if order.get_type() == OrderType.SELL:
@@ -59,10 +54,10 @@ class Account:
                 order_ind = i
                 break
         if order_ind is not None:
-            self.reverse_order_effect(self.__orders[order_ind])
+            self.__reverse_order_effect(self.__orders[order_ind])
             del self.__orders[order_ind]
 
-    def reverse_order_effect(self, order: Order):
+    def __reverse_order_effect(self, order: Order):
         if order.get_type() == OrderType.SELL:
             self.__balances[order.get_currency()] += order.get_amount()
         elif order.get_type() == OrderType.BUY:
@@ -91,8 +86,7 @@ class Account:
             if not order.get_is_filled():
                 if self.order_satisfied(order, market_info):
                     self.fill_order(order)
-                    self.remove_filled_orders()
-                    self.sample_balance(market_info)
+                    self.__remove_filled_orders()
 
     @staticmethod
     def order_satisfied(order: Order, market_info: BacktestMarketInfo):
@@ -105,7 +99,7 @@ class Account:
             return candlestick.low <= order.get_price()
 
     def fill_order(self, order: Order):
-        print('executing')
+        #print('executing')
         if order.get_type() == OrderType.SELL:
             btc_value = order.get_amount() * order.get_price()
             self.__balances['BTC'] += btc_value - self.get_fee(btc_value)
@@ -127,7 +121,8 @@ class Account:
                 estimated_balance += balance
             else:
                 try:
-                    candlestick = market_info.get_pair_latest_candlestick(self.pair_from(currency))
+                    candlestick = market_info.get_pair_latest_candlestick(
+                                                                pair_from('BTC', currency))
                     estimated_balance += balance * candlestick.close
                 except KeyError as e:
                     print('KeyError: ', currency, e)
@@ -136,7 +131,7 @@ class Account:
                 if order.get_type() == OrderType.SELL:
                     try:
                         candlestick = market_info.get_pair_latest_candlestick(
-                            self.pair_from(order.get_currency())
+                            pair_from('BTC', order.get_currency())
                         )
                         estimated_balance += order.get_amount() * candlestick.close
                     except KeyError as e:
@@ -145,31 +140,8 @@ class Account:
                     estimated_balance += order.get_amount() * order.get_price()
         return estimated_balance
 
-    def remove_filled_orders(self):
+    def __remove_filled_orders(self):
         self.__orders = list(filter(lambda order: not order.get_is_filled(), self.__orders))
-
-    def sample_balance(self, market_info):
-        self.__balance_series.append(self.get_estimated_balance(market_info))
-
-    def max_avg_drawdown(self):
-        total_drawback = 0.0
-        num_drawbacks = 0
-        max_drawback = 0.0
-        max_balance_so_far = 0.0
-        for balance in self.__balance_series:
-            if balance > max_balance_so_far:
-                max_balance_so_far = balance
-            if balance < max_balance_so_far:
-                num_drawbacks += 1
-                current_drawback = (max_balance_so_far - balance) / max_balance_so_far * 100
-                total_drawback += current_drawback
-                if current_drawback > max_drawback:
-                    max_drawback = current_drawback
-        return max_drawback, (total_drawback / num_drawbacks if num_drawbacks > 0 else 0.0)
-
-    @staticmethod
-    def pair_from(currency):
-        return pair_from('BTC', currency)
 
     def __repr__(self):
         return 'Account(' + str({'balances': self.__balances, 'orders': self.__orders}) + ')'

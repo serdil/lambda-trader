@@ -34,9 +34,9 @@ class APICallExecutor:
         def __executor(self):
             while True:
                 try:
-                    function, return_queue = self.queued_calls.get(timeout=0.1)
+                    _function, return_queue = self.queued_calls.get(timeout=0.1)
                     try:
-                        return_queue.put((function(), None))
+                        return_queue.put((_function(), None))
                     except Exception as e:
                         return_queue.put((None, e))
                 except Empty:
@@ -130,11 +130,11 @@ class PolxMarketInfo:
         high24h = float(ticker_info['high24hr'])
         low24h = float(ticker_info['low24hr'])
         is_frozen = int(ticker_info['isFrozen'])
-        id = int(ticker_info['id'])
+        _id = int(ticker_info['id'])
         ticker = Ticker(last=last, lowest_ask=lowest_ask, highest_bid=highest_bid,
                         base_volume=base_volume, quote_volume=quote_volume,
                         percent_change=percent_change, high24h=high24h, low24h=low24h,
-                        is_frozen=is_frozen, id=id)
+                        is_frozen=is_frozen, _id=_id)
         return ticker
 
     def lock_ticker(self):
@@ -190,12 +190,12 @@ class PolxAccount:
     @staticmethod
     def __order_from_polx_info(key, value):
         currency = pair_second(key)
-        type = OrderType.BUY if value['type'] == 'buy' else OrderType.SELL
+        _type = OrderType.BUY if value['type'] == 'buy' else OrderType.SELL
         timestamp = datetime.strptime(value['date'], '%Y-%m-%d %H:%M:%S').timestamp()
         order_number = int(value['orderNumber'])
         amount = float(value['amount'])
         price = float(value['rate'])
-        return Order(currency, type, price, amount, timestamp, order_number=order_number)
+        return Order(currency, _type, price, amount, timestamp, order_number=order_number)
 
     def get_estimated_balance(self):
         self.logger.debug('get_estimated_balance')

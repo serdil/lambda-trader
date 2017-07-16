@@ -147,7 +147,7 @@ class PolxStrategy:
         orders_to_cancel = []
 
         for order in self.account.get_open_orders().values():
-            if self.market_info.get_market_time() - order.get_timestamp() >= self.ORDER_TIMEOUT:
+            if self.market_info.get_market_time() - order.get_date() >= self.ORDER_TIMEOUT:
                 orders_to_cancel.append(order)
 
         self.logger.debug('orders_to_cancel: %s', self.join(orders_to_cancel))
@@ -276,7 +276,7 @@ class PolxStrategy:
     @staticmethod
     def make_order(currency, price, amount, order_type, timestamp):
         return Order(currency=currency, price=price,
-                     amount=amount, type=order_type, timestamp=timestamp)
+                     amount=amount, _type=order_type, date=timestamp)
 
     @staticmethod
     def join(items):
