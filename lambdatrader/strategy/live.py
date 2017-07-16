@@ -9,6 +9,8 @@ from polx.polxdriver import PolxAccount, UnableToFillException
 from utils import pair_second, pair_from, get_now_timestamp
 
 
+# TODO Use signals and executors for these.
+
 class PolxStrategy:
 
     DELTA = 0.0001
