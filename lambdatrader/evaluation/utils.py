@@ -19,7 +19,7 @@ def statistics_over_periods(trading_info: TradingInfo, start=None, end=None, per
     if end is None:
         end = trading_info.history_end
 
-    statistics = Statistics(trading_info)
+    statistics = Statistics(trading_info=trading_info)
 
     periods = []
     period_stats = []
@@ -28,6 +28,7 @@ def statistics_over_periods(trading_info: TradingInfo, start=None, end=None, per
         periods.append((date, date + 7 * ONE_DAY))
 
     for period in periods:
-        period_stats.append(statistics.calc_stats_for_period(period[0], period[1]))
+        period_stats.append(statistics.calc_stats_for_period(start_date=period[0],
+                                                             end_date=period[1]))
 
-    return statistics.calc_stats_over_periods(period_stats)
+    return statistics.calc_stats_over_periods(period_stats=period_stats)
