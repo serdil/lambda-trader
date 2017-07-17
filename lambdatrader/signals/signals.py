@@ -32,12 +32,12 @@ class SignalGenerator:
 
     def __analyze_pairs(self, pairs) -> Iterable[TradeSignal]:
         for pair in pairs:
-            trade_signal = self.__analyze_pair(pair)
+            trade_signal = self.__analyze_pair(pair=pair)
             if trade_signal:
                 yield trade_signal
 
     def __analyze_pair(self, pair) -> Optional[TradeSignal]:
-        latest_ticker = self.market_info.get_pair_ticker(pair)
+        latest_ticker = self.market_info.get_pair_ticker(pair=pair)
         price = latest_ticker.lowest_ask
         market_date = self.__get_market_date()
 
@@ -54,8 +54,8 @@ class SignalGenerator:
 
         if retracement_ratio_satisfied:
             entry = PriceEntry(price)
-            success_exit = PriceTakeProfitSuccessExit(target_price)
-            failure_exit = TimeoutStopLossFailureExit(self.ORDER_TIMEOUT)
+            success_exit = PriceTakeProfitSuccessExit(price=target_price)
+            failure_exit = TimeoutStopLossFailureExit(timeout=self.ORDER_TIMEOUT)
 
             trade_signal = TradeSignal(date=market_date, exchange=None, pair=pair, entry=entry,
                                        success_exit=success_exit, failure_exit=failure_exit)
@@ -66,7 +66,7 @@ class SignalGenerator:
         return sorted(
             filter(lambda p: self.market_info.get_pair_last_24h_btc_volume(p) >= self.HIGH_VOLUME_LIMIT,
                    self.market_info.pairs()),
-            key=lambda pair: -self.market_info.get_pair_last_24h_btc_volume(pair)
+            key=lambda pair: -self.market_info.get_pair_last_24h_btc_volume(pair=pair)
         )
 
     def __get_market_date(self):
