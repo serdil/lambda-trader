@@ -101,8 +101,8 @@ class PolxStrategy:
             price = latest_ticker.lowest_ask
             self.logger.debug('price: %f', price)
 
-            timestamp = self.market_info.get_market_time()
-            self.logger.debug('timestamp: %d', timestamp)
+            market_date = self.market_info.get_market_time()
+            self.logger.debug('timestamp: %d', market_date)
 
             if self.__get_balance('BTC') >= chunk_size * (1.0 + self.DELTA):
                 self.logger.debug('btc balance is enough')
@@ -127,14 +127,20 @@ class PolxStrategy:
                     self.logger.info('retracement ratio satisfied, attempting trade')
 
                     try:
-                        buy_order = Order(pair_second(pair), OrderType.BUY, price,
-                                          chunk_size / price, timestamp)
+                        buy_order = Order(pair=pair_second(pair),
+                                          _type=OrderType.BUY,
+                                          price=price,
+                                          amount=chunk_size / price,
+                                          date=market_date)
                         self.logger.info('buy_order: %s', str(buy_order))
 
-                        self.account.new_order(buy_order, fill_or_kill=True)
-                        sell_order = Order(pair_second(pair), OrderType.SELL,
-                                           target_price, -1, timestamp)
-                        self.account.new_order(sell_order)
+                        self.account.new_order(order=buy_order, fill_or_kill=True)
+                        sell_order = Order(pair=pair_second(pair),
+                                           _type=OrderType.SELL,
+                                           price=target_price,
+                                           amount=-1,
+                                           date=market_date)
+                        self.account.new_order(order=sell_order)
                         self.__update_balances()
 
                         current_balance = self.__get_estimated_balance()
@@ -172,7 +178,7 @@ class PolxStrategy:
             sell_order = self.make_order(order.get_currency(), price,
                                          -1, OrderType.SELL,
                                          self.market_info.get_market_time())
-            self.account.new_order(sell_order)
+            self.account.new_order(order=sell_order)
             self.logger.info('sell_order_put')
 
             self.__update_balances()
@@ -192,11 +198,11 @@ class PolxStrategy:
             list(
                 filter(
                     lambda p:
-                    self.market_info.get_pair_last_24h_btc_volume(p) >= self.HIGH_VOLUME_LIMIT,
+                    self.market_info.get_pair_last_24h_btc_volume(pair=p) >= self.HIGH_VOLUME_LIMIT,
                     self.market_info.pairs()
                 )
             ),
-            key=lambda pair: -self.market_info.get_pair_last_24h_btc_volume(pair)
+            key=lambda pair: -self.market_info.get_pair_last_24h_btc_volume(pair=pair)
         )
 
     def __get_balance(self, currency):
@@ -275,11 +281,12 @@ class PolxStrategy:
         if num_open_orders == 0 and not log_if_no_open_orders:
             return
         estimated_balance = self.__get_estimated_balance()
-        self.__log_heartbeat_info(estimated_balance, num_open_orders)
+        self.__log_heartbeat_info(estimated_balance=estimated_balance,
+                                  num_open_orders=num_open_orders)
 
     def __log_heartbeat_info(self, estimated_balance, num_open_orders):
         self.logger.info('HEARTBEAT: estimated_balance: %f num_open_orders: %d',
-                         self.__get_estimated_balance(), len(self.__get_pairs_with_open_orders()))
+                         estimated_balance, num_open_orders)
 
     @staticmethod
     def make_order(currency, price, amount, order_type, timestamp):
