@@ -43,16 +43,16 @@ class CandlestickStore:
                 raise ValueError(error_message.format(candlestick.date, newest_date))
 
             self.__history[pair][candlestick.date] = candlestick
-            self.__chunks_in_memory[pair].add(self.__get_chunk_no(candlestick.date))
+            self.__chunks_in_memory[pair].add(self.__get_chunk_no(date=candlestick.date))
 
         def get_candlestick(self, pair, date):
-            self.__sync_pair_if_not_synced(pair)
-            if self.__get_chunk_no(date) not in self.__chunks_in_memory[pair]:
-                self.__load_chunk(pair, self.__get_chunk_no(date))
+            self.__sync_pair_if_not_synced(pair=pair)
+            if self.__get_chunk_no(date=date) not in self.__chunks_in_memory[pair]:
+                self.__load_chunk(pair=pair, chunk_no=self.__get_chunk_no(date=date))
             return self.__history[pair][date]
 
         def get_pair_oldest_date(self, pair):
-            self.__sync_pair_if_not_synced(pair)
+            self.__sync_pair_if_not_synced(pair=pair)
             pair_history = self.__history[pair]
 
             if len(pair_history.keys()) == 0:
@@ -61,7 +61,7 @@ class CandlestickStore:
             return pair_history[pair_history.keys()[0]].date
 
         def get_pair_newest_date(self, pair):
-            self.__sync_pair_if_not_synced(pair)
+            self.__sync_pair_if_not_synced(pair=pair)
             pair_history = self.__history[pair]
 
             if len(pair_history.keys()) == 0:
@@ -71,7 +71,7 @@ class CandlestickStore:
 
         def __sync_with_existing_pairs_in_db(self):
             for pair_table_name in self.__get_pair_table_names():
-                self.__sync_pair_if_not_synced(pair_table_name)
+                self.__sync_pair_if_not_synced(pair=pair_table_name)
 
         def __get_pair_table_names(self):
             query = "SELECT name FROM sqlite_master WHERE type='table'"
@@ -84,27 +84,27 @@ class CandlestickStore:
 
         def __sync_pair_if_not_synced(self, pair):
             if pair not in self.__synced_pairs:
-                self.__sync_pair(pair)
+                self.__sync_pair(pair=pair)
 
         def __sync_pair(self, pair):
-            self.__create_pair_table_if_not_exists(pair)
+            self.__create_pair_table_if_not_exists(pair=pair)
 
             if self.__pair_table_is_empty(pair):
                 return
 
-            self.__load_pair_first_chunk(pair)
-            self.__load_pair_last_chunk(pair)
+            self.__load_pair_first_chunk(pair=pair)
+            self.__load_pair_last_chunk(pair=pair)
 
             self.__synced_pairs.add(pair)
 
         def __load_pair_first_chunk(self, pair):
             self.__load_chunk(pair,
-                              self.__get_chunk_no(self.__get_pair_oldest_date_from_db(pair)),
+                              self.__get_chunk_no(date=self.__get_pair_oldest_date_from_db(pair)),
                               mark_as_chunk_in_db=False)
 
         def __load_pair_last_chunk(self, pair):
             self.__load_chunk(pair,
-                              self.__get_chunk_no(self.__get_pair_newest_date_from_db(pair)),
+                              self.__get_chunk_no(date=self.__get_pair_newest_date_from_db(pair)),
                               mark_as_chunk_in_db=False)
 
         def __pair_table_is_empty(self, pair):
@@ -127,7 +127,7 @@ class CandlestickStore:
             self.__cursor.execute(query, (chunk_start_date, chunk_end_date,))
 
             for row in self.__cursor:
-                candlestick = self.__make_candlestick_from_row(row)
+                candlestick = self.__make_candlestick_from_row(row=row)
                 self.__history[pair][candlestick.date] = candlestick
 
             if mark_as_chunk_in_db:
@@ -139,10 +139,13 @@ class CandlestickStore:
                 for i, chunk_no in enumerate(sorted(chunks_in_memory)):
                     if chunk_no not in self.__chunks_in_db[pair]:
                         if i == 0:
-                            start_from = self.get_pair_oldest_date(pair) % self.ONE_CHUNK_SECONDS
-                            self.__persist_chunk(pair, chunk_no, start_offset=start_from)
+                            start_from = self.get_pair_oldest_date(pair=pair) \
+                                         % self.ONE_CHUNK_SECONDS
+                            self.__persist_chunk(pair=pair,
+                                                 chunk_no=chunk_no,
+                                                 start_offset=start_from)
                         else:
-                            self.__persist_chunk(pair, chunk_no)
+                            self.__persist_chunk(pair=pair, chunk_no=chunk_no)
 
         def __persist_chunk(self, pair, chunk_no, start_offset=0):
             rows_to_insert = []

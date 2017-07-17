@@ -97,7 +97,7 @@ class SignalExecutor(BaseSignalExecutor):
             if market_date - sell_order.get_date() >= signal.failure_exit.timeout:
                 print(datetime.fromtimestamp(market_date), sell_order.get_currency(), 'sl')
                 self.account.cancel_order(order_number=sell_order_number)
-                price = self.market_info.get_pair_ticker(currency_pair=signal.pair).highest_bid
+                price = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
                 self.account.sell(currency=sell_order.get_currency(),
                                   price=price, amount=sell_order.get_amount())
                 profit_amount = trade.amount * price - trade.amount * trade.rate
