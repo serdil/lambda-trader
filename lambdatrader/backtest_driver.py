@@ -36,13 +36,13 @@ trading_info = signal_executor.get_trading_info()
 print()
 print(trading_info)
 
-stats = period_statistics(trading_info)
+stats = period_statistics(trading_info=trading_info)
 
 print()
 print('Statistics over whole trading period:')
 pprint(stats)
 
-stats_over_periods = statistics_over_periods(trading_info)
+stats_over_periods = statistics_over_periods(trading_info=trading_info)
 
 print()
 print('Statistics over weekly periods:')

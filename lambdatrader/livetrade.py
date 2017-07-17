@@ -1,7 +1,7 @@
 from time import sleep
 
 from poloniex import PoloniexError
-from strategy.strategy import PolxStrategy
+from strategy.live import PolxStrategy
 
 from loghandlers import get_logger_with_all_handlers
 from polx.polxdriver import PolxMarketInfo, PolxAccount
@@ -14,7 +14,7 @@ sleep(5)
 account = PolxAccount()
 sleep(10)
 
-strategy = PolxStrategy(market_info, account)
+strategy = PolxStrategy(market_info=market_info, account=account)
 
 logger.info('PolxStrategy running...')
 while True:
