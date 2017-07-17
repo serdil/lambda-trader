@@ -3,6 +3,15 @@ from time import sleep
 
 from poloniex import PoloniexError
 
+from lambdatrader.config import (
+    RETRACEMENT_SIGNALS__ORDER_TIMEOUT,
+    EXECUTOR__NUM_CHUNKS,
+    RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT,
+    EXECUTOR__MIN_CHUNK_SIZE,
+    RETRACEMENT_STRATEGY__MIN_NUM_HIGH_VOLUME_PAIRS,
+    RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR,
+    RETRACEMENT_SIGNALS__RETRACEMENT_RATIO,
+)
 from loghandlers import get_logger_with_all_handlers
 from models.order import Order, OrderType
 from polx.polxdriver import PolxAccount, UnableToFillException
@@ -13,18 +22,15 @@ from utils import pair_second, pair_from, get_now_timestamp
 
 class PolxStrategy:
 
-    DELTA = 0.0001
+    ORDER_TIMEOUT = RETRACEMENT_SIGNALS__ORDER_TIMEOUT
 
-    PERIOD = 300
-    ORDER_TIMEOUT = 1 * 24 * 3600
+    NUM_CHUNKS = EXECUTOR__NUM_CHUNKS
+    HIGH_VOLUME_LIMIT = RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT
+    MIN_CHUNK_SIZE = EXECUTOR__MIN_CHUNK_SIZE
+    MIN_NUM_HIGH_VOLUME_PAIRS = RETRACEMENT_STRATEGY__MIN_NUM_HIGH_VOLUME_PAIRS
+    BUY_PROFIT_FACTOR = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
 
-    NUM_CHUNKS = 10
-    HIGH_VOLUME_LIMIT = 20
-    MIN_CHUNK_SIZE = 0.00011
-    MIN_NUM_HIGH_VOLUME_PAIRS = 1
-    BUY_PROFIT_FACTOR = 1.03
-
-    RETRACEMENT_RATIO = 0.1
+    RETRACEMENT_RATIO = RETRACEMENT_SIGNALS__RETRACEMENT_RATIO
 
     def __init__(self, market_info, account: PolxAccount):
         self.market_info = market_info

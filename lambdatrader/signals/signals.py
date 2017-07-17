@@ -1,5 +1,11 @@
 from typing import Iterable, Optional
 
+from lambdatrader.config import (
+    RETRACEMENT_SIGNALS__ORDER_TIMEOUT,
+    RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT,
+    RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR,
+    RETRACEMENT_SIGNALS__RETRACEMENT_RATIO,
+)
 from models.tradesignal import (
     PriceEntry, PriceTakeProfitSuccessExit, TimeoutStopLossFailureExit, TradeSignal,
 )
@@ -7,10 +13,10 @@ from models.tradesignal import (
 
 class SignalGenerator:
 
-    HIGH_VOLUME_LIMIT = 20
-    ORDER_TIMEOUT = 1 * 24 * 3600
-    BUY_PROFIT_FACTOR = 1.03
-    RETRACEMENT_RATIO = 0.1
+    HIGH_VOLUME_LIMIT = RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT
+    ORDER_TIMEOUT = RETRACEMENT_SIGNALS__ORDER_TIMEOUT
+    BUY_PROFIT_FACTOR = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
+    RETRACEMENT_RATIO = RETRACEMENT_SIGNALS__RETRACEMENT_RATIO
 
     def __init__(self, market_info):
         self.market_info = market_info

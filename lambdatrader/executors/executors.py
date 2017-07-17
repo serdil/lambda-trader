@@ -1,6 +1,10 @@
 from datetime import datetime
 from typing import Iterable
 
+from lambdatrader.config import (
+    EXECUTOR__NUM_CHUNKS,
+    EXECUTOR__MIN_CHUNK_SIZE,
+)
 from models.order import Order, OrderType
 from models.trade import Trade
 from models.tradesignal import TradeSignal
@@ -43,8 +47,8 @@ class BaseSignalExecutor:
 class SignalExecutor(BaseSignalExecutor):
     DELTA = 0.0001
 
-    NUM_CHUNKS = 10
-    MIN_CHUNK_SIZE = 0.00011
+    NUM_CHUNKS = EXECUTOR__NUM_CHUNKS
+    MIN_CHUNK_SIZE = EXECUTOR__MIN_CHUNK_SIZE
 
     def __init__(self, market_info, account):
         super().__init__()
