@@ -70,4 +70,4 @@ class SignalGenerator:
         )
 
     def __get_market_date(self):
-        return self.market_info.get_market_time()
+        return self.market_info.get_market_date()

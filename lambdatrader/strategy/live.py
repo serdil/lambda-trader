@@ -59,7 +59,7 @@ class PolxStrategy:
     def act(self):
         self.logger.debug('acting')
 
-        if self.market_info.get_market_time() - self.__last_order_cancellation_time >= 1800:
+        if self.market_info.get_market_date() - self.__last_order_cancellation_time >= 1800:
             self.__cancel_old_orders()
 
         high_volume_pairs = self.__get_high_volume_pairs()
@@ -101,8 +101,8 @@ class PolxStrategy:
             price = latest_ticker.lowest_ask
             self.logger.debug('price: %f', price)
 
-            market_date = self.market_info.get_market_time()
-            self.logger.debug('timestamp: %d', market_date)
+            market_date = self.market_info.get_market_date()
+            self.logger.debug('date: %d', market_date)
 
             if self.__get_balance('BTC') >= chunk_size * (1.0 + self.DELTA):
                 self.logger.debug('btc balance is enough')
@@ -161,7 +161,7 @@ class PolxStrategy:
         orders_to_cancel = []
 
         for order in self.account.get_open_orders().values():
-            if self.market_info.get_market_time() - order.get_date() >= self.ORDER_TIMEOUT:
+            if self.market_info.get_market_date() - order.get_date() >= self.ORDER_TIMEOUT:
                 orders_to_cancel.append(order)
 
         self.logger.debug('orders_to_cancel: %s', self.join(orders_to_cancel))
@@ -177,13 +177,13 @@ class PolxStrategy:
 
             sell_order = self.make_order(order.get_currency(), price,
                                          -1, OrderType.SELL,
-                                         self.market_info.get_market_time())
+                                         self.market_info.get_market_date())
             self.account.new_order(order=sell_order)
             self.logger.info('sell_order_put')
 
             self.__update_balances()
 
-        self.__last_order_cancellation_time = self.market_info.get_market_time()
+        self.__last_order_cancellation_time = self.market_info.get_market_date()
 
     def __get_pairs_with_open_orders(self):
         self.logger.debug('get_pairs_with_open_orders')
@@ -288,10 +288,13 @@ class PolxStrategy:
         self.logger.info('HEARTBEAT: estimated_balance: %f num_open_orders: %d',
                          estimated_balance, num_open_orders)
 
+    def __get_market_date(self):
+        return self.market_info.get_market_date()
+
     @staticmethod
-    def make_order(currency, price, amount, order_type, timestamp):
+    def make_order(currency, price, amount, order_type, date):
         return Order(currency=currency, price=price,
-                     amount=amount, _type=order_type, date=timestamp)
+                     amount=amount, _type=order_type, date=date)
 
     @staticmethod
     def join(items):

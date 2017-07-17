@@ -68,7 +68,7 @@ class PolxMarketInfo:
     def get_market_time():
         return get_now_timestamp()
 
-    def set_market_time(self, timestamp):
+    def set_market_date(self, date):
         raise NotImplementedError()
 
     def get_pair_candlestick(self, pair, ind=0):

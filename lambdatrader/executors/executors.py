@@ -131,7 +131,7 @@ class SignalExecutor(BaseSignalExecutor):
         return trade_signal_is_valid and btc_balance_is_enough and no_open_trades_with_pair
 
     def __get_market_date(self):
-        return self.market_info.get_market_time()
+        return self.market_info.get_market_date()
 
     @staticmethod
     def __trade_signal_is_valid(trade_signal, market_date):
