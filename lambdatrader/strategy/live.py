@@ -3,26 +3,34 @@ from time import sleep
 
 from poloniex import PoloniexError
 
+from lambdatrader.config import (
+    RETRACEMENT_SIGNALS__ORDER_TIMEOUT,
+    EXECUTOR__NUM_CHUNKS,
+    RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT,
+    EXECUTOR__MIN_CHUNK_SIZE,
+    RETRACEMENT_STRATEGY__MIN_NUM_HIGH_VOLUME_PAIRS,
+    RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR,
+    RETRACEMENT_SIGNALS__RETRACEMENT_RATIO,
+)
 from loghandlers import get_logger_with_all_handlers
 from models.order import Order, OrderType
 from polx.polxdriver import PolxAccount, UnableToFillException
 from utils import pair_second, pair_from, get_now_timestamp
 
 
+# TODO Use signals and executors for these.
+
 class PolxStrategy:
 
-    DELTA = 0.0001
+    ORDER_TIMEOUT = RETRACEMENT_SIGNALS__ORDER_TIMEOUT
 
-    PERIOD = 300
-    ORDER_TIMEOUT = 1 * 24 * 3600
+    NUM_CHUNKS = EXECUTOR__NUM_CHUNKS
+    HIGH_VOLUME_LIMIT = RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT
+    MIN_CHUNK_SIZE = EXECUTOR__MIN_CHUNK_SIZE
+    MIN_NUM_HIGH_VOLUME_PAIRS = RETRACEMENT_STRATEGY__MIN_NUM_HIGH_VOLUME_PAIRS
+    BUY_PROFIT_FACTOR = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
 
-    NUM_CHUNKS = 10
-    HIGH_VOLUME_LIMIT = 20
-    MIN_CHUNK_SIZE = 0.00011
-    MIN_NUM_HIGH_VOLUME_PAIRS = 1
-    BUY_PROFIT_FACTOR = 1.03
-
-    RETRACEMENT_RATIO = 0.1
+    RETRACEMENT_RATIO = RETRACEMENT_SIGNALS__RETRACEMENT_RATIO
 
     def __init__(self, market_info, account: PolxAccount):
         self.market_info = market_info
@@ -51,7 +59,7 @@ class PolxStrategy:
     def act(self):
         self.logger.debug('acting')
 
-        if self.market_info.get_market_time() - self.__last_order_cancellation_time >= 1800:
+        if self.market_info.get_market_date() - self.__last_order_cancellation_time >= 1800:
             self.__cancel_old_orders()
 
         high_volume_pairs = self.__get_high_volume_pairs()
@@ -93,8 +101,8 @@ class PolxStrategy:
             price = latest_ticker.lowest_ask
             self.logger.debug('price: %f', price)
 
-            timestamp = self.market_info.get_market_time()
-            self.logger.debug('timestamp: %d', timestamp)
+            market_date = self.market_info.get_market_date()
+            self.logger.debug('date: %d', market_date)
 
             if self.__get_balance('BTC') >= chunk_size * (1.0 + self.DELTA):
                 self.logger.debug('btc balance is enough')
@@ -119,14 +127,20 @@ class PolxStrategy:
                     self.logger.info('retracement ratio satisfied, attempting trade')
 
                     try:
-                        buy_order = Order(pair_second(pair), OrderType.BUY, price,
-                                          chunk_size / price, timestamp)
+                        buy_order = Order(pair=pair_second(pair),
+                                          _type=OrderType.BUY,
+                                          price=price,
+                                          amount=chunk_size / price,
+                                          date=market_date)
                         self.logger.info('buy_order: %s', str(buy_order))
 
-                        self.account.new_order(buy_order, fill_or_kill=True)
-                        sell_order = Order(pair_second(pair), OrderType.SELL,
-                                           target_price, -1, timestamp)
-                        self.account.new_order(sell_order)
+                        self.account.new_order(order=buy_order, fill_or_kill=True)
+                        sell_order = Order(pair=pair_second(pair),
+                                           _type=OrderType.SELL,
+                                           price=target_price,
+                                           amount=-1,
+                                           date=market_date)
+                        self.account.new_order(order=sell_order)
                         self.__update_balances()
 
                         current_balance = self.__get_estimated_balance()
@@ -147,7 +161,7 @@ class PolxStrategy:
         orders_to_cancel = []
 
         for order in self.account.get_open_orders().values():
-            if self.market_info.get_market_time() - order.get_date() >= self.ORDER_TIMEOUT:
+            if self.market_info.get_market_date() - order.get_date() >= self.ORDER_TIMEOUT:
                 orders_to_cancel.append(order)
 
         self.logger.debug('orders_to_cancel: %s', self.join(orders_to_cancel))
@@ -163,13 +177,13 @@ class PolxStrategy:
 
             sell_order = self.make_order(order.get_currency(), price,
                                          -1, OrderType.SELL,
-                                         self.market_info.get_market_time())
-            self.account.new_order(sell_order)
+                                         self.market_info.get_market_date())
+            self.account.new_order(order=sell_order)
             self.logger.info('sell_order_put')
 
             self.__update_balances()
 
-        self.__last_order_cancellation_time = self.market_info.get_market_time()
+        self.__last_order_cancellation_time = self.market_info.get_market_date()
 
     def __get_pairs_with_open_orders(self):
         self.logger.debug('get_pairs_with_open_orders')
@@ -184,11 +198,11 @@ class PolxStrategy:
             list(
                 filter(
                     lambda p:
-                    self.market_info.get_pair_last_24h_btc_volume(p) >= self.HIGH_VOLUME_LIMIT,
+                    self.market_info.get_pair_last_24h_btc_volume(pair=p) >= self.HIGH_VOLUME_LIMIT,
                     self.market_info.pairs()
                 )
             ),
-            key=lambda pair: -self.market_info.get_pair_last_24h_btc_volume(pair)
+            key=lambda pair: -self.market_info.get_pair_last_24h_btc_volume(pair=pair)
         )
 
     def __get_balance(self, currency):
@@ -267,16 +281,20 @@ class PolxStrategy:
         if num_open_orders == 0 and not log_if_no_open_orders:
             return
         estimated_balance = self.__get_estimated_balance()
-        self.__log_heartbeat_info(estimated_balance, num_open_orders)
+        self.__log_heartbeat_info(estimated_balance=estimated_balance,
+                                  num_open_orders=num_open_orders)
 
     def __log_heartbeat_info(self, estimated_balance, num_open_orders):
         self.logger.info('HEARTBEAT: estimated_balance: %f num_open_orders: %d',
-                         self.__get_estimated_balance(), len(self.__get_pairs_with_open_orders()))
+                         estimated_balance, num_open_orders)
+
+    def __get_market_date(self):
+        return self.market_info.get_market_date()
 
     @staticmethod
-    def make_order(currency, price, amount, order_type, timestamp):
+    def make_order(currency, price, amount, order_type, date):
         return Order(currency=currency, price=price,
-                     amount=amount, _type=order_type, date=timestamp)
+                     amount=amount, _type=order_type, date=date)
 
     @staticmethod
     def join(items):

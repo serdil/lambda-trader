@@ -1,6 +1,10 @@
 from datetime import datetime
 from typing import Iterable
 
+from lambdatrader.config import (
+    EXECUTOR__NUM_CHUNKS,
+    EXECUTOR__MIN_CHUNK_SIZE,
+)
 from models.order import Order, OrderType
 from models.trade import Trade
 from models.tradesignal import TradeSignal
@@ -43,8 +47,8 @@ class BaseSignalExecutor:
 class SignalExecutor(BaseSignalExecutor):
     DELTA = 0.0001
 
-    NUM_CHUNKS = 10
-    MIN_CHUNK_SIZE = 0.00011
+    NUM_CHUNKS = EXECUTOR__NUM_CHUNKS
+    MIN_CHUNK_SIZE = EXECUTOR__MIN_CHUNK_SIZE
 
     def __init__(self, market_info, account):
         super().__init__()
@@ -93,7 +97,7 @@ class SignalExecutor(BaseSignalExecutor):
             if market_date - sell_order.get_date() >= signal.failure_exit.timeout:
                 print(datetime.fromtimestamp(market_date), sell_order.get_currency(), 'sl')
                 self.account.cancel_order(order_number=sell_order_number)
-                price = self.market_info.get_pair_ticker(currency_pair=signal.pair).highest_bid
+                price = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
                 self.account.sell(currency=sell_order.get_currency(),
                                   price=price, amount=sell_order.get_amount())
                 profit_amount = trade.amount * price - trade.amount * trade.rate
@@ -127,7 +131,7 @@ class SignalExecutor(BaseSignalExecutor):
         return trade_signal_is_valid and btc_balance_is_enough and no_open_trades_with_pair
 
     def __get_market_date(self):
-        return self.market_info.get_market_time()
+        return self.market_info.get_market_date()
 
     @staticmethod
     def __trade_signal_is_valid(trade_signal, market_date):

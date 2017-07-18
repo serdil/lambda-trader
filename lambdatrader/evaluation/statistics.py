@@ -17,11 +17,12 @@ class Statistics:
         return self.__trading_info
 
     def calc_stats_for_period(self, start_date, end_date):
-        num_of_trades = self.__num_of_trades(start_date, end_date)
-        maximum_drawdown = self.__max_drawdown(start_date, end_date)
-        roi = self.__roi(start_date, end_date)
-        success_rate = self.__success_rate(start_date, end_date)
-        longest_drawdown_period = self.__longest_drawdown_period(start_date, end_date)
+        num_of_trades = self.__num_of_trades(start_date=start_date, end_date=end_date)
+        maximum_drawdown = self.__max_drawdown(start_date=start_date, end_date=end_date)
+        roi = self.__roi(start_date=start_date, end_date=end_date)
+        success_rate = self.__success_rate(start_date=start_date, end_date=end_date)
+        longest_drawdown_period = self.__longest_drawdown_period(start_date=start_date,
+                                                                 end_date=end_date)
 
         return {
             'num_of_trades': num_of_trades,
@@ -32,7 +33,7 @@ class Statistics:
         }
 
     def __num_of_trades(self, start_date, end_date):
-        return sum([1 for _ in self.__period_trades(start_date, end_date)])
+        return sum([1 for _ in self.__period_trades(start_date=start_date, end_date=end_date)])
 
     def __max_drawdown(self, start_date, end_date):
         max_so_far = 0
@@ -48,8 +49,8 @@ class Statistics:
         return max_drawdown
 
     def __roi(self, start_date, end_date):
-        start_balance = self.__balance_after(start_date)
-        end_balance = self.__balance_before(end_date)
+        start_balance = self.__balance_after(date=start_date)
+        end_balance = self.__balance_before(date=end_date)
 
         return (end_balance - start_balance) / start_balance
 
@@ -70,7 +71,8 @@ class Statistics:
 
     def __longest_drawdown_period(self, start_date, end_date):
         dates_balances = [(date, balance) for date, balance
-         in self.__period_dates_and_balances(start_date, end_date)]
+                          in self.__period_dates_and_balances(start_date=start_date,
+                                                              end_date=end_date)]
 
         longest_drawdown = 0
 
@@ -116,16 +118,16 @@ class Statistics:
 
     @classmethod
     def calc_stats_over_periods(cls, period_stats):
-        longest_drawdown_period = cls.__periods_longest_drawdown_period(period_stats)
-        median_roi = cls.__periods_median_roi(period_stats)
-        first_q_roi = cls.__periods_first_first_q_roi(period_stats)
-        minimum_roi = cls.__periods_minimum_roi(period_stats)
-        median_num_of_trades = cls.__periods_median_num_of_trades(period_stats)
-        first_q_num_of_trades = cls.__periods_first_q_num_of_trades(period_stats)
-        minimum_num_of_trades = cls.__periods_minimum_num_of_trades(period_stats)
-        median_success_rate = cls.__periods_median_success_rate(period_stats)
-        first_q_success_rate = cls.__periods_first_q_success_rate(period_stats)
-        minimum_success_rate = cls.__periods_minimum_success_rate(period_stats)
+        longest_drawdown_period = cls.__periods_longest_drawdown_period(period_stats=period_stats)
+        median_roi = cls.__periods_median_roi(period_stats=period_stats)
+        first_q_roi = cls.__periods_first_first_q_roi(period_stats=period_stats)
+        minimum_roi = cls.__periods_minimum_roi(period_stats=period_stats)
+        median_num_of_trades = cls.__periods_median_num_of_trades(period_stats=period_stats)
+        first_q_num_of_trades = cls.__periods_first_q_num_of_trades(period_stats=period_stats)
+        minimum_num_of_trades = cls.__periods_minimum_num_of_trades(period_stats=period_stats)
+        median_success_rate = cls.__periods_median_success_rate(period_stats=period_stats)
+        first_q_success_rate = cls.__periods_first_q_success_rate(period_stats=period_stats)
+        minimum_success_rate = cls.__periods_minimum_success_rate(period_stats=period_stats)
 
         return {
             'longest_drawdown_period': longest_drawdown_period,
@@ -145,7 +147,7 @@ class Statistics:
         longest_subseq_len = 0
         subseq_len = 0
 
-        rois = cls.__periods_roi_list(period_stats)
+        rois = cls.__periods_roi_list(period_stats=period_stats)
 
         for i, roi in enumerate(rois):
             if roi < 0:
@@ -159,47 +161,47 @@ class Statistics:
 
     @classmethod
     def __periods_median_roi(cls, period_stats):
-        rois = cls.__periods_roi_list(period_stats)
+        rois = cls.__periods_roi_list(period_stats=period_stats)
         return numpy.median(rois)
 
     @classmethod
     def __periods_first_first_q_roi(cls, period_stats):
-        rois = cls.__periods_roi_list(period_stats)
+        rois = cls.__periods_roi_list(period_stats=period_stats)
         return numpy.percentile(rois, 25)
 
     @classmethod
     def __periods_minimum_roi(cls, period_stats):
-        rois = cls.__periods_roi_list(period_stats)
+        rois = cls.__periods_roi_list(period_stats=period_stats)
         return min(rois)
 
     @classmethod
     def __periods_median_num_of_trades(cls, period_stats):
-        num_of_trades = cls.__periods_num_of_trades_list(period_stats)
+        num_of_trades = cls.__periods_num_of_trades_list(period_stats=period_stats)
         return numpy.median(num_of_trades)
 
     @classmethod
     def __periods_first_q_num_of_trades(cls, period_stats):
-        num_of_trades = cls.__periods_num_of_trades_list(period_stats)
+        num_of_trades = cls.__periods_num_of_trades_list(period_stats=period_stats)
         return numpy.percentile(num_of_trades, 25)
 
     @classmethod
     def __periods_minimum_num_of_trades(cls, period_stats):
-        num_of_trades = cls.__periods_num_of_trades_list(period_stats)
+        num_of_trades = cls.__periods_num_of_trades_list(period_stats=period_stats)
         return min(num_of_trades)
 
     @classmethod
     def __periods_median_success_rate(cls, period_stats):
-        success_rates = cls.__periods_success_rate_list(period_stats)
+        success_rates = cls.__periods_success_rate_list(period_stats=period_stats)
         return numpy.median(success_rates)
 
     @classmethod
     def __periods_first_q_success_rate(cls, period_stats):
-        success_rates = cls.__periods_success_rate_list(period_stats)
+        success_rates = cls.__periods_success_rate_list(period_stats=period_stats)
         return numpy.percentile(success_rates, 25)
 
     @classmethod
     def __periods_minimum_success_rate(cls, period_stats):
-        success_rates = cls.__periods_success_rate_list(period_stats)
+        success_rates = cls.__periods_success_rate_list(period_stats=period_stats)
         return min(success_rates)
     
     @staticmethod

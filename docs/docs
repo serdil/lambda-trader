@@ -1,0 +1,13 @@
+
+[Interface] MarketInfo
+getTicks(exchange: ExchangeEnum) -> Ticker: Returns latest ticker from exchange.
+getTickHistory(exchange: ExchangeEnum, start_date) -> List<Ticker>
+
+[Type] Ticker
+{timestamp: [], ticker: {[pair1]: {bid: [], ask: [], high24h: [], low24h[], vol24h:[]}, ...}}
+
+[Interface] Account
+
+[Class] SignalGenerator
+
+[Class] SignalExecutor

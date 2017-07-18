@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List, Dict, Iterable
+from typing import Dict, Iterable
 
 from backtesting.marketinfo import BacktestMarketInfo
 
@@ -22,12 +22,12 @@ class Account:
         if self.__balances[currency] < amount:
             raise IllegalOrderException
         self.__balances[currency] -= amount
-        self.__balances['BTC'] += amount * price - self.get_fee(amount * price)
+        self.__balances['BTC'] += amount * price - self.get_fee(amount=amount * price)
 
     def buy(self, currency, price, amount):
         if self.__balances['BTC'] < amount * price:
             raise IllegalOrderException
-        self.__balances[currency] += amount - self.get_fee(amount)
+        self.__balances[currency] += amount - self.get_fee(amount=amount)
         self.__balances['BTC'] -= amount * price
 
     def new_order(self, order: Order):
@@ -54,7 +54,7 @@ class Account:
                 order_ind = i
                 break
         if order_ind is not None:
-            self.__reverse_order_effect(self.__orders[order_ind])
+            self.__reverse_order_effect(order=self.__orders[order_ind])
             del self.__orders[order_ind]
 
     def __reverse_order_effect(self, order: Order):
@@ -84,8 +84,8 @@ class Account:
     def execute_orders(self, market_info: BacktestMarketInfo):
         for order in self.__orders:
             if not order.get_is_filled():
-                if self.order_satisfied(order, market_info):
-                    self.fill_order(order)
+                if self.order_satisfied(order=order, market_info=market_info):
+                    self.fill_order(order=order)
                     self.__remove_filled_orders()
 
     @staticmethod
@@ -99,10 +99,9 @@ class Account:
             return candlestick.low <= order.get_price()
 
     def fill_order(self, order: Order):
-        #print('executing')
         if order.get_type() == OrderType.SELL:
             btc_value = order.get_amount() * order.get_price()
-            self.__balances['BTC'] += btc_value - self.get_fee(btc_value)
+            self.__balances['BTC'] += btc_value - self.get_fee(amount=btc_value)
         elif order.get_type() == OrderType.BUY:
             balance_addition = order.get_amount() - self.get_fee(order.get_amount())
             self.__balances[order.get_currency()] += balance_addition
@@ -144,4 +143,4 @@ class Account:
         self.__orders = list(filter(lambda order: not order.get_is_filled(), self.__orders))
 
     def __repr__(self):
-        return 'Account(' + str({'balances': self.__balances, 'orders': self.__orders}) + ')'
+        return 'Account(balances={}, orders={})'.format(self.__balances, self.__orders)
