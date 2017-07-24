@@ -8,7 +8,7 @@ from config import (
 )
 from utils import get_project_directory
 
-_1MB = 1024 * 1024 * 1024
+_1MB = 1024 * 1024
 _5MB = 5 * _1MB
 _256MB = 256 * _1MB
 _1GB = 1024 * _1MB
