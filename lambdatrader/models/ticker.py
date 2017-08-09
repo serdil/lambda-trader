@@ -1,4 +1,3 @@
-
 class Ticker:
     def __init__(self, lowest_ask, highest_bid, last, base_volume,
                  quote_volume, percent_change, low24h, high24h, is_frozen=False, _id=None):

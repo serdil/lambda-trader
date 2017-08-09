@@ -1,5 +1,5 @@
-from evaluation.statistics import Statistics
-from models.tradinginfo import TradingInfo
+from lambdatrader.evaluation.statistics import Statistics
+from lambdatrader.models.tradinginfo import TradingInfo
 
 ONE_DAY = 24 * 3600
 

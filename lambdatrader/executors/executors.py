@@ -5,11 +5,11 @@ from lambdatrader.config import (
     EXECUTOR__NUM_CHUNKS,
     EXECUTOR__MIN_CHUNK_SIZE,
 )
-from models.order import Order, OrderType
-from models.trade import Trade
-from models.tradesignal import TradeSignal
-from models.tradinginfo import TradingInfo
-from utils import pair_from, pair_second
+from lambdatrader.models.order import Order, OrderType
+from lambdatrader.models.trade import Trade
+from lambdatrader.models.tradesignal import TradeSignal
+from lambdatrader.models.tradinginfo import TradingInfo
+from lambdatrader.utils import pair_from, pair_second
 
 
 class BaseSignalExecutor:

@@ -1,10 +1,10 @@
 from pprint import pprint
 
-from backtesting.account import Account
-from backtesting.marketinfo import BacktestMarketInfo
-from evaluation.utils import statistics_over_periods, period_statistics
-from executors.executors import SignalExecutor
-from history.store import CandlestickStore
+from lambdatrader.backtesting.account import Account
+from lambdatrader.backtesting.marketinfo import BacktestMarketInfo
+from lambdatrader.evaluation.utils import statistics_over_periods, period_statistics
+from lambdatrader.executors.executors import SignalExecutor
+from lambdatrader.history.store import CandlestickStore
 
 from backtesting import backtest
 from signals.signals import SignalGenerator
