@@ -6,7 +6,7 @@ from lambdatrader.config import (
     RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR,
     RETRACEMENT_SIGNALS__RETRACEMENT_RATIO,
 )
-from models.tradesignal import (
+from lambdatrader.models.tradesignal import (
     PriceEntry, PriceTakeProfitSuccessExit, TimeoutStopLossFailureExit, TradeSignal,
 )
 

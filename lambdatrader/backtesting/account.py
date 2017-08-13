@@ -1,10 +1,9 @@
 from collections import defaultdict
 from typing import Dict, Iterable
 
-from backtesting.marketinfo import BacktestMarketInfo
-
-from models.order import Order, OrderType
-from utils import pair_from
+from lambdatrader.backtesting.marketinfo import BacktestMarketInfo
+from lambdatrader.models.order import Order, OrderType
+from lambdatrader.utils import pair_from
 
 
 class IllegalOrderException(Exception):

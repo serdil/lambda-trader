@@ -1,8 +1,7 @@
 from datetime import datetime
 
-from backtesting.marketinfo import BacktestMarketInfo
-
-from backtesting.account import Account
+from lambdatrader.backtesting.marketinfo import BacktestMarketInfo
+from lambdatrader.backtesting.account import Account
 from utils import date_ceil, date_floor
 
 

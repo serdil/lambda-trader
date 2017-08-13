@@ -1,4 +1,4 @@
-from models.ticker import Ticker
+from lambdatrader.models.ticker import Ticker
 
 
 class BacktestMarketInfo:

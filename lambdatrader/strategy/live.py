@@ -12,10 +12,10 @@ from lambdatrader.config import (
     RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR,
     RETRACEMENT_SIGNALS__RETRACEMENT_RATIO,
 )
-from loghandlers import get_logger_with_all_handlers
-from models.order import Order, OrderType
-from polx.polxdriver import PolxAccount, UnableToFillException
-from utils import pair_second, pair_from, get_now_timestamp
+from lambdatrader.loghandlers import get_logger_with_all_handlers
+from lambdatrader.models.order import Order, OrderType
+from lambdatrader.polx.polxdriver import PolxAccount, UnableToFillException
+from lambdatrader.utils import pair_second, pair_from, get_now_timestamp
 
 
 # TODO Use signals and executors for these.
