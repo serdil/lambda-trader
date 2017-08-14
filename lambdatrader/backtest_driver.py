@@ -11,11 +11,13 @@ from signals.signals import SignalGenerator
 
 ONE_DAY = 24 * 3600
 
+BACKTEST_NUM_DAYS = ONE_DAY * 7
+
 market_info = BacktestMarketInfo(candlestick_store=CandlestickStore.get_instance())
 
 account = Account(balances={'BTC': 100})
 
-start_date = market_info.get_max_pair_end_time() - ONE_DAY * 7
+start_date = market_info.get_max_pair_end_time() - BACKTEST_NUM_DAYS
 end_date = market_info.get_max_pair_end_time()
 
 signal_generator = SignalGenerator(market_info=market_info)
