@@ -185,7 +185,7 @@ class SignalExecutor(BaseSignalExecutor):
     def __print_trade(self, pair):
         estimated_balance = self.account.get_estimated_balance(market_info=self.market_info)
 
-        print('TRADE:', pair)
+        print(datetime.fromtimestamp(self.__get_market_date()), 'TRADE:', pair)
         print('balance:', estimated_balance)
         print('open orders:', len(list(self.account.get_open_sell_orders())))
 
