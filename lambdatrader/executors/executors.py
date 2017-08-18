@@ -18,7 +18,9 @@ class BaseSignalExecutor:
         self.__trades = []
         self.__history_start = None
         self.__history_end = None
-        self.__balances = {}
+        self.__estimated_balances = {}
+        self.__frozen_balances = {}
+        self.__latest_frozen_balance = None
 
     def set_history_start(self, date):
         self.__history_start = date
@@ -34,13 +36,25 @@ class BaseSignalExecutor:
         end_date = date
         trade = Trade(_id=trade_id, start_date=start_date, end_date=end_date, profit=profit_amount)
         self.__trades.append(trade)
+        self.__set_frozen_balance(date=date, balance=self.get_frozen_balance() + profit_amount)
 
-    def declare_balance(self, date, balance):
-        self.__balances[date] = balance
+    def declare_estimated_balance(self, date, balance):
+        self.__estimated_balances[date] = balance
+        if self.__latest_frozen_balance is None:
+            self.__set_frozen_balance(date=date, balance=balance)
+
+    def get_frozen_balance(self):
+        return self.__latest_frozen_balance
+
+    def __set_frozen_balance(self, date, balance):
+        self.__frozen_balances[date] = balance
+        self.__latest_frozen_balance = balance
 
     def get_trading_info(self):
         return TradingInfo(history_start=self.__history_start, history_end=self.__history_end,
-                           balances=dict(self.__balances), trades=list(self.__trades))
+                           estimated_balances=dict(self.__estimated_balances),
+                           frozen_balances=dict(self.__frozen_balances),
+                           trades=list(self.__trades))
 
 
 #  Assuming PriceTakeProfitSuccessExit and TimeoutStopLossFailureExit for now.
@@ -65,7 +79,7 @@ class SignalExecutor(BaseSignalExecutor):
 
         market_date = self.__get_market_date()
         estimated_balance = self.account.get_estimated_balance(market_info=self.market_info)
-        self.declare_balance(date=market_date, balance=estimated_balance)
+        self.declare_estimated_balance(date=market_date, balance=estimated_balance)
 
         self.__execute_new_signals(trade_signals=signals)
 
@@ -184,10 +198,14 @@ class SignalExecutor(BaseSignalExecutor):
 
     def __print_trade(self, pair):
         estimated_balance = self.account.get_estimated_balance(market_info=self.market_info)
+        frozen_balance = self.get_frozen_balance()
 
+        print()
         print(datetime.fromtimestamp(self.__get_market_date()), 'TRADE:', pair)
-        print('balance:', estimated_balance)
-        print('open orders:', len(list(self.account.get_open_sell_orders())))
+        print('estimated_balance:', estimated_balance)
+        print('frozen_balance:', frozen_balance)
+        print('num_open_orders:', len(list(self.account.get_open_sell_orders())))
+        print()
 
     class InternalTrade:
         def __init__(self, currency, amount, rate, target_rate):
