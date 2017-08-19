@@ -43,6 +43,7 @@ for chat_id in TELEGRAM_CHAT_IDS:
     handler = TelegramHandler(token=TELEGRAM_TOKEN, chat_id=chat_id)
     handler.setLevel(logging.INFO)
     handler.setFormatter(formatter)
+    telegram_handlers.append(handler)
 
 
 def add_all_handlers(logger):
