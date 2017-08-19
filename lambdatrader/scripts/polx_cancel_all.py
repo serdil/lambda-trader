@@ -1,4 +1,4 @@
-from polx.polxclient import polo
+from lambdatrader.polx.polxclient import polo
 
 from lambdatrader.utils import pair_from
 
