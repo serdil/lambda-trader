@@ -66,7 +66,7 @@ class PolxMarketInfo:
         t.start()
 
     @staticmethod
-    def get_market_time():
+    def get_market_date():
         return get_now_timestamp()
 
     def set_market_date(self, date):
