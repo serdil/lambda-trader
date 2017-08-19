@@ -4,13 +4,10 @@ from time import sleep
 from poloniex import PoloniexError
 
 from lambdatrader.config import (
-    RETRACEMENT_SIGNALS__ORDER_TIMEOUT,
-    EXECUTOR__NUM_CHUNKS,
-    RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT,
-    EXECUTOR__MIN_CHUNK_SIZE,
-    RETRACEMENT_STRATEGY__MIN_NUM_HIGH_VOLUME_PAIRS,
-    RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR,
-    RETRACEMENT_SIGNALS__RETRACEMENT_RATIO,
+    RETRACEMENT_SIGNALS__ORDER_TIMEOUT, EXECUTOR__NUM_CHUNKS,
+    RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT, EXECUTOR__MIN_CHUNK_SIZE,
+    RETRACEMENT_STRATEGY__MIN_NUM_HIGH_VOLUME_PAIRS, RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR,
+    RETRACEMENT_SIGNALS__RETRACEMENT_RATIO, POLONIEX_TRADING_PAIRS,
 )
 from lambdatrader.loghandlers import get_logger_with_all_handlers
 from lambdatrader.models.order import Order, OrderType
@@ -21,6 +18,8 @@ from lambdatrader.utils import pair_second, pair_from, get_now_timestamp
 # TODO Use signals and executors for these.
 
 class PolxStrategy:
+
+    DELTA = 0.0001
 
     ORDER_TIMEOUT = RETRACEMENT_SIGNALS__ORDER_TIMEOUT
 
@@ -50,6 +49,8 @@ class PolxStrategy:
 
         self.__update_estimated_balance()
         self.__start_heartbeat_thread()
+
+        self.__allowed_trading_pairs_set = set(POLONIEX_TRADING_PAIRS)
 
     def __start_heartbeat_thread(self):
         self.logger.debug('starting_heartbeat_thread')
@@ -84,7 +85,7 @@ class PolxStrategy:
 
         if len(high_volume_pairs) >= self.MIN_NUM_HIGH_VOLUME_PAIRS:
             for pair in high_volume_pairs:
-                if pair not in open_pairs:
+                if pair not in open_pairs and pair in POLONIEX_TRADING_PAIRS:
                     self.act_on_pair(pair)
 
     def act_on_pair(self, pair):
@@ -127,7 +128,7 @@ class PolxStrategy:
                     self.logger.info('retracement ratio satisfied, attempting trade')
 
                     try:
-                        buy_order = Order(pair=pair_second(pair),
+                        buy_order = Order(currency=pair_second(pair),
                                           _type=OrderType.BUY,
                                           price=price,
                                           amount=chunk_size / price,
@@ -135,7 +136,7 @@ class PolxStrategy:
                         self.logger.info('buy_order: %s', str(buy_order))
 
                         self.account.new_order(order=buy_order, fill_or_kill=True)
-                        sell_order = Order(pair=pair_second(pair),
+                        sell_order = Order(currency=pair_second(pair),
                                            _type=OrderType.SELL,
                                            price=target_price,
                                            amount=-1,
@@ -299,4 +300,3 @@ class PolxStrategy:
     @staticmethod
     def join(items):
         return ' '.join([str(item) for item in items])
-
