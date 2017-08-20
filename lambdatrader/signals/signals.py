@@ -1,5 +1,7 @@
 from typing import Iterable, Optional
 
+from collections import defaultdict
+
 from lambdatrader.config import (
     RETRACEMENT_SIGNALS__ORDER_TIMEOUT,
     RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT,
@@ -17,6 +19,8 @@ class SignalGenerator:
     ORDER_TIMEOUT = RETRACEMENT_SIGNALS__ORDER_TIMEOUT
     BUY_PROFIT_FACTOR = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
     RETRACEMENT_RATIO = RETRACEMENT_SIGNALS__RETRACEMENT_RATIO
+
+    PAIRS_RET_RATIOS = defaultdict(lambda: RETRACEMENT_SIGNALS__RETRACEMENT_RATIO)
 
     def __init__(self, market_info):
         self.market_info = market_info
@@ -36,7 +40,14 @@ class SignalGenerator:
             if trade_signal:
                 yield trade_signal
 
+    def __inc_ret_ratio_small_add(self, pair):
+        self.PAIRS_RET_RATIOS[pair] = self.PAIRS_RET_RATIOS[pair] + 0.0001
+
+    def __dec_ret_ratio(self, pair):
+        self.PAIRS_RET_RATIOS[pair] = self.PAIRS_RET_RATIOS[pair] * 9.5 / 10
+
     def __analyze_pair(self, pair) -> Optional[TradeSignal]:
+        self.__inc_ret_ratio_small_add(pair)
         latest_ticker = self.market_info.get_pair_ticker(pair=pair)
         price = latest_ticker.lowest_ask
         market_date = self.__get_market_date()
@@ -50,9 +61,10 @@ class SignalGenerator:
             return
 
         current_retracement_ratio = (target_price - price) / (day_high_price - price)
-        retracement_ratio_satisfied = current_retracement_ratio <= self.RETRACEMENT_RATIO
+        retracement_ratio_satisfied = current_retracement_ratio <= self.PAIRS_RET_RATIOS[pair]
 
         if retracement_ratio_satisfied:
+            self.__dec_ret_ratio(pair)
             entry = PriceEntry(price)
             success_exit = PriceTakeProfitSuccessExit(price=target_price)
             failure_exit = TimeoutStopLossFailureExit(timeout=self.ORDER_TIMEOUT)
