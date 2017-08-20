@@ -21,12 +21,12 @@ class Account:
         if self.__balances[currency] < amount:
             raise IllegalOrderException
         self.__balances[currency] -= amount
-        self.__balances['BTC'] += amount * price - self.get_fee(amount=amount * price)
+        self.__balances['BTC'] += amount * price - self.get_taker_fee(amount=amount * price)
 
     def buy(self, currency, price, amount):
         if self.__balances['BTC'] < amount * price:
             raise IllegalOrderException
-        self.__balances[currency] += amount - self.get_fee(amount=amount)
+        self.__balances[currency] += amount - self.get_taker_fee(amount=amount)
         self.__balances['BTC'] -= amount * price
 
     def new_order(self, order: Order):
@@ -100,14 +100,17 @@ class Account:
     def fill_order(self, order: Order):
         if order.get_type() == OrderType.SELL:
             btc_value = order.get_amount() * order.get_price()
-            self.__balances['BTC'] += btc_value - self.get_fee(amount=btc_value)
+            self.__balances['BTC'] += btc_value - self.get_taker_fee(amount=btc_value)
         elif order.get_type() == OrderType.BUY:
-            balance_addition = order.get_amount() - self.get_fee(order.get_amount())
+            balance_addition = order.get_amount() - self.get_taker_fee(order.get_amount())
             self.__balances[order.get_currency()] += balance_addition
         order.fill()
 
-    def get_fee(self, amount):
+    def get_taker_fee(self, amount):
         return amount * 0.0025
+
+    def get_maker_fee(self, amount):
+        return amount * 0.0015
 
     def get_balance(self, currency):
         return self.__balances[currency]

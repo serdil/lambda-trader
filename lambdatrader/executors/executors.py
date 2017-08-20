@@ -100,7 +100,8 @@ class SignalExecutor(BaseSignalExecutor):
         if sell_order_number not in open_sell_order_numbers:  # Price TP hit
             print(datetime.fromtimestamp(market_date), sell_order.get_currency(), 'tp')
             close_date = market_date
-            profit_amount = trade.amount * trade.target_rate - trade.amount * trade.rate
+            profit_amount = self.__calc_profit_amount(amount=trade.amount, buy_rate=trade.rate,
+                                                      sell_rate=trade.target_rate)
             self.declare_trade_end(date=close_date,
                                    trade_id=trade_number, profit_amount=profit_amount)
             del self.__trades[trade_number]
@@ -114,12 +115,22 @@ class SignalExecutor(BaseSignalExecutor):
                 price = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
                 self.account.sell(currency=sell_order.get_currency(),
                                   price=price, amount=sell_order.get_amount())
-                profit_amount = trade.amount * price - trade.amount * trade.rate
+                profit_amount = self.__calc_profit_amount(amount=trade.amount, buy_rate=trade.rate,
+                                                          sell_rate=price)
                 self.declare_trade_end(date=market_date,
                                        trade_id=trade_number, profit_amount=profit_amount)
 
                 del self.__trades[trade_number]
                 del self.__tracked_signals[signal.id]
+
+    def __calc_profit_amount(self, amount, buy_rate, sell_rate):
+        bought_amount = amount - self.__get_fee(amount=amount)
+        btc_omitted = amount * buy_rate
+        btc_added = bought_amount * sell_rate - self.__get_fee(amount=bought_amount*sell_rate)
+        return btc_added - btc_omitted
+
+    def __get_fee(self, amount):
+        return self.account.get_taker_fee(amount=amount)
 
     def __get_pairs_with_open_orders(self):
         return set([pair_from('BTC', order.get_currency()) for order in
