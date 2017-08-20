@@ -124,13 +124,16 @@ class SignalExecutor(BaseSignalExecutor):
                 del self.__tracked_signals[signal.id]
 
     def __calc_profit_amount(self, amount, buy_rate, sell_rate):
-        bought_amount = amount - self.__get_fee(amount=amount)
+        bought_amount = amount - self.__get_taker_fee(amount=amount)
         btc_omitted = amount * buy_rate
-        btc_added = bought_amount * sell_rate - self.__get_fee(amount=bought_amount*sell_rate)
+        btc_added = bought_amount * sell_rate - self.__get_maker_fee(amount=bought_amount * sell_rate)
         return btc_added - btc_omitted
 
-    def __get_fee(self, amount):
+    def __get_taker_fee(self, amount):
         return self.account.get_taker_fee(amount=amount)
+
+    def __get_maker_fee(self, amount):
+        return self.account.get_maker_fee(amount=amount)
 
     def __get_pairs_with_open_orders(self):
         return set([pair_from('BTC', order.get_currency()) for order in
