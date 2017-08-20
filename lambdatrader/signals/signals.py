@@ -21,6 +21,7 @@ class SignalGenerator:
     RETRACEMENT_RATIO = RETRACEMENT_SIGNALS__RETRACEMENT_RATIO
 
     PAIRS_RET_RATIOS = defaultdict(lambda: RETRACEMENT_SIGNALS__RETRACEMENT_RATIO)
+    PAIRS_PROF = defaultdict(lambda: RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR)
 
     def __init__(self, market_info):
         self.market_info = market_info
@@ -41,18 +42,28 @@ class SignalGenerator:
                 yield trade_signal
 
     def __inc_ret_ratio_small_add(self, pair):
-        self.PAIRS_RET_RATIOS[pair] = self.PAIRS_RET_RATIOS[pair] + 0.0001
+        #self.PAIRS_RET_RATIOS[pair] = self.PAIRS_RET_RATIOS[pair] + 0.0001
+        pass
 
     def __dec_ret_ratio(self, pair):
-        self.PAIRS_RET_RATIOS[pair] = self.PAIRS_RET_RATIOS[pair] * 9.5 / 10
+        self.PAIRS_RET_RATIOS[pair] = self.PAIRS_RET_RATIOS[pair] * 9.9 / 10
+
+    def __inc_prof_fac(self, pair):
+        #self.PAIRS_PROF[pair] = self.PAIRS_PROF[pair] * 10 / 8
+        pass
+
+    def __dec_prof_fac(self, pair):
+        #self.PAIRS_PROF[pair] = max(self.PAIRS_PROF[pair] - 0.01, 1.03)
+        pass
 
     def __analyze_pair(self, pair) -> Optional[TradeSignal]:
         self.__inc_ret_ratio_small_add(pair)
+        self.__dec_prof_fac(pair)
         latest_ticker = self.market_info.get_pair_ticker(pair=pair)
         price = latest_ticker.lowest_ask
         market_date = self.__get_market_date()
 
-        target_price = price * self.BUY_PROFIT_FACTOR
+        target_price = price * self.PAIRS_PROF[pair]
         day_high_price = latest_ticker.high24h
 
         price_is_lower_than_day_high = target_price < day_high_price
@@ -65,6 +76,7 @@ class SignalGenerator:
 
         if retracement_ratio_satisfied:
             self.__dec_ret_ratio(pair)
+            self.__inc_prof_fac(pair)
             entry = PriceEntry(price)
             success_exit = PriceTakeProfitSuccessExit(price=target_price)
             failure_exit = TimeoutStopLossFailureExit(timeout=self.ORDER_TIMEOUT)

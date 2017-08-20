@@ -84,6 +84,7 @@ class SignalExecutor(BaseSignalExecutor):
         self.__execute_new_signals(trade_signals=signals)
 
     def __process_signals(self):
+        #self.NUM_CHUNKS = max(self.NUM_CHUNKS - 0.001, 3)
         for signal_info in list(self.__tracked_signals.values()):
             self.__process_signal(signal_info=signal_info)
 
@@ -174,6 +175,8 @@ class SignalExecutor(BaseSignalExecutor):
                [order.get_currency() for order in self.account.get_open_sell_orders()]
 
     def __execute_signal(self, signal: TradeSignal, position_size):
+        #if self.NUM_CHUNKS - len(list(self.account.get_open_sell_orders())) < 2:
+        #    self.NUM_CHUNKS += 1
         entry_price = signal.entry.price
         target_price = signal.success_exit.price
         pair = signal.pair
@@ -212,6 +215,7 @@ class SignalExecutor(BaseSignalExecutor):
         frozen_balance = self.get_frozen_balance()
 
         print()
+        print('num_chunks', self.NUM_CHUNKS)
         print(datetime.fromtimestamp(self.__get_market_date()), 'TRADE:', pair)
         print('estimated_balance:', estimated_balance)
         print('frozen_balance:', frozen_balance)

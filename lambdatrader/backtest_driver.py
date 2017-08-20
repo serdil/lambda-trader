@@ -11,7 +11,7 @@ from signals.signals import SignalGenerator
 
 ONE_DAY = 24 * 3600
 
-BACKTEST_NUM_DAYS = ONE_DAY * 35
+BACKTEST_NUM_DAYS = ONE_DAY * 63
 
 market_info = BacktestMarketInfo(candlestick_store=CandlestickStore.get_instance())
 
