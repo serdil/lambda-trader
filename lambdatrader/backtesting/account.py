@@ -100,9 +100,9 @@ class Account:
     def fill_order(self, order: Order):
         if order.get_type() == OrderType.SELL:
             btc_value = order.get_amount() * order.get_price()
-            self.__balances['BTC'] += btc_value - self.get_taker_fee(amount=btc_value)
+            self.__balances['BTC'] += btc_value - self.get_maker_fee(amount=btc_value)
         elif order.get_type() == OrderType.BUY:
-            balance_addition = order.get_amount() - self.get_taker_fee(order.get_amount())
+            balance_addition = order.get_amount() - self.get_maker_fee(order.get_amount())
             self.__balances[order.get_currency()] += balance_addition
         order.fill()
 
