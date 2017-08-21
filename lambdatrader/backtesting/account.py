@@ -1,10 +1,9 @@
 from collections import defaultdict
-from typing import List, Dict, Iterable
+from typing import Dict, Iterable
 
-from backtesting.marketinfo import BacktestMarketInfo
-
-from models.order import Order, OrderType
-from utils import pair_from
+from lambdatrader.backtesting.marketinfo import BacktestMarketInfo
+from lambdatrader.models.order import Order, OrderType
+from lambdatrader.utils import pair_from
 
 
 class IllegalOrderException(Exception):
@@ -12,28 +11,23 @@ class IllegalOrderException(Exception):
 
 
 class Account:
-    def __init__(self, balances: Dict={'BTC': 100}, orders: List[Order]=[]):
-        self.__balance_series = []
+    def __init__(self, balances: Dict={'BTC': 100}):
         self.__balances = defaultdict(int)
         for currency, balance in balances.items():
             self.__balances[currency] = balance
         self.__orders = []
-        for order in orders:
-            self.__orders.append(order)
 
-    def sell(self, currency, price, amount, market_info):
+    def sell(self, currency, price, amount):
         if self.__balances[currency] < amount:
             raise IllegalOrderException
         self.__balances[currency] -= amount
-        self.__balances['BTC'] += amount * price - self.get_fee(amount * price)
-        self.sample_balance(market_info)
+        self.__balances['BTC'] += amount * price - self.get_taker_fee(amount=amount * price)
 
-    def buy(self, currency, price, amount, market_info):
+    def buy(self, currency, price, amount):
         if self.__balances['BTC'] < amount * price:
             raise IllegalOrderException
-        self.__balances[currency] += amount - self.get_fee(amount)
+        self.__balances[currency] += amount - self.get_taker_fee(amount=amount)
         self.__balances['BTC'] -= amount * price
-        self.sample_balance(market_info)
 
     def new_order(self, order: Order):
         if order.get_type() == OrderType.SELL:
@@ -59,10 +53,10 @@ class Account:
                 order_ind = i
                 break
         if order_ind is not None:
-            self.reverse_order_effect(self.__orders[order_ind])
+            self.__reverse_order_effect(order=self.__orders[order_ind])
             del self.__orders[order_ind]
 
-    def reverse_order_effect(self, order: Order):
+    def __reverse_order_effect(self, order: Order):
         if order.get_type() == OrderType.SELL:
             self.__balances[order.get_currency()] += order.get_amount()
         elif order.get_type() == OrderType.BUY:
@@ -72,37 +66,51 @@ class Account:
         for order in self.__orders:
             if not order.get_is_filled():
                 yield order
+        return
+
+    def get_open_sell_orders(self):
+        for order in self.get_open_orders():
+            if order.get_type() == OrderType.SELL:
+                yield order
+        return
+
+    def get_open_buy_orders(self):
+        for order in self.get_open_orders():
+            if order.get_type() == OrderType.BUY:
+                yield order
+        return
 
     def execute_orders(self, market_info: BacktestMarketInfo):
         for order in self.__orders:
             if not order.get_is_filled():
-                if self.order_satisfied(order, market_info):
-                    self.fill_order(order)
-                    self.remove_filled_orders()
-                    self.sample_balance(market_info)
+                if self.order_satisfied(order=order, market_info=market_info):
+                    self.fill_order(order=order)
+                    self.__remove_filled_orders()
 
     @staticmethod
     def order_satisfied(order: Order, market_info: BacktestMarketInfo):
-        try:
-            candlestick = market_info.get_pair_latest_candlestick(pair_from('BTC', order.get_currency()))
-            if order.get_type() == OrderType.SELL:
-                return candlestick.high >= order.get_price()
-            elif order.get_type() == OrderType.BUY:
-                return candlestick.low <= order.get_price()
-        except KeyError:
-            return False
+        candlestick = market_info.get_pair_latest_candlestick(
+            pair_from('BTC', order.get_currency())
+        )
+        if order.get_type() == OrderType.SELL:
+            return candlestick.high >= order.get_price()
+        elif order.get_type() == OrderType.BUY:
+            return candlestick.low <= order.get_price()
 
     def fill_order(self, order: Order):
-        print('executing')
         if order.get_type() == OrderType.SELL:
             btc_value = order.get_amount() * order.get_price()
-            self.__balances['BTC'] += btc_value - self.get_fee(btc_value)
+            self.__balances['BTC'] += btc_value - self.get_maker_fee(amount=btc_value)
         elif order.get_type() == OrderType.BUY:
-            self.__balances[order.get_currency()] += order.get_amount() - self.get_fee(order.get_amount())
+            balance_addition = order.get_amount() - self.get_maker_fee(order.get_amount())
+            self.__balances[order.get_currency()] += balance_addition
         order.fill()
 
-    def get_fee(self, amount):
+    def get_taker_fee(self, amount):
         return amount * 0.0025
+
+    def get_maker_fee(self, amount):
+        return amount * 0.0015
 
     def get_balance(self, currency):
         return self.__balances[currency]
@@ -114,7 +122,8 @@ class Account:
                 estimated_balance += balance
             else:
                 try:
-                    candlestick = market_info.get_pair_latest_candlestick(self.pair_from(currency))
+                    candlestick = market_info.get_pair_latest_candlestick(
+                                                                pair_from('BTC', currency))
                     estimated_balance += balance * candlestick.close
                 except KeyError as e:
                     print('KeyError: ', currency, e)
@@ -122,7 +131,9 @@ class Account:
             if not order.get_is_filled():
                 if order.get_type() == OrderType.SELL:
                     try:
-                        candlestick = market_info.get_pair_latest_candlestick(self.pair_from(order.get_currency()))
+                        candlestick = market_info.get_pair_latest_candlestick(
+                            pair_from('BTC', order.get_currency())
+                        )
                         estimated_balance += order.get_amount() * candlestick.close
                     except KeyError as e:
                         print('KeyError: ', order.get_currency(), e)
@@ -130,31 +141,8 @@ class Account:
                     estimated_balance += order.get_amount() * order.get_price()
         return estimated_balance
 
-    def remove_filled_orders(self):
+    def __remove_filled_orders(self):
         self.__orders = list(filter(lambda order: not order.get_is_filled(), self.__orders))
 
-    def sample_balance(self, market_info):
-        self.__balance_series.append(self.get_estimated_balance(market_info))
-
-    def max_avg_drawback(self):
-        total_drawback = 0.0
-        num_drawbacks = 0
-        max_drawback = 0.0
-        max_balance_so_far = 0.0
-        for balance in self.__balance_series:
-            if balance > max_balance_so_far:
-                max_balance_so_far = balance
-            if balance < max_balance_so_far:
-                num_drawbacks += 1
-                current_drawback = (max_balance_so_far - balance) / max_balance_so_far * 100
-                total_drawback += current_drawback
-                if current_drawback > max_drawback:
-                    max_drawback = current_drawback
-        return max_drawback, (total_drawback / num_drawbacks if num_drawbacks > 0 else 0.0)
-
-    @staticmethod
-    def pair_from(currency):
-        return pair_from('BTC', currency)
-
     def __repr__(self):
-        return 'Account(' + str({'balances': self.__balances, 'orders': self.__orders}) + ')'
+        return 'Account(balances={}, orders={})'.format(self.__balances, self.__orders)

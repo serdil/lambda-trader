@@ -1,10 +1,10 @@
 from time import sleep
 
 from poloniex import PoloniexError
-from strategy.strategy import PolxStrategy
 
-from loghandlers import get_logger_with_all_handlers
-from polx.polxdriver import PolxMarketInfo, PolxAccount
+from lambdatrader.strategy.live import PolxStrategy
+from lambdatrader.loghandlers import get_logger_with_all_handlers
+from lambdatrader.polx.polxdriver import PolxMarketInfo, PolxAccount
 
 logger = get_logger_with_all_handlers(__name__)
 
@@ -14,13 +14,13 @@ sleep(5)
 account = PolxAccount()
 sleep(10)
 
-strategy = PolxStrategy(market_info, account)
+strategy = PolxStrategy(market_info=market_info, account=account)
 
 logger.info('PolxStrategy running...')
 while True:
     try:
         strategy.act()
-    except PoloniexError as e: # TODO convert to own error type
+    except PoloniexError as e:  # TODO convert to own error type
         if str(e).find('Connection timed out.') >= 0:
             logger.warning(str(e))
         else:

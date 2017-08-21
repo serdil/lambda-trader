@@ -1,0 +1,100 @@
+# MarketInfo and Account are one instance per exchange
+
+[Interface] MarketInfo
+
+getTicks()
+    -> Ticks
+    : Returns latest ticker.
+
+# NEEDS PRICE SERVER
+getTickHistory(start_date: Integer, from_oldest: Boolean)
+    -> [Ticks]
+
+getCandlestickHistory(currency_pair: CurrencyPair,
+    candlestick_period: CandlestickPeriodEnum, aggregate_ticks: Boolean,
+    start_date: Integer, from_oldest: Boolean)
+    -> [Candlestick]
+
+# NEEDS PRICE SERVER
+getTickAvailableDateRanges()
+    -> [(Date, Date), (Date, Date)]
+
+getCandlestickAvailableDateRanges(aggregate_ticks: Boolean)
+    -> {CandlestickPeriodEnum.M1: [(1500577000, 150057900), (1500578100, 150058200)]...}
+
+# NEEDS PRICE SERVER
+getOldestAvailableTickDate()
+    -> Integer
+    : Returns oldest tick date from which until now ticks are continuously available
+
+getOldestAvailableCandlestickDate(candlestick_period: CandlestickPeriodEnum)
+    -> Integer
+    : Returns oldest candlestick date from which until now candlesticks are continuously available
+
+
+[Type] Ticks
+{timestamp: [], ticker: {__pair_1__: {bid: __, ask: __, high24h: __, low24h: __, vol24h:__}, ...}}
+
+
+[Interface] Account
+
+
+[Type] OrderRequest
+currency: CurrencyEnum
+type: OrderTypeEnum
+amount: Float
+rate: Float
+
+
+[Enum] OrderTypeEnum
+BUY
+SELL
+
+
+[Type] Order
+currency: CurrencyEnum
+type: OrderTypeEnum
+amount: Float
+rate: Float
+date: Date
+order_number: String
+
+
+[Type] TradeSignal
+...
+
+
+[Interface] SignalGenerator
+generateSignals()
+    -> [TradeSignal]
+
+
+[Interface] SignalExecutor
+act(signals: [TradeSignal])
+
+
+[Enum] ExchangeEnum
+POLX
+
+
+[Type] CurrencyPair
+first: CurrencyEnum
+second: CurrencyEnum
+
+
+[Enum] CurrencyEnum
+BTC
+ETH
+LTC
+ETC
+...
+
+
+[Enum] CandlestickPeriodEnum
+M1
+M5
+M15
+M30
+H1
+H4
+D1
