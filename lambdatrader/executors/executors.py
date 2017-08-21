@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Iterable
 
+from collections import defaultdict
+
 from lambdatrader.config import (
     EXECUTOR__NUM_CHUNKS,
     EXECUTOR__MIN_CHUNK_SIZE,
@@ -64,6 +66,8 @@ class SignalExecutor(BaseSignalExecutor):
     NUM_CHUNKS = EXECUTOR__NUM_CHUNKS
     MIN_CHUNK_SIZE = EXECUTOR__MIN_CHUNK_SIZE
 
+    POSITION_SIZES = defaultdict(lambda: 1/EXECUTOR__NUM_CHUNKS)
+
     def __init__(self, market_info, account):
         super().__init__()
 
@@ -84,7 +88,8 @@ class SignalExecutor(BaseSignalExecutor):
         self.__execute_new_signals(trade_signals=signals)
 
     def __process_signals(self):
-        #self.NUM_CHUNKS = max(self.NUM_CHUNKS - 0.001, 3)
+        for key in self.POSITION_SIZES:
+            self.__inc_position_size(key)
         for signal_info in list(self.__tracked_signals.values()):
             self.__process_signal(signal_info=signal_info)
 
@@ -137,15 +142,15 @@ class SignalExecutor(BaseSignalExecutor):
         return set([pair_from('BTC', order.get_currency()) for order in
                     self.account.get_open_sell_orders()])
 
-    def __get_chunk_size(self, estimated_balance):
-        return estimated_balance / self.NUM_CHUNKS
+    def __get_position_size(self, estimated_balance, pair):
+        return estimated_balance * self.POSITION_SIZES[pair]
 
     def __execute_new_signals(self, trade_signals: Iterable[TradeSignal]):
         for trade_signal in trade_signals:
             estimated_balance = self.account.get_estimated_balance(market_info=self.market_info)
             if self.__can_execute_signal(trade_signal=trade_signal,
                                          estimated_balance=estimated_balance):
-                position_size = self.__get_chunk_size(estimated_balance=estimated_balance)
+                position_size = estimated_balance * self.POSITION_SIZES[trade_signal.pair]
                 self.__execute_signal(signal=trade_signal, position_size=position_size)
 
     def __can_execute_signal(self, trade_signal, estimated_balance):
@@ -153,7 +158,8 @@ class SignalExecutor(BaseSignalExecutor):
         trade_signal_is_valid = self.__trade_signal_is_valid(trade_signal=trade_signal,
                                                              market_date=market_date)
         no_open_trades_with_pair = self.__no_open_trades_with_pair(trade_signal.pair)
-        btc_balance_is_enough = self.__btc_balance_is_enough(estimated_balance=estimated_balance)
+        btc_balance_is_enough = self.__btc_balance_is_enough(estimated_balance=estimated_balance,
+                                                             pair=trade_signal.pair)
         return trade_signal_is_valid and btc_balance_is_enough and no_open_trades_with_pair
 
     def __get_market_date(self):
@@ -163,20 +169,25 @@ class SignalExecutor(BaseSignalExecutor):
     def __trade_signal_is_valid(trade_signal, market_date):
         return trade_signal and (market_date - trade_signal.date) < trade_signal.good_for
 
-    def __btc_balance_is_enough(self, estimated_balance):
-        chunk_size = self.__get_chunk_size(estimated_balance=estimated_balance)
-        chunk_size_is_large_enough = chunk_size >= self.MIN_CHUNK_SIZE
+    def __btc_balance_is_enough(self, estimated_balance, pair):
+        position_size = self.__get_position_size(estimated_balance=estimated_balance, pair=pair)
+        chunk_size_is_large_enough = position_size >= self.MIN_CHUNK_SIZE
         btc_balance = self.account.get_balance('BTC')
-        btc_balance_is_enough = btc_balance >= chunk_size * (1.0 + self.DELTA)
+        btc_balance_is_enough = btc_balance >= position_size * (1.0 + self.DELTA)
         return chunk_size_is_large_enough and btc_balance_is_enough
 
     def __no_open_trades_with_pair(self, pair):
         return pair_second(pair) not in \
                [order.get_currency() for order in self.account.get_open_sell_orders()]
 
+    def __dec_position_size(self, pair):
+        self.POSITION_SIZES[pair] = self.POSITION_SIZES[pair] * 0.8
+
+    def __inc_position_size(self, pair):
+        self.POSITION_SIZES[pair] = min(self.POSITION_SIZES[pair] + 0.001, 0.3)
+
     def __execute_signal(self, signal: TradeSignal, position_size):
-        #if self.NUM_CHUNKS - len(list(self.account.get_open_sell_orders())) < 2:
-        #    self.NUM_CHUNKS += 1
+        self.__dec_position_size(signal.pair)
         entry_price = signal.entry.price
         target_price = signal.success_exit.price
         pair = signal.pair
@@ -215,7 +226,7 @@ class SignalExecutor(BaseSignalExecutor):
         frozen_balance = self.get_frozen_balance()
 
         print()
-        print('num_chunks', self.NUM_CHUNKS)
+        print('pos_size', self.POSITION_SIZES[pair])
         print(datetime.fromtimestamp(self.__get_market_date()), 'TRADE:', pair)
         print('estimated_balance:', estimated_balance)
         print('frozen_balance:', frozen_balance)

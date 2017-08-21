@@ -42,11 +42,12 @@ class SignalGenerator:
                 yield trade_signal
 
     def __inc_ret_ratio_small_add(self, pair):
-        #self.PAIRS_RET_RATIOS[pair] = self.PAIRS_RET_RATIOS[pair] + 0.0001
+        #self.PAIRS_RET_RATIOS[pair] = self.PAIRS_RET_RATIOS[pair] + 0.000001
         pass
 
     def __dec_ret_ratio(self, pair):
-        self.PAIRS_RET_RATIOS[pair] = self.PAIRS_RET_RATIOS[pair] * 9.9 / 10
+        #self.PAIRS_RET_RATIOS[pair] = self.PAIRS_RET_RATIOS[pair] * 0.95
+        pass
 
     def __inc_prof_fac(self, pair):
         #self.PAIRS_PROF[pair] = self.PAIRS_PROF[pair] * 10 / 8
