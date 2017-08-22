@@ -17,13 +17,15 @@ market_info = BacktestMarketInfo(candlestick_store=CandlestickStore.get_instance
 
 account = Account(balances={'BTC': 100})
 
-start_date = market_info.get_max_pair_end_time() - BACKTEST_NUM_DAYS
-end_date = market_info.get_max_pair_end_time()
+start_date = market_info.get_max_pair_end_time() - 1 * BACKTEST_NUM_DAYS
+end_date = market_info.get_max_pair_end_time() - 0 * BACKTEST_NUM_DAYS
 
-signal_generator = RetracementSignalGenerator(market_info=market_info)
+signal_generators = [
+        RetracementSignalGenerator(market_info=market_info)
+    ]
 signal_executor = SignalExecutor(market_info=market_info, account=account)
 
-backtest.backtest(account=account, market_info=market_info, signal_generator=signal_generator,
+backtest.backtest(account=account, market_info=market_info, signal_generators=signal_generators,
                   signal_executor=signal_executor, start=start_date, end=end_date)
 
 print()
