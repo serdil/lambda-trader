@@ -7,7 +7,7 @@ from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.history.store import CandlestickStore
 
 from backtesting import backtest
-from signals.signals import SignalGenerator
+from signals.signals import RetracementSignalGenerator
 
 ONE_DAY = 24 * 3600
 
@@ -20,7 +20,7 @@ account = Account(balances={'BTC': 100})
 start_date = market_info.get_max_pair_end_time() - BACKTEST_NUM_DAYS
 end_date = market_info.get_max_pair_end_time()
 
-signal_generator = SignalGenerator(market_info=market_info)
+signal_generator = RetracementSignalGenerator(market_info=market_info)
 signal_executor = SignalExecutor(market_info=market_info, account=account)
 
 backtest.backtest(account=account, market_info=market_info, signal_generator=signal_generator,
