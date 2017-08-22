@@ -41,7 +41,7 @@ class BaseSignalGenerator:
         return self.market_info.get_market_date()
 
 
-class SignalGenerator(BaseSignalGenerator):
+class RetracementSignalGenerator(BaseSignalGenerator):
 
     HIGH_VOLUME_LIMIT = RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT
     ORDER_TIMEOUT = RETRACEMENT_SIGNALS__ORDER_TIMEOUT
