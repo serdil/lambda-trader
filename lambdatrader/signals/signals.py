@@ -11,12 +11,7 @@ from lambdatrader.models.tradesignal import (
 )
 
 
-class SignalGenerator:
-
-    HIGH_VOLUME_LIMIT = RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT
-    ORDER_TIMEOUT = RETRACEMENT_SIGNALS__ORDER_TIMEOUT
-    BUY_PROFIT_FACTOR = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
-    RETRACEMENT_RATIO = RETRACEMENT_SIGNALS__RETRACEMENT_RATIO
+class BaseSignalGenerator:
 
     def __init__(self, market_info):
         self.market_info = market_info
@@ -26,20 +21,40 @@ class SignalGenerator:
         return trade_signals
 
     def __analyze_market(self):
-        high_volume_pairs = self.__get_high_volume_pairs()
+        high_volume_pairs = self.get_allowed_pairs()
         trade_signals = list(self.__analyze_pairs(pairs=high_volume_pairs))
         return trade_signals
 
     def __analyze_pairs(self, pairs) -> Iterable[TradeSignal]:
         for pair in pairs:
-            trade_signal = self.__analyze_pair(pair=pair)
+            trade_signal = self.analyze_pair(pair=pair)
             if trade_signal:
                 yield trade_signal
 
-    def __analyze_pair(self, pair) -> Optional[TradeSignal]:
+    def get_allowed_pairs(self):
+        raise NotImplementedError
+
+    def analyze_pair(self, pair):
+        raise NotImplementedError
+
+    def get_market_date(self):
+        return self.market_info.get_market_date()
+
+
+class SignalGenerator(BaseSignalGenerator):
+
+    HIGH_VOLUME_LIMIT = RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT
+    ORDER_TIMEOUT = RETRACEMENT_SIGNALS__ORDER_TIMEOUT
+    BUY_PROFIT_FACTOR = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
+    RETRACEMENT_RATIO = RETRACEMENT_SIGNALS__RETRACEMENT_RATIO
+
+    def get_allowed_pairs(self):
+        return self.__get_high_volume_pairs()
+
+    def analyze_pair(self, pair) -> Optional[TradeSignal]:
         latest_ticker = self.market_info.get_pair_ticker(pair=pair)
         price = latest_ticker.lowest_ask
-        market_date = self.__get_market_date()
+        market_date = self.get_market_date()
 
         target_price = price * self.BUY_PROFIT_FACTOR
         day_high_price = latest_ticker.high24h
@@ -68,6 +83,3 @@ class SignalGenerator:
                    self.market_info.pairs()),
             key=lambda pair: -self.market_info.get_pair_last_24h_btc_volume(pair=pair)
         )
-
-    def __get_market_date(self):
-        return self.market_info.get_market_date()
