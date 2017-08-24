@@ -14,7 +14,7 @@ class BacktestMarketInfo(BaseMarketInfo):
         self.__last_high_calc_high = {}
 
     def get_exchange(self) -> ExchangeEnum:
-        return ExchangeEnum.POLONIEX
+        return ExchangeEnum.BACKTESTING
 
     def set_market_date(self, timestamp):
         self.market_time = timestamp

@@ -1,16 +1,24 @@
 from collections import defaultdict
 from typing import Dict, Iterable
 
+from account.account import BaseAccount
 from lambdatrader.backtesting.marketinfo import BacktestMarketInfo
 from lambdatrader.models.order import Order, OrderType
 from lambdatrader.utils import pair_from
+from models.enums.exchange import ExchangeEnum
 
 
 class IllegalOrderException(Exception):
     pass
 
 
-class Account:
+class Account(BaseAccount):
+    def get_balances(self):
+        pass
+
+    def get_exchange(self):
+        return ExchangeEnum.BACKTESTING
+
     def __init__(self, balances: Dict={'BTC': 100}):
         self.__balances = defaultdict(int)
         for currency, balance in balances.items():
@@ -29,7 +37,7 @@ class Account:
         self.__balances[currency] += amount - self.get_taker_fee(amount=amount)
         self.__balances['BTC'] -= amount * price
 
-    def new_order(self, order: Order):
+    def new_order(self, order: Order, __fill_or_kill=None):
         if order.get_type() == OrderType.SELL:
             if self.__balances[order.get_currency()] < order.get_amount():
                 raise IllegalOrderException

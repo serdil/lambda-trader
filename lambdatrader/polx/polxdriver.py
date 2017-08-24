@@ -5,6 +5,7 @@ from time import sleep
 
 from poloniex import PoloniexError
 
+from account.account import BaseAccount
 from lambdatrader.loghandlers import get_logger_with_all_handlers
 from lambdatrader.models.order import OrderType, Order
 from lambdatrader.models.ticker import Ticker
@@ -155,10 +156,19 @@ class UnableToFillException(Exception):
     pass
 
 
-class PolxAccount:
+class PolxAccount(BaseAccount):
 
     def __init__(self):
         self.logger = get_logger_with_all_handlers(__name__)
+
+    def get_exchange(self):
+        return ExchangeEnum.POLONIEX
+
+    def get_maker_fee(self, amount):
+        return amount * 0.0015
+
+    def get_taker_fee(self, amount):
+        return amount * 0.0025
 
     def new_order(self, order, fill_or_kill=False):
         self.logger.info('new_order: %s', str(order))
@@ -201,7 +211,7 @@ class PolxAccount:
         return Order(currency=currency, _type=_type, price=price,
                      amount=amount, date=date, order_number=order_number)
 
-    def get_estimated_balance(self):
+    def get_estimated_balance(self, __market_info=None):
         self.logger.debug('get_estimated_balance')
         complete_balances = self.__api_call(call=lambda: polo.returnCompleteBalances())
 
@@ -234,6 +244,24 @@ class PolxAccount:
                                   orderType='fillOrKill' if fill_or_kill else False)
             )
             return sell_result
+
+    def get_balance(self, currency):
+        raise NotImplementedError
+
+    def buy(self, currency, price, amount):
+        raise NotImplementedError
+
+    def sell(self, currency, price, amount):
+        raise NotImplementedError
+
+    def get_order(self, order_number):
+        raise NotImplementedError
+
+    def get_open_buy_orders(self):
+        raise NotImplementedError
+
+    def get_open_sell_orders(self):
+        raise NotImplementedError
 
     @staticmethod
     def __api_call(call):

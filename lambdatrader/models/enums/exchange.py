@@ -2,4 +2,5 @@ from enum import Enum
 
 
 class ExchangeEnum(Enum):
-    POLONIEX = 1
+    BACKTESTING = 1
+    POLONIEX = 2
