@@ -27,3 +27,15 @@ class BaseMarketInfo:
     def get_pair_candlestick(self, pair, ind):
         raise NotImplementedError
 
+    def is_candlesticks_supported(self):
+        raise NotImplementedError
+
+    def is_all_pairs_ticker_cheap(self):
+        raise NotImplementedError
+
+    def is_fill_or_kill_supported(self):
+        raise NotImplementedError
+
+    def is_fill_or_kill_cheap(self):
+        raise NotImplementedError
+
