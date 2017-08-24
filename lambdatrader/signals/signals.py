@@ -80,6 +80,6 @@ class RetracementSignalGenerator(BaseSignalGenerator):
     def __get_high_volume_pairs(self):
         return sorted(
             filter(lambda p: self.market_info.get_pair_last_24h_btc_volume(p) >= self.HIGH_VOLUME_LIMIT,
-                   self.market_info.pairs()),
+                   self.market_info.get_active_pairs()),
             key=lambda pair: -self.market_info.get_pair_last_24h_btc_volume(pair=pair)
         )

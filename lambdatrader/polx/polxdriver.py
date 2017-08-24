@@ -11,6 +11,8 @@ from lambdatrader.models.ticker import Ticker
 
 from lambdatrader.polx.polxclient import polo
 from lambdatrader.utils import pair_from, pair_second, get_now_timestamp
+from marketinfo.marketinfo import BaseMarketInfo
+from models.enums.exchange import ExchangeEnum
 
 
 class APICallExecutor:
@@ -52,7 +54,7 @@ class APICallExecutor:
         return cls.__instance
 
 
-class PolxMarketInfo:
+class PolxMarketInfo(BaseMarketInfo):
 
     def __init__(self):
         self.logger = get_logger_with_all_handlers(__name__)
@@ -61,16 +63,15 @@ class PolxMarketInfo:
         self.__ticker_lock = Lock()
         self.__start_fetcher_thread()
 
+    def get_exchange(self) -> ExchangeEnum:
+        return ExchangeEnum.POLONIEX
+
     def __start_fetcher_thread(self):
         t = Thread(target=self.fetcher)
         t.start()
 
-    @staticmethod
-    def get_market_date():
+    def get_market_date(self):
         return get_now_timestamp()
-
-    def set_market_date(self, date):
-        raise NotImplementedError()
 
     def get_pair_candlestick(self, pair, ind=0):
         raise NotImplementedError()
@@ -90,7 +91,7 @@ class PolxMarketInfo:
         self.unlock_ticker()
         return value
 
-    def pairs(self):
+    def get_active_pairs(self):
         self.lock_ticker()
         pairs_list = [pair for pair in self.__ticker if pair[:3] == 'BTC']
         self.unlock_ticker()

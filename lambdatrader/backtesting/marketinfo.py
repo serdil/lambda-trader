@@ -1,7 +1,10 @@
 from lambdatrader.models.ticker import Ticker
+from marketinfo.marketinfo import BaseMarketInfo
+from models.enums.exchange import ExchangeEnum
 
 
-class BacktestMarketInfo:
+class BacktestMarketInfo(BaseMarketInfo):
+
     def __init__(self, candlestick_store):
         self.market_time = 0
         self.candlestick_store = candlestick_store
@@ -9,6 +12,9 @@ class BacktestMarketInfo:
         self.__last_volume_calc_volume = {}
         self.__last_high_calc_date = {}
         self.__last_high_calc_high = {}
+
+    def get_exchange(self) -> ExchangeEnum:
+        return ExchangeEnum.POLONIEX
 
     def set_market_date(self, timestamp):
         self.market_time = timestamp
@@ -129,7 +135,7 @@ class BacktestMarketInfo:
     def __get_pair_end_time_from_store(self, pair):
         return self.candlestick_store.get_pair_newest_date(pair=pair)
 
-    def pairs(self):
+    def get_active_pairs(self):
         return list(
             filter(
                 self.__pair_exists_in_current_market_time,
