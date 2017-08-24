@@ -153,3 +153,15 @@ class BacktestMarketInfo(BaseMarketInfo):
         return self.__get_pair_start_time_from_store(pair=pair) < \
                self.get_market_date() < \
                self.__get_pair_end_time_from_store(pair=pair)
+
+    def on_pair_candlestick(self, handler):
+        raise NotImplementedError
+
+    def on_pair_tick(self, handler):
+        raise NotImplementedError
+
+    def on_all_pairs_candlestick(self, handler):
+        raise NotImplementedError
+
+    def on_all_pairs_tick(self, handler):
+        raise NotImplementedError

@@ -57,6 +57,18 @@ class APICallExecutor:
 
 class PolxMarketInfo(BaseMarketInfo):
 
+    def on_pair_candlestick(self, handler):
+        raise NotImplementedError
+
+    def on_pair_tick(self, handler):
+        raise NotImplementedError
+
+    def on_all_pairs_candlestick(self, handler):
+        raise NotImplementedError
+
+    def on_all_pairs_tick(self, handler):
+        raise NotImplementedError
+
     def __init__(self):
         self.logger = get_logger_with_all_handlers(__name__)
 
@@ -267,6 +279,18 @@ class PolxAccount(BaseAccount):
         raise NotImplementedError
 
     def get_open_sell_orders(self):
+        raise NotImplementedError
+
+    def on_pair_candlestick(self, handler):
+        raise NotImplementedError
+
+    def on_pair_tick(self, handler):
+        raise NotImplementedError
+
+    def on_all_pairs_candlestick(self, handler):
+        raise NotImplementedError
+
+    def on_all_pairs_tick(self, handler):
         raise NotImplementedError
 
     @staticmethod
