@@ -146,12 +146,6 @@ class BacktestMarketInfo(BaseMarketInfo):
     def is_candlesticks_supported(self):
         return True
 
-    def is_fill_or_kill_supported(self):
-        return True
-
-    def is_fill_or_kill_cheap(self):
-        return True
-
     def is_all_pairs_ticker_cheap(self):
         return True
 
