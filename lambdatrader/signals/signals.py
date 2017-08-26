@@ -80,16 +80,16 @@ class RetracementSignalGenerator(BaseSignalGenerator):
         price = latest_ticker.lowest_ask
         market_date = self.get_market_date()
 
-        self.debug('market_date:%s', str(market_date))
-        self.debug('latest_ticker:%s', str(latest_ticker))
-
         target_price = price * self.BUY_PROFIT_FACTOR
         day_high_price = latest_ticker.high24h
 
+        price_is_lower_than_day_high = target_price < day_high_price
+
+        self.debug('market_date:%s', str(market_date))
+        self.debug('latest_ticker:%s', str(latest_ticker))
+
         self.debug('target_price:%s', str(target_price))
         self.debug('day_high_price:%s', str(day_high_price))
-
-        price_is_lower_than_day_high = target_price < day_high_price
 
         self.debug('price_is_lower_than_day_high:%s', str(price_is_lower_than_day_high))
 
