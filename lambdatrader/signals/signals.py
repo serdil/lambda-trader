@@ -53,7 +53,7 @@ class BaseSignalGenerator:
         return self.market_info.get_market_date()
 
     def debug(self, msg, *args, **kwargs):
-        self.logger.debug(msg, args, kwargs=kwargs)
+        self.logger.debug(msg, *args, **kwargs)
 
     def backtest_print(self, *args):
         if not self.LIVE and not self.SILENT:
