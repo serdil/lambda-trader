@@ -46,8 +46,14 @@ print()
 print('Statistics over whole trading period:')
 pprint(stats)
 
-stats_over_periods = statistics_over_periods(trading_info=trading_info)
+stats_over_weekly_periods = statistics_over_periods(trading_info=trading_info, period_days=7)
 
 print()
 print('Statistics over weekly periods:')
-pprint(stats_over_periods)
+pprint(stats_over_weekly_periods)
+
+stats_over_monthly_periods = statistics_over_periods(trading_info=trading_info, period_days=30)
+
+print()
+print('Statistics over monthly periods:')
+pprint(stats_over_monthly_periods)
