@@ -23,6 +23,8 @@ while True:
     except PoloniexError as e:  # TODO convert to own error type
         if str(e).find('Connection timed out.') >= 0:
             logger.warning(str(e))
+        elif str(e).find('Please do not make more than') >= 0:
+            logger.error(str(e))
         else:
             logger.exception('unhandled exception')
     except Exception as e:
