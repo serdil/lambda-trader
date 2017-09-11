@@ -3,7 +3,7 @@ from marketinfo.marketinfo import BaseMarketInfo
 from models.enums.exchange import ExchangeEnum
 
 
-class BacktestMarketInfo(BaseMarketInfo):
+class BacktestingMarketInfo(BaseMarketInfo):
 
     def __init__(self, candlestick_store):
         self.market_time = 0

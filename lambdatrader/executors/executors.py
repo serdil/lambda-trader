@@ -5,7 +5,8 @@ from lambdatrader.config import (
     EXECUTOR__NUM_CHUNKS,
     EXECUTOR__MIN_CHUNK_SIZE,
 )
-from lambdatrader.models.order import Order, OrderType
+from lambdatrader.models.order import Order
+from models.ordertype import OrderType
 from lambdatrader.models.trade import Trade
 from lambdatrader.models.tradesignal import TradeSignal
 from lambdatrader.models.tradinginfo import TradingInfo
@@ -88,8 +89,7 @@ class SignalExecutor(BaseSignalExecutor):
             self.__process_signal(signal_info=signal_info)
 
     def __process_signal(self, signal_info):
-        open_sell_order_numbers = [order.get_order_number() for order in
-                                   self.account.get_open_sell_orders()]
+        open_sell_orders_dict = self.account.get_open_sell_orders()
         signal = signal_info['signal']
         sell_order = signal_info['tp_sell_order']
         sell_order_number = sell_order.get_order_number()
@@ -97,7 +97,7 @@ class SignalExecutor(BaseSignalExecutor):
         trade = self.__trades[trade_number]
         market_date = self.__get_market_date()
 
-        if sell_order_number not in open_sell_order_numbers:  # Price TP hit
+        if sell_order_number not in open_sell_orders_dict:  # Price TP hit
             print(datetime.fromtimestamp(market_date), sell_order.get_currency(), 'tp')
             close_date = market_date
             profit_amount = self.__calc_profit_amount(amount=trade.amount, buy_rate=trade.rate,

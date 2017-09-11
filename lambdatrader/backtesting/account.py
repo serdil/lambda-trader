@@ -2,8 +2,9 @@ from collections import defaultdict
 from typing import Dict, Iterable
 
 from account.account import BaseAccount
-from lambdatrader.backtesting.marketinfo import BacktestMarketInfo
-from lambdatrader.models.order import Order, OrderType
+from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
+from lambdatrader.models.order import Order
+from models.ordertype import OrderType
 from lambdatrader.utils import pair_from
 from models.enums.exchange import ExchangeEnum
 
@@ -12,7 +13,7 @@ class IllegalOrderException(Exception):
     pass
 
 
-class Account(BaseAccount):
+class BacktestingAccount(BaseAccount):
     def get_balances(self):
         pass
 
@@ -70,25 +71,30 @@ class Account(BaseAccount):
         elif order.get_type() == OrderType.BUY:
             self.__balances['BTC'] += order.get_amount() * order.get_price()
 
-    def get_open_orders(self) -> Iterable[Order]:
+    def get_open_orders(self):
+        open_orders = {}
         for order in self.__orders:
             if not order.get_is_filled():
-                yield order
-        return
+                open_orders[order.get_order_number()] = order
+        return open_orders
 
     def get_open_sell_orders(self):
-        for order in self.get_open_orders():
+        open_orders = self.get_open_orders()
+        open_sell_orders = {}
+        for order_number, order in open_orders.items():
             if order.get_type() == OrderType.SELL:
-                yield order
-        return
+                open_sell_orders[order_number] = order
+        return open_sell_orders
 
     def get_open_buy_orders(self):
-        for order in self.get_open_orders():
+        open_orders = self.get_open_orders()
+        open_buy_orders = {}
+        for order_number, order in open_orders.items():
             if order.get_type() == OrderType.BUY:
-                yield order
-        return
+                open_buy_orders[order_number] = order
+        return open_buy_orders
 
-    def execute_orders(self, market_info: BacktestMarketInfo):
+    def execute_orders(self, market_info: BacktestingMarketInfo):
         for order in self.__orders:
             if not order.get_is_filled():
                 if self.order_satisfied(order=order, market_info=market_info):
@@ -96,7 +102,7 @@ class Account(BaseAccount):
                     self.__remove_filled_orders()
 
     @staticmethod
-    def order_satisfied(order: Order, market_info: BacktestMarketInfo):
+    def order_satisfied(order: Order, market_info: BacktestingMarketInfo):
         candlestick = market_info.get_pair_latest_candlestick(
             pair_from('BTC', order.get_currency())
         )
@@ -123,7 +129,7 @@ class Account(BaseAccount):
     def get_balance(self, currency):
         return self.__balances[currency]
 
-    def get_estimated_balance(self, market_info: BacktestMarketInfo):
+    def get_estimated_balance(self, market_info: BacktestingMarketInfo):
         estimated_balance = 0
         for currency, balance in self.__balances.items():
             if currency == 'BTC':

@@ -10,7 +10,8 @@ from lambdatrader.config import (
     RETRACEMENT_SIGNALS__RETRACEMENT_RATIO, POLONIEX_TRADING_PAIRS,
 )
 from lambdatrader.loghandlers import get_logger_with_all_handlers
-from lambdatrader.models.order import Order, OrderType
+from lambdatrader.models.order import Order
+from models.ordertype import OrderType
 from lambdatrader.polx.polxdriver import PolxAccount, UnableToFillException
 from lambdatrader.utils import pair_second, pair_from, get_now_timestamp
 

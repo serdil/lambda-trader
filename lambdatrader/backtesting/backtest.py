@@ -2,12 +2,12 @@ from datetime import datetime
 
 import itertools
 
-from lambdatrader.backtesting.marketinfo import BacktestMarketInfo
-from lambdatrader.backtesting.account import Account
+from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
+from lambdatrader.backtesting.account import BacktestingAccount
 from utils import date_ceil, date_floor
 
 
-def backtest(account: Account, market_info: BacktestMarketInfo,
+def backtest(account: BacktestingAccount, market_info: BacktestingMarketInfo,
              signal_generators, signal_executor, start=0, end=9999999999):
     normalized_start = date_ceil(start)
     normalized_end = date_floor(end)

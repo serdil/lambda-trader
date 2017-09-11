@@ -1,7 +1,7 @@
 from pprint import pprint
 
-from lambdatrader.backtesting.account import Account
-from lambdatrader.backtesting.marketinfo import BacktestMarketInfo
+from lambdatrader.backtesting.account import BacktestingAccount
+from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.evaluation.utils import statistics_over_periods, period_statistics
 from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.history.store import CandlestickStore
@@ -13,9 +13,9 @@ ONE_DAY = 24 * 3600
 
 BACKTEST_NUM_DAYS = ONE_DAY * 7
 
-market_info = BacktestMarketInfo(candlestick_store=CandlestickStore.get_instance())
+market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
 
-account = Account(balances={'BTC': 100})
+account = BacktestingAccount(balances={'BTC': 100})
 
 start_date = market_info.get_max_pair_end_time() - 1 * BACKTEST_NUM_DAYS
 end_date = market_info.get_max_pair_end_time() - 0 * BACKTEST_NUM_DAYS

@@ -1,10 +1,6 @@
-from enum import Enum
 from uuid import uuid1
 
-
-class OrderType(Enum):
-    BUY = 1
-    SELL = 2
+from models.ordertype import OrderType
 
 
 class Order:

@@ -7,7 +7,8 @@ from poloniex import PoloniexError
 
 from account.account import BaseAccount
 from lambdatrader.loghandlers import get_logger_with_all_handlers
-from lambdatrader.models.order import OrderType, Order
+from lambdatrader.models.order import Order
+from models.ordertype import OrderType
 from lambdatrader.models.ticker import Ticker
 
 from lambdatrader.polx.polxclient import polo
@@ -276,10 +277,20 @@ class PolxAccount(BaseAccount):
         raise NotImplementedError
 
     def get_open_buy_orders(self):
-        raise NotImplementedError
+        open_orders = self.get_open_orders()
+        open_buy_orders = {}
+        for order_number, order in open_orders.items():
+            if order.get_type() == OrderType.BUY:
+                open_buy_orders[order_number] = order
+        return open_buy_orders
 
     def get_open_sell_orders(self):
-        raise NotImplementedError
+        open_orders = self.get_open_orders()
+        open_sell_orders = {}
+        for order_number, order in open_orders.items():
+            if order.get_type() == OrderType.SELL:
+                open_sell_orders[order_number] = order
+        return open_sell_orders
 
     def on_pair_candlestick(self, handler):
         raise NotImplementedError
