@@ -55,7 +55,7 @@ def start_bot():
 
 def stop_bot():
     with cd('lambda-trader'):
-        run('ps aux | grep livetrade | awk \'{print $2}\' | xargs kill')
+        run('killall python3 || true')
 
 
 def update_bot():
