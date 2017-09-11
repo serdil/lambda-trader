@@ -1,3 +1,5 @@
+from time import sleep
+
 from lambdatrader.polx.polxclient import polo
 
 from lambdatrader.utils import pair_from
@@ -21,9 +23,24 @@ while True:
         if float(value) > 0.00010:
             try:
                 if key != 'BTC':
+                    highest_bid = float(ticker[pair_from('BTC', key)]['highestBid'])
+                    lower_price = highest_bid * 0.999
+                    even_lower_price = highest_bid * 0.995
+                    even_lower_than_lower = highest_bid * 0.99
                     polo.sell(pair_from('BTC', key),
-                              float(ticker[pair_from('BTC', key)]['highestBid']),
-                              float(value), orderType='fillOrKill')
+                              highest_bid, float(value),
+                              orderType='fillOrKill')
+                    print('tried to sell for', highest_bid)
+                    sleep(5)
+                    polo.sell(pair_from('BTC', key),
+                              lower_price, float(value),
+                              orderType='fillOrKill')
+                    print('tried to sell for', lower_price)
+                    sleep(5)
+                    polo.sell(pair_from('BTC', key),
+                              even_lower_than_lower, float(value),
+                              orderType='fillOrKill')
+                    print('tried to sell for', even_lower_than_lower)
                     print('sold')
             except Exception as e:
                 print(e)
