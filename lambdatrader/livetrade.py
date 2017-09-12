@@ -25,6 +25,8 @@ while True:
             logger.warning(str(e))
         elif str(e).find('Please do not make more than') >= 0:
             logger.error(str(e))
+        elif str(e).find('Invalid json response') >= 0:
+            logger.error(str(e))
         else:
             logger.exception('unhandled exception')
     except Exception as e:
