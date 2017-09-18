@@ -129,18 +129,6 @@ class PolxAccount(BaseAccount):
                 open_sell_orders[order_number] = order
         return open_sell_orders
 
-    def on_pair_candlestick(self, handler):
-        raise NotImplementedError
-
-    def on_pair_tick(self, handler):
-        raise NotImplementedError
-
-    def on_all_pairs_candlestick(self, handler):
-        raise NotImplementedError
-
-    def on_all_pairs_tick(self, handler):
-        raise NotImplementedError
-
     @staticmethod
     def __api_call(call):
         return APICallExecutor.get_instance().call(call)
