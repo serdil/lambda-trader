@@ -1,6 +1,6 @@
 from lambdatrader.models.ticker import Ticker
-from marketinfo.marketinfo import BaseMarketInfo
-from models.enums.exchange import ExchangeEnum
+from lambdatrader.marketinfo.marketinfo import BaseMarketInfo
+from lambdatrader.models.enums.exchange import ExchangeEnum
 
 
 class BacktestingMarketInfo(BaseMarketInfo):

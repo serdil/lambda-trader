@@ -4,7 +4,7 @@ import itertools
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.backtesting.account import BacktestingAccount
-from utils import date_ceil, date_floor
+from lambdatrader.utils import date_ceil, date_floor
 
 
 def backtest(account: BacktestingAccount, market_info: BacktestingMarketInfo,

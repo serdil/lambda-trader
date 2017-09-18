@@ -1,4 +1,4 @@
-from models.enums.exchange import ExchangeEnum
+from lambdatrader.models.enums.exchange import ExchangeEnum
 
 
 class BaseMarketInfo:

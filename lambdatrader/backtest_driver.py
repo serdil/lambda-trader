@@ -5,9 +5,8 @@ from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.evaluation.utils import statistics_over_periods, period_statistics
 from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.history.store import CandlestickStore
-
-from backtesting import backtest
-from signals.signals import RetracementSignalGenerator
+from lambdatrader.backtesting import backtest
+from lambdatrader.signals.signals import RetracementSignalGenerator
 
 ONE_DAY = 24 * 3600
 

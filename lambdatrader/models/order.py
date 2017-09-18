@@ -1,6 +1,6 @@
 from uuid import uuid1
 
-from models.ordertype import OrderType
+from lambdatrader.models.ordertype import OrderType
 
 
 class Order:

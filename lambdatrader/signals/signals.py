@@ -10,7 +10,7 @@ from lambdatrader.config import (
 from lambdatrader.models.tradesignal import (
     PriceEntry, PriceTakeProfitSuccessExit, TimeoutStopLossFailureExit, TradeSignal,
 )
-from loghandlers import get_logger_with_all_handlers
+from lambdatrader.loghandlers import get_logger_with_all_handlers
 
 
 class BaseSignalGenerator:
