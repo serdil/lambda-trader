@@ -174,7 +174,7 @@ class SignalExecutor(BaseSignalExecutor):
 
     def __no_open_trades_with_pair(self, pair):
         return pair_second(pair) not in \
-               [order.get_currency() for order in self.account.get_open_sell_orders()]
+               [order.get_currency() for order in self.account.get_open_sell_orders().values()]
 
     def __execute_signal(self, signal: TradeSignal, position_size):
         entry_price = signal.entry.price
