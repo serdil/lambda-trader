@@ -70,9 +70,6 @@ class PolxMarketInfo(BaseMarketInfo):
     def is_candlesticks_supported(self):
         return False
 
-    def is_all_pairs_ticker_cheap(self):
-        return True
-
     def fetcher(self):
         self.logger.info('starting to fetch ticker...')
         while True:

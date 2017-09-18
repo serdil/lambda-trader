@@ -146,9 +146,6 @@ class BacktestingMarketInfo(BaseMarketInfo):
     def is_candlesticks_supported(self):
         return True
 
-    def is_all_pairs_ticker_cheap(self):
-        return True
-
     def __pair_exists_in_current_market_time(self, pair):
         return self.__get_pair_start_time_from_store(pair=pair) < \
                self.get_market_date() < \

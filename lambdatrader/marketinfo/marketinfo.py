@@ -30,9 +30,6 @@ class BaseMarketInfo:
     def is_candlesticks_supported(self):
         raise NotImplementedError
 
-    def is_all_pairs_ticker_cheap(self):
-        raise NotImplementedError
-
     def on_pair_tick(self, handler):
         raise NotImplementedError
 
