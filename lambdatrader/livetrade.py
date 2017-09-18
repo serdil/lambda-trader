@@ -4,7 +4,8 @@ from poloniex import PoloniexError
 
 from lambdatrader.strategy.live import PolxStrategy
 from lambdatrader.loghandlers import get_logger_with_all_handlers
-from lambdatrader.polx.polxdriver import PolxMarketInfo, PolxAccount
+from lambdatrader.polx.marketinfo import PolxMarketInfo
+from lambdatrader.polx.account import PolxAccount
 
 logger = get_logger_with_all_handlers(__name__)
 

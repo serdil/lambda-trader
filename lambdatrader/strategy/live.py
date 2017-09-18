@@ -11,8 +11,8 @@ from lambdatrader.config import (
 )
 from lambdatrader.loghandlers import get_logger_with_all_handlers
 from lambdatrader.models.order import Order
-from models.ordertype import OrderType
-from lambdatrader.polx.polxdriver import PolxAccount, UnableToFillException
+from lambdatrader.models.ordertype import OrderType
+from lambdatrader.polx.account import PolxAccount, UnableToFillException
 from lambdatrader.utils import pair_second, pair_from, get_now_timestamp
 
 

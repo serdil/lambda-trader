@@ -6,7 +6,7 @@ from lambdatrader.config import (
     EXECUTOR__MIN_CHUNK_SIZE,
 )
 from lambdatrader.models.order import Order
-from models.ordertype import OrderType
+from lambdatrader.models.ordertype import OrderType
 from lambdatrader.models.trade import Trade
 from lambdatrader.models.tradesignal import TradeSignal
 from lambdatrader.models.tradinginfo import TradingInfo
