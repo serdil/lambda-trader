@@ -10,7 +10,7 @@ from lambdatrader.config import (
 from lambdatrader.models.tradesignal import (
     PriceEntry, PriceTakeProfitSuccessExit, TimeoutStopLossFailureExit, TradeSignal,
 )
-from lambdatrader.loghandlers import get_logger_with_all_handlers
+from lambdatrader.loghandlers import get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger
 
 
 class BaseSignalGenerator:
@@ -20,9 +20,12 @@ class BaseSignalGenerator:
         self.LIVE = live
         self.SILENT = silent
 
-        self.logger = get_logger_with_all_handlers(__name__)
-
-        if not self.LIVE:
+        if self.LIVE:
+            self.logger = get_logger_with_all_handlers(__name__)
+        elif self.SILENT:
+            self.logger = get_silent_logger(__name__)
+        else:
+            self.logger = get_logger_with_console_handler(__name__)
             self.logger.setLevel(ERROR)
 
     def generate_signals(self):

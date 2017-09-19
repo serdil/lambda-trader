@@ -1,4 +1,5 @@
 from datetime import datetime
+from logging import ERROR
 from typing import Iterable
 
 from lambdatrader.config import (
@@ -11,10 +12,25 @@ from lambdatrader.models.trade import Trade
 from lambdatrader.models.tradesignal import TradeSignal
 from lambdatrader.models.tradinginfo import TradingInfo
 from lambdatrader.utils import pair_from, pair_second
+from lambdatrader.loghandlers import get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger
 
 
 class BaseSignalExecutor:
-    def __init__(self):
+    def __init__(self, market_info, account, live=False, silent=False):
+        self.market_info = market_info
+        self.account = account
+
+        self.LIVE = live
+        self.SILENT = silent
+
+        if self.LIVE:
+            self.logger = get_logger_with_all_handlers(__name__)
+        elif self.SILENT:
+            self.logger = get_silent_logger(__name__)
+        else:
+            self.logger = get_logger_with_console_handler(__name__)
+            self.logger.setLevel(ERROR)
+
         self.__trade_starts = {}
         self.__trades = []
         self.__history_start = None
@@ -29,8 +45,8 @@ class BaseSignalExecutor:
     def set_history_end(self, date):
         self.__history_end = date
 
-    def declare_trade_start(self, date, trade_number):
-        self.__trade_starts[trade_number] = date
+    def declare_trade_start(self, date, trade_id):
+        self.__trade_starts[trade_id] = date
 
     def declare_trade_end(self, date, trade_id, profit_amount):
         start_date = self.__trade_starts[trade_id]
@@ -57,6 +73,9 @@ class BaseSignalExecutor:
                            frozen_balances=dict(self.__frozen_balances),
                            trades=list(self.__trades))
 
+    def act(self, signals):
+        raise NotImplementedError
+
 
 #  Assuming PriceTakeProfitSuccessExit and TimeoutStopLossFailureExit for now.
 class SignalExecutor(BaseSignalExecutor):
@@ -65,13 +84,10 @@ class SignalExecutor(BaseSignalExecutor):
     NUM_CHUNKS = EXECUTOR__NUM_CHUNKS
     MIN_CHUNK_SIZE = EXECUTOR__MIN_CHUNK_SIZE
 
-    def __init__(self, market_info, account):
-        super().__init__()
+    def __init__(self, market_info, account, live=False, silent=False):
+        super().__init__(market_info=market_info, account=account, live=live, silent=silent)
 
-        self.market_info = market_info
-        self.account = account
-
-        self.__trades = {}
+        self.__internal_trades = {}
 
         self.__tracked_signals = {}
 
@@ -93,34 +109,34 @@ class SignalExecutor(BaseSignalExecutor):
         signal = signal_info['signal']
         sell_order = signal_info['tp_sell_order']
         sell_order_number = sell_order.get_order_number()
-        trade_number = sell_order_number
-        trade = self.__trades[trade_number]
+        internal_trade_id = signal.id
+        internal_trade = self.__internal_trades[internal_trade_id]
         market_date = self.__get_market_date()
 
         if sell_order_number not in open_sell_orders_dict:  # Price TP hit
-            print(datetime.fromtimestamp(market_date), sell_order.get_currency(), 'tp')
+            self.__conditional_print(datetime.fromtimestamp(market_date), sell_order.get_currency(), 'tp')
             close_date = market_date
-            profit_amount = self.__calc_profit_amount(amount=trade.amount, buy_rate=trade.rate,
-                                                      sell_rate=trade.target_rate)
+            profit_amount = self.__calc_profit_amount(amount=internal_trade.amount, buy_rate=internal_trade.rate,
+                                                      sell_rate=internal_trade.target_rate)
             self.declare_trade_end(date=close_date,
-                                   trade_id=trade_number, profit_amount=profit_amount)
-            del self.__trades[trade_number]
+                                   trade_id=internal_trade_id, profit_amount=profit_amount)
+            del self.__internal_trades[internal_trade_id]
             del self.__tracked_signals[signal.id]
 
         else:
             #  Check Timeout SL
             if market_date - sell_order.get_date() >= signal.failure_exit.timeout:
-                print(datetime.fromtimestamp(market_date), sell_order.get_currency(), 'sl')
+                self.__conditional_print(datetime.fromtimestamp(market_date), sell_order.get_currency(), 'sl')
                 self.account.cancel_order(order_number=sell_order_number)
                 price = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
                 self.account.sell(currency=sell_order.get_currency(),
                                   price=price, amount=sell_order.get_amount())
-                profit_amount = self.__calc_profit_amount(amount=trade.amount, buy_rate=trade.rate,
+                profit_amount = self.__calc_profit_amount(amount=internal_trade.amount, buy_rate=internal_trade.rate,
                                                           sell_rate=price)
                 self.declare_trade_end(date=market_date,
-                                       trade_id=trade_number, profit_amount=profit_amount)
+                                       trade_id=internal_trade_id, profit_amount=profit_amount)
 
-                del self.__trades[trade_number]
+                del self.__internal_trades[internal_trade_id]
                 del self.__tracked_signals[signal.id]
 
     def __calc_profit_amount(self, amount, buy_rate, sell_rate):
@@ -190,18 +206,16 @@ class SignalExecutor(BaseSignalExecutor):
         sell_order = Order(currency=currency, _type=OrderType.SELL, price=target_price,
                            amount=bought_amount, date=self.__get_market_date())
 
-        trade_number = sell_order.get_order_number()
-
         self.account.new_order(order=sell_order)
 
         self.__save_signal_to_tracked_signals_with_tp_sell_order(signal=signal,
                                                                  tp_sell_order=sell_order)
 
-        self.__trades[trade_number] = self.InternalTrade(currency=currency, amount=bought_amount,
-                                                         rate=entry_price,
-                                                         target_rate=target_price)
+        self.__internal_trades[signal.id] = self.InternalTrade(currency=currency, amount=bought_amount,
+                                                                  rate=entry_price,
+                                                                  target_rate=target_price)
 
-        self.declare_trade_start(date=market_date, trade_number=trade_number)
+        self.declare_trade_start(date=market_date, trade_id=signal.id)
 
         self.__print_trade(pair=pair)
 
@@ -211,15 +225,21 @@ class SignalExecutor(BaseSignalExecutor):
         }
 
     def __print_trade(self, pair):
-        estimated_balance = self.account.get_estimated_balance(market_info=self.market_info)
-        frozen_balance = self.get_frozen_balance()
+        if not self.LIVE and not self.SILENT:
+            estimated_balance = self.account.get_estimated_balance(market_info=self.market_info)
+            frozen_balance = self.get_frozen_balance()
 
-        print()
-        print(datetime.fromtimestamp(self.__get_market_date()), 'TRADE:', pair)
-        print('estimated_balance:', estimated_balance)
-        print('frozen_balance:', frozen_balance)
-        print('num_open_orders:', len(list(self.account.get_open_sell_orders())))
-        print()
+            print()
+            print(datetime.fromtimestamp(self.__get_market_date()), 'TRADE:', pair)
+            print('estimated_balance:', estimated_balance)
+            print('frozen_balance:', frozen_balance)
+            print('num_open_orders:', len(list(self.account.get_open_sell_orders())))
+            print()
+
+    def __conditional_print(self, *args):
+        if not self.LIVE and not self.SILENT:
+            print(*args)
+
 
     class InternalTrade:
         def __init__(self, currency, amount, rate, target_rate):

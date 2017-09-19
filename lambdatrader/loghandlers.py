@@ -60,3 +60,15 @@ def get_logger_with_all_handlers(name):
     if not len(logger.handlers):
         add_all_handlers(logger)
     return logger
+
+
+def get_logger_with_console_handler(name):
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(console_handler)
+    return logger
+
+def get_silent_logger(name):
+    logger = logging.getLogger(name)
+    logger.handlers = []
+    return logger
