@@ -22,9 +22,6 @@ class BaseAccount:
     def cancel_order(self, order_number):
         raise NotImplementedError
 
-    def sell(self, currency, price, amount):
-        raise NotImplementedError
-
     def get_taker_fee(self, amount):
         raise NotImplementedError
 
@@ -37,8 +34,25 @@ class BaseAccount:
     def get_balances(self):
         raise NotImplementedError
 
-    def buy(self, currency, price, amount):
-        raise NotImplementedError
-
     def new_order(self, order_request, fill_or_kill=False):
         raise NotImplementedError
+
+
+class TradingException(Exception):
+    pass
+
+
+class IllegalOrder(TradingException):
+    pass
+
+
+class NotEnoughBalance(IllegalOrder):
+    pass
+
+
+class UnableToFillImmediately(TradingException):
+    pass
+
+
+class NoSuchOrder(TradingException):
+    pass

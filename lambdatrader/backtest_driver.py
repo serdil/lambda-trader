@@ -14,7 +14,7 @@ BACKTEST_NUM_DAYS = ONE_DAY * 7
 
 market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
 
-account = BacktestingAccount(balances={'BTC': 100})
+account = BacktestingAccount(market_info=market_info, balances={'BTC': 100})
 
 start_date = market_info.get_max_pair_end_time() - 1 * BACKTEST_NUM_DAYS
 end_date = market_info.get_max_pair_end_time() - 0 * BACKTEST_NUM_DAYS

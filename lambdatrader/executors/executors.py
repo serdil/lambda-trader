@@ -206,7 +206,7 @@ class SignalExecutor(BaseSignalExecutor):
         sell_order = Order(currency=currency, _type=OrderType.SELL, price=target_price,
                            amount=bought_amount, date=self.__get_market_date())
 
-        self.account.new_order(order=sell_order)
+        self.account.new_order(order_request=sell_order)
 
         self.__save_signal_to_tracked_signals_with_tp_sell_order(signal=signal,
                                                                  tp_sell_order=sell_order)

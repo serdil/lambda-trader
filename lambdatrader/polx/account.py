@@ -104,12 +104,6 @@ class PolxAccount(BaseAccount):
     def get_balance(self, currency):
         raise NotImplementedError
 
-    def buy(self, currency, price, amount):
-        raise NotImplementedError
-
-    def sell(self, currency, price, amount):
-        raise NotImplementedError
-
     def get_order(self, order_number):
         raise NotImplementedError
 
