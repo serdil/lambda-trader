@@ -2,8 +2,7 @@ from collections import defaultdict
 from typing import Dict
 
 from config import BACKTESTING_TAKER_FEE, BACKTESTING_MAKER_FEE
-from lambdatrader.account.account import IllegalOrder, NotEnoughBalance, \
-    UnableToFillImmediately
+from lambdatrader.account.account import NotEnoughBalance, UnableToFillImmediately
 from lambdatrader.account.account import BaseAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.models.enums.exchange import ExchangeEnum
@@ -26,99 +25,26 @@ class BacktestingAccount(BaseAccount):
 
         self.__orders = []
 
+    def get_taker_fee(self, amount):
+        return amount * BACKTESTING_TAKER_FEE
+
+    def get_maker_fee(self, amount):
+        return amount * BACKTESTING_MAKER_FEE
+
+    def get_balance(self, currency):
+        return self.__balances[currency]
+
     def get_balances(self):
         return dict(self.__balances)
 
     def get_exchange(self):
         return ExchangeEnum.BACKTESTING
 
-    def __instant_sell(self, currency, price, amount):
-        self.__check_instant_sell_valid(currency=currency, price=price, amount=amount)
-        self.__balances[currency] -= amount
-        self.__balances['BTC'] += amount * price - self.get_taker_fee(amount=amount * price)
-
-    def __check_instant_sell_valid(self, currency, price, amount):
-        self.__check_sell_balance_enough(currency=currency, amount=amount)
-        self.__check_sell_price_valid(currency=currency, price=price)
-
-    def __check_sell_balance_enough(self, currency, amount):
-        if self.__balances[currency] < amount:
-            raise NotEnoughBalance(str(amount))
-
-    def __check_sell_price_valid(self, currency, price):
-        if price > self.market_info.get_pair_ticker(pair_from('BTC', currency)).highest_bid:
-            raise UnableToFillImmediately
-
-    def __instant_buy(self, currency, price, amount):
-        self.__check_instant_buy_valid(currency=currency, price=price, amount=amount)
-        self.__balances[currency] += amount - self.get_taker_fee(amount=amount)
-        self.__balances['BTC'] -= amount * price
-
-    def __check_instant_buy_valid(self, currency, price, amount):
-        self.__check_buy_balance_enough(currency=currency, price=price, amount=amount)
-        self.__check_buy_price_valid(currency=currency, price=price)
-
-    def __check_buy_balance_enough(self, currency, price, amount):
-        if self.__balances[currency] < price * amount:
-            raise NotEnoughBalance(str(amount))
-
-    def __check_buy_price_valid(self, currency, price):
-        if price < self.market_info.get_pair_ticker(pair_from('BTC', currency)).lowest_ask:
-            raise UnableToFillImmediately
-
-    def new_order(self, order_request: OrderRequest, fill_or_kill=False):
-        currency = order_request.get_currency()
-        order_type = order_request.get_type()
-        price = order_request.get_price()
-        amount = order_request.get_amount()
-
-        market_date = self.market_info.get_market_date()
-
-        order = Order(currency=currency, _type=order_type,
-                      price=price, amount=amount, date=market_date, is_filled=False)
-
-        if order_type == OrderType.SELL:
-            if fill_or_kill:
-                self.__instant_sell(currency=currency, price=price, amount=amount)
-                order.fill()
-                return order
-            else:
-                self.__check_sell_balance_enough(currency, amount)
-                self.__balances[currency] -= amount
-                self.__orders.append(order)
-                return order
-        elif order_type == OrderType.BUY:
-            if fill_or_kill:
-                self.__instant_buy(currency=currency, price=price, amount=amount)
-                order.fill()
-                return order
-            else:
-                self.__check_buy_balance_enough(currency, price=price, amount=amount)
-                self.__balances['BTC'] -= amount * price
-                self.__orders.append(order)
-                return order
-
     def get_order(self, order_number):
         for order in self.__orders:
             if order.get_order_number() == order_number:
                 return order
         raise KeyError
-
-    def cancel_order(self, order_number):
-        order_ind = None
-        for i, order in enumerate(self.__orders):
-            if order.get_order_number() == order_number:
-                order_ind = i
-                break
-        if order_ind is not None:
-            self.__reverse_order_effect(order=self.__orders[order_ind])
-            del self.__orders[order_ind]
-
-    def __reverse_order_effect(self, order: Order):
-        if order.get_type() == OrderType.SELL:
-            self.__balances[order.get_currency()] += order.get_amount()
-        elif order.get_type() == OrderType.BUY:
-            self.__balances['BTC'] += order.get_amount() * order.get_price()
 
     def get_open_orders(self):
         open_orders = {}
@@ -168,14 +94,21 @@ class BacktestingAccount(BaseAccount):
             self.__balances[order.get_currency()] += balance_addition
         order.fill()
 
-    def get_taker_fee(self, amount):
-        return amount * BACKTESTING_TAKER_FEE
+    def cancel_order(self, order_number):
+        order_ind = None
+        for i, order in enumerate(self.__orders):
+            if order.get_order_number() == order_number:
+                order_ind = i
+                break
+        if order_ind is not None:
+            self.__reverse_order_effect(order=self.__orders[order_ind])
+            del self.__orders[order_ind]
 
-    def get_maker_fee(self, amount):
-        return amount * BACKTESTING_MAKER_FEE
-
-    def get_balance(self, currency):
-        return self.__balances[currency]
+    def __reverse_order_effect(self, order: Order):
+        if order.get_type() == OrderType.SELL:
+            self.__balances[order.get_currency()] += order.get_amount()
+        elif order.get_type() == OrderType.BUY:
+            self.__balances['BTC'] += order.get_amount() * order.get_price()
 
     def get_estimated_balance(self, market_info: BacktestingMarketInfo):
         estimated_balance = 0
@@ -202,6 +135,72 @@ class BacktestingAccount(BaseAccount):
                 elif order.get_type() == OrderType.BUY:
                     estimated_balance += order.get_amount() * order.get_price()
         return estimated_balance
+
+    def new_order(self, order_request: OrderRequest, fill_or_kill=False):
+        currency = order_request.get_currency()
+        order_type = order_request.get_type()
+        price = order_request.get_price()
+        amount = order_request.get_amount()
+
+        market_date = self.market_info.get_market_date()
+
+        order = Order(currency=currency, _type=order_type,
+                      price=price, amount=amount, date=market_date, is_filled=False)
+
+        if order_type == OrderType.SELL:
+            if fill_or_kill:
+                self.__instant_sell(currency=currency, price=price, amount=amount)
+                order.fill()
+                return order
+            else:
+                self.__check_sell_balance_enough(currency, amount)
+                self.__balances[currency] -= amount
+                self.__orders.append(order)
+                return order
+        elif order_type == OrderType.BUY:
+            if fill_or_kill:
+                self.__instant_buy(currency=currency, price=price, amount=amount)
+                order.fill()
+                return order
+            else:
+                self.__check_buy_balance_enough(currency, price=price, amount=amount)
+                self.__balances['BTC'] -= amount * price
+                self.__orders.append(order)
+                return order
+
+    def __instant_sell(self, currency, price, amount):
+        self.__check_instant_sell_valid(currency=currency, price=price, amount=amount)
+        self.__balances[currency] -= amount
+        self.__balances['BTC'] += amount * price - self.get_taker_fee(amount=amount * price)
+
+    def __check_instant_sell_valid(self, currency, price, amount):
+        self.__check_sell_balance_enough(currency=currency, amount=amount)
+        self.__check_sell_price_valid(currency=currency, price=price)
+
+    def __check_sell_balance_enough(self, currency, amount):
+        if self.__balances[currency] < amount:
+            raise NotEnoughBalance(str(amount))
+
+    def __check_sell_price_valid(self, currency, price):
+        if price > self.market_info.get_pair_ticker(pair_from('BTC', currency)).highest_bid:
+            raise UnableToFillImmediately
+
+    def __instant_buy(self, currency, price, amount):
+        self.__check_instant_buy_valid(currency=currency, price=price, amount=amount)
+        self.__balances[currency] += amount - self.get_taker_fee(amount=amount)
+        self.__balances['BTC'] -= amount * price
+
+    def __check_instant_buy_valid(self, currency, price, amount):
+        self.__check_buy_balance_enough(currency=currency, price=price, amount=amount)
+        self.__check_buy_price_valid(currency=currency, price=price)
+
+    def __check_buy_balance_enough(self, currency, price, amount):
+        if self.__balances[currency] < price * amount:
+            raise NotEnoughBalance(str(amount))
+
+    def __check_buy_price_valid(self, currency, price):
+        if price < self.market_info.get_pair_ticker(pair_from('BTC', currency)).lowest_ask:
+            raise UnableToFillImmediately
 
     def __remove_filled_orders(self):
         self.__orders = list(filter(lambda order: not order.get_is_filled(), self.__orders))
