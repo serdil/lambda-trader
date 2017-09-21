@@ -4,7 +4,6 @@ from typing import Dict
 from config import BACKTESTING_TAKER_FEE, BACKTESTING_MAKER_FEE
 from lambdatrader.account.account import NotEnoughBalance, UnableToFillImmediately
 from lambdatrader.account.account import BaseAccount
-from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.models.enums.exchange import ExchangeEnum
 from lambdatrader.models.order import Order
 from lambdatrader.models.ordertype import OrderType
@@ -15,15 +14,22 @@ from models.orderrequest import OrderRequest
 
 class BacktestingAccount(BaseAccount):
 
-    def __init__(self, market_info: BaseMarketInfo, balances: Dict={'BTC': 100}):
+    def __init__(self, market_info: BaseMarketInfo, balances=None):
         self.market_info = market_info
 
+
         self.__balances = defaultdict(int)
+
+        if balances == None:
+            balances = {'BTC': 100.0}
 
         for currency, balance in balances.items():
             self.__balances[currency] = balance
 
         self.__orders = []
+
+    def get_exchange(self):
+        return ExchangeEnum.BACKTESTING
 
     def get_taker_fee(self, amount):
         return amount * BACKTESTING_TAKER_FEE
@@ -37,21 +43,34 @@ class BacktestingAccount(BaseAccount):
     def get_balances(self):
         return dict(self.__balances)
 
-    def get_exchange(self):
-        return ExchangeEnum.BACKTESTING
-
-    def get_order(self, order_number):
-        for order in self.__orders:
-            if order.get_order_number() == order_number:
-                return order
-        raise KeyError
-
-    def get_open_orders(self):
-        open_orders = {}
+    def get_estimated_balance(self):
+        estimated_balance = 0
+        for currency, balance in self.__balances.items():
+            if currency == 'BTC':
+                estimated_balance += balance
+            else:
+                try:
+                    candlestick = self.market_info.get_pair_latest_candlestick(
+                                                                pair_from('BTC', currency))
+                    estimated_balance += balance * candlestick.close
+                except KeyError as e:
+                    print('KeyError: ', currency, e)
         for order in self.__orders:
             if not order.get_is_filled():
-                open_orders[order.get_order_number()] = order
-        return open_orders
+                if order.get_type() == OrderType.SELL:
+                    try:
+                        candlestick = self.market_info.get_pair_latest_candlestick(
+                            pair_from('BTC', order.get_currency())
+                        )
+                        estimated_balance += order.get_amount() * candlestick.close
+                    except KeyError as e:
+                        print('KeyError: ', order.get_currency(), e)
+                elif order.get_type() == OrderType.BUY:
+                    estimated_balance += order.get_amount() * order.get_price()
+        return estimated_balance
+
+    def get_order(self, order_number):
+        return self.get_open_orders()[order_number]
 
     def get_open_sell_orders(self):
         open_orders = self.get_open_orders()
@@ -69,72 +88,12 @@ class BacktestingAccount(BaseAccount):
                 open_buy_orders[order_number] = order
         return open_buy_orders
 
-    def execute_orders(self):
+    def get_open_orders(self):
+        open_orders = {}
         for order in self.__orders:
             if not order.get_is_filled():
-                if self.__order_satisfied(order=order):
-                    self.__fill_order(order=order)
-                    self.__remove_filled_orders()
-
-    def __order_satisfied(self, order: Order):
-        candlestick = self.market_info.get_pair_latest_candlestick(
-            pair_from('BTC', order.get_currency())
-        )
-        if order.get_type() == OrderType.SELL:
-            return candlestick.high >= order.get_price()
-        elif order.get_type() == OrderType.BUY:
-            return candlestick.low <= order.get_price()
-
-    def __fill_order(self, order: Order):
-        if order.get_type() == OrderType.SELL:
-            btc_value = order.get_amount() * order.get_price()
-            self.__balances['BTC'] += btc_value - self.get_maker_fee(amount=btc_value)
-        elif order.get_type() == OrderType.BUY:
-            balance_addition = order.get_amount() - self.get_maker_fee(order.get_amount())
-            self.__balances[order.get_currency()] += balance_addition
-        order.fill()
-
-    def cancel_order(self, order_number):
-        order_ind = None
-        for i, order in enumerate(self.__orders):
-            if order.get_order_number() == order_number:
-                order_ind = i
-                break
-        if order_ind is not None:
-            self.__reverse_order_effect(order=self.__orders[order_ind])
-            del self.__orders[order_ind]
-
-    def __reverse_order_effect(self, order: Order):
-        if order.get_type() == OrderType.SELL:
-            self.__balances[order.get_currency()] += order.get_amount()
-        elif order.get_type() == OrderType.BUY:
-            self.__balances['BTC'] += order.get_amount() * order.get_price()
-
-    def get_estimated_balance(self, market_info: BacktestingMarketInfo):
-        estimated_balance = 0
-        for currency, balance in self.__balances.items():
-            if currency == 'BTC':
-                estimated_balance += balance
-            else:
-                try:
-                    candlestick = market_info.get_pair_latest_candlestick(
-                                                                pair_from('BTC', currency))
-                    estimated_balance += balance * candlestick.close
-                except KeyError as e:
-                    print('KeyError: ', currency, e)
-        for order in self.__orders:
-            if not order.get_is_filled():
-                if order.get_type() == OrderType.SELL:
-                    try:
-                        candlestick = market_info.get_pair_latest_candlestick(
-                            pair_from('BTC', order.get_currency())
-                        )
-                        estimated_balance += order.get_amount() * candlestick.close
-                    except KeyError as e:
-                        print('KeyError: ', order.get_currency(), e)
-                elif order.get_type() == OrderType.BUY:
-                    estimated_balance += order.get_amount() * order.get_price()
-        return estimated_balance
+                open_orders[order.get_order_number()] = order
+        return open_orders
 
     def new_order(self, order_request: OrderRequest, fill_or_kill=False):
         currency = order_request.get_currency()
@@ -167,6 +126,47 @@ class BacktestingAccount(BaseAccount):
                 self.__balances['BTC'] -= amount * price
                 self.__orders.append(order)
                 return order
+
+    def cancel_order(self, order_number):
+        order_ind = None
+        for i, order in enumerate(self.__orders):
+            if order.get_order_number() == order_number:
+                order_ind = i
+                break
+        if order_ind is not None:
+            self.__reverse_order_effect(order=self.__orders[order_ind])
+            del self.__orders[order_ind]
+
+    def execute_orders(self):
+        for order in self.__orders:
+            if not order.get_is_filled():
+                if self.__order_satisfied(order=order):
+                    self.__fill_order(order=order)
+                    self.__remove_filled_orders()
+
+    def __order_satisfied(self, order: Order):
+        candlestick = self.market_info.get_pair_latest_candlestick(
+            pair_from('BTC', order.get_currency())
+        )
+        if order.get_type() == OrderType.SELL:
+            return candlestick.high >= order.get_price()
+        elif order.get_type() == OrderType.BUY:
+            return candlestick.low <= order.get_price()
+
+    def __fill_order(self, order: Order):
+        if order.get_type() == OrderType.SELL:
+            btc_value = order.get_amount() * order.get_price()
+            self.__balances['BTC'] += btc_value - self.get_maker_fee(amount=btc_value)
+        elif order.get_type() == OrderType.BUY:
+            balance_addition = order.get_amount() - self.get_maker_fee(order.get_amount())
+            self.__balances[order.get_currency()] += balance_addition
+        order.fill()
+
+    def __reverse_order_effect(self, order: Order):
+        if order.get_type() == OrderType.SELL:
+            self.__balances[order.get_currency()] += order.get_amount()
+        elif order.get_type() == OrderType.BUY:
+            self.__balances['BTC'] += order.get_amount() * order.get_price()
 
     def __instant_sell(self, currency, price, amount):
         self.__check_instant_sell_valid(currency=currency, price=price, amount=amount)

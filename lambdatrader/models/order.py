@@ -27,6 +27,9 @@ class Order:
                ' date=' + str(self.__date) + ' is_filled=' + str(self.__is_filled) + \
                ' order_number=' + str(self.__order_number) + ')'
 
+    def set_order_number(self, order_number):
+        self.__order_number = order_number
+
     def get_order_number(self):
         return self.__order_number
 
