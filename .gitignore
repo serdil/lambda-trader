@@ -11,4 +11,6 @@ log/*
 db/*
 !db/.gitkeep
 
+lambdatrader/exclude.py
+
 venv/*
