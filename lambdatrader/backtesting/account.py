@@ -1,15 +1,14 @@
 from collections import defaultdict
-from typing import Dict
 
-from config import BACKTESTING_TAKER_FEE, BACKTESTING_MAKER_FEE
+from lambdatrader.config import BACKTESTING_TAKER_FEE, BACKTESTING_MAKER_FEE
 from lambdatrader.account.account import NotEnoughBalance, UnableToFillImmediately
 from lambdatrader.account.account import BaseAccount
 from lambdatrader.models.enums.exchange import ExchangeEnum
 from lambdatrader.models.order import Order
 from lambdatrader.models.ordertype import OrderType
 from lambdatrader.utils import pair_from
-from marketinfo.marketinfo import BaseMarketInfo
-from models.orderrequest import OrderRequest
+from lambdatrader.marketinfo.marketinfo import BaseMarketInfo
+from lambdatrader.models.orderrequest import OrderRequest
 
 
 class BacktestingAccount(BaseAccount):

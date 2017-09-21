@@ -2,7 +2,7 @@ from datetime import datetime
 
 from poloniex import PoloniexError
 
-from config import POLONIEX_TAKER_FEE, POLONIEX_MAKER_FEE
+from lambdatrader.config import POLONIEX_TAKER_FEE, POLONIEX_MAKER_FEE
 from lambdatrader.account.account import BaseAccount, UnableToFillImmediately
 from lambdatrader.loghandlers import get_logger_with_all_handlers
 from lambdatrader.models.order import Order
