@@ -31,7 +31,7 @@ print()
 print('Backtest Complete!')
 
 print()
-print('Estimated Balance:', account.get_estimated_balance(market_info))
+print('Estimated Balance:', account.get_estimated_balance())
 print('Open Orders:', list(account.get_open_orders()))
 
 trading_info = signal_executor.get_trading_info()
