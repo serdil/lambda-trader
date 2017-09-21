@@ -22,11 +22,11 @@ def backtest(account: BacktestingAccount, market_info: BacktestingMarketInfo,
 
     market_info.set_market_date(start_date)
     while market_info.get_market_date() < end_date:
-        account.execute_orders(market_info)
+        account.execute_orders()
         signals = \
             list(itertools.chain.from_iterable([list(generator.generate_signals()) for generator
                                                 in signal_generators]))
         signal_executor.act(signals=signals)
         market_info.inc_market_time()
 
-    account.execute_orders(market_info)
+    account.execute_orders()

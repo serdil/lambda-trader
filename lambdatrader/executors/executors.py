@@ -95,7 +95,7 @@ class SignalExecutor(BaseSignalExecutor):
         self.__process_signals()
 
         market_date = self.__get_market_date()
-        estimated_balance = self.account.get_estimated_balance(market_info=self.market_info)
+        estimated_balance = self.account.get_estimated_balance()
         self.declare_estimated_balance(date=market_date, balance=estimated_balance)
 
         self.__execute_new_signals(trade_signals=signals)
@@ -129,8 +129,11 @@ class SignalExecutor(BaseSignalExecutor):
                 self.__conditional_print(datetime.fromtimestamp(market_date), sell_order.get_currency(), 'sl')
                 self.account.cancel_order(order_number=sell_order_number)
                 price = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
-                self.account.sell(currency=sell_order.get_currency(),
-                                  price=price, amount=sell_order.get_amount())
+
+                sell_request = OrderRequest(currency=sell_order.get_currency(), _type=OrderType.SELL,
+                                            price=price, amount=sell_order.get_amount(), date=market_date)
+
+                self.account.new_order(sell_request)
                 profit_amount = self.__calc_profit_amount(amount=internal_trade.amount, buy_rate=internal_trade.rate,
                                                           sell_rate=price)
                 self.declare_trade_end(date=market_date,
@@ -241,7 +244,7 @@ class SignalExecutor(BaseSignalExecutor):
 
     def __print_trade(self, pair):
         if not self.LIVE and not self.SILENT:
-            estimated_balance = self.account.get_estimated_balance(market_info=self.market_info)
+            estimated_balance = self.account.get_estimated_balance()
             frozen_balance = self.get_frozen_balance()
 
             print()

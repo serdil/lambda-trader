@@ -121,7 +121,7 @@ class BacktestingAccount(BaseAccount):
                 order.fill()
                 return order
             else:
-                self.__check_buy_balance_enough(currency, price=price, amount=amount)
+                self.__check_buy_balance_enough(price=price, amount=amount)
                 self.__balances['BTC'] -= amount * price
                 self.__orders.append(order)
                 return order
@@ -190,11 +190,11 @@ class BacktestingAccount(BaseAccount):
         self.__balances['BTC'] -= amount * price
 
     def __check_instant_buy_valid(self, currency, price, amount):
-        self.__check_buy_balance_enough(currency=currency, price=price, amount=amount)
+        self.__check_buy_balance_enough(price=price, amount=amount)
         self.__check_buy_price_valid(currency=currency, price=price)
 
-    def __check_buy_balance_enough(self, currency, price, amount):
-        if self.__balances[currency] < price * amount:
+    def __check_buy_balance_enough(self, price, amount):
+        if self.__balances['BTC'] < price * amount:
             raise NotEnoughBalance(str(amount))
 
     def __check_buy_price_valid(self, currency, price):
