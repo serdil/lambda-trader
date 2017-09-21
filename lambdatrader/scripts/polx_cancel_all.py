@@ -11,11 +11,16 @@ for orders in polo.returnOpenOrders().values():
         print('cancelling')
         polo.cancelOrder(order['orderNumber'])
 
+balances_to_print = polo.returnBalances()
+for key, value in balances_to_print.items():
+    if float(value) > 0.0:
+        print(key, ':', value)
+
 while True:
     balances = polo.returnBalances()
     ticker = polo.returnTicker()
     total_amount = sum([float(value) if key != 'BTC' else 0 for key, value in balances.items()])
-    print(total_amount)
+    print('total amount:', total_amount)
     if total_amount < DELTA:
         print('success')
         break
