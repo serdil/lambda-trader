@@ -6,13 +6,13 @@ from lambdatrader.config import (
     EXECUTOR__NUM_CHUNKS,
     EXECUTOR__MIN_CHUNK_SIZE,
 )
-from lambdatrader.models.order import Order
 from lambdatrader.models.ordertype import OrderType
 from lambdatrader.models.trade import Trade
 from lambdatrader.models.tradesignal import TradeSignal
 from lambdatrader.models.tradinginfo import TradingInfo
 from lambdatrader.utils import pair_from, pair_second
 from lambdatrader.loghandlers import get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger
+from lambdatrader.models.orderrequest import OrderRequest
 
 
 class BaseSignalExecutor:
@@ -153,14 +153,14 @@ class SignalExecutor(BaseSignalExecutor):
 
     def __get_pairs_with_open_orders(self):
         return set([pair_from('BTC', order.get_currency()) for order in
-                    self.account.get_open_sell_orders()])
+                    self.account.get_open_sell_orders().values()])
 
     def __get_chunk_size(self, estimated_balance):
         return estimated_balance / self.NUM_CHUNKS
 
     def __execute_new_signals(self, trade_signals: Iterable[TradeSignal]):
         for trade_signal in trade_signals:
-            estimated_balance = self.account.get_estimated_balance(market_info=self.market_info)
+            estimated_balance = self.account.get_estimated_balance()
             if self.__can_execute_signal(trade_signal=trade_signal,
                                          estimated_balance=estimated_balance):
                 position_size = self.__get_chunk_size(estimated_balance=estimated_balance)
@@ -168,11 +168,21 @@ class SignalExecutor(BaseSignalExecutor):
 
     def __can_execute_signal(self, trade_signal, estimated_balance):
         market_date = self.__get_market_date()
+
         trade_signal_is_valid = self.__trade_signal_is_valid(trade_signal=trade_signal,
                                                              market_date=market_date)
+        if not trade_signal_is_valid:
+            return False
+
         no_open_trades_with_pair = self.__no_open_trades_with_pair(trade_signal.pair)
+        if not no_open_trades_with_pair:
+            return False
+
         btc_balance_is_enough = self.__btc_balance_is_enough(estimated_balance=estimated_balance)
-        return trade_signal_is_valid and btc_balance_is_enough and no_open_trades_with_pair
+        if not btc_balance_is_enough:
+            return False
+
+        return True
 
     def __get_market_date(self):
         return self.market_info.get_market_date()
@@ -196,24 +206,29 @@ class SignalExecutor(BaseSignalExecutor):
         entry_price = signal.entry.price
         target_price = signal.success_exit.price
         pair = signal.pair
-        market_date = self.__get_market_date()
         currency = pair_second(pair)
+        amount_to_buy = position_size / entry_price
 
-        self.account.buy(currency=currency, price=entry_price, amount=position_size / entry_price)
+        market_date = self.__get_market_date()
+
+        buy_request = OrderRequest(currency=currency, _type=OrderType.BUY,
+                                   price=entry_price, amount=amount_to_buy, date=market_date)
+
+        self.account.new_order(order_request=buy_request, fill_or_kill=True)
 
         bought_amount = self.account.get_balance(currency)
 
-        sell_order = Order(currency=currency, _type=OrderType.SELL, price=target_price,
-                           amount=bought_amount, date=self.__get_market_date())
+        sell_request = OrderRequest(currency=currency, _type=OrderType.SELL,
+                                    price=target_price, amount=bought_amount, date=market_date)
 
-        self.account.new_order(order_request=sell_order)
+        sell_order = self.account.new_order(order_request=sell_request)
 
         self.__save_signal_to_tracked_signals_with_tp_sell_order(signal=signal,
                                                                  tp_sell_order=sell_order)
 
         self.__internal_trades[signal.id] = self.InternalTrade(currency=currency, amount=bought_amount,
-                                                                  rate=entry_price,
-                                                                  target_rate=target_price)
+                                                               rate=entry_price,
+                                                               target_rate=target_price)
 
         self.declare_trade_start(date=market_date, trade_id=signal.id)
 
@@ -239,7 +254,6 @@ class SignalExecutor(BaseSignalExecutor):
     def __conditional_print(self, *args):
         if not self.LIVE and not self.SILENT:
             print(*args)
-
 
     class InternalTrade:
         def __init__(self, currency, amount, rate, target_rate):
