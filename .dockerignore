@@ -1,3 +1,5 @@
+.git
+
 tmp/*
 
 exclude/*
@@ -13,5 +15,5 @@ db/*
 
 lambdatrader/exclude.py
 
-venv/*
-venv-fabric/*
+venv
+venv-fabric
