@@ -77,4 +77,5 @@ def set_up_remote_dev():
 
 
 def rsync_remote_dev():
-    rsync_project(remote_dir='./lambda-trader/')
+    exclude_paths = ['db/history.db']
+    rsync_project(local_dir='./', remote_dir='./lambda-trader/', exclude=exclude_paths)
