@@ -32,7 +32,10 @@ class PolxAccount(BaseAccount):
 
     def get_balances(self):
         self.logger.debug('get_balances')
-        balances = self.__api_call(call=lambda: polo.returnBalances())
+        balances = {}
+        balances_response = self.__api_call(call=lambda: polo.returnBalances())
+        for currency, balance in balances_response.items():
+            balances[currency] = float(balance)
         return balances
 
     def get_estimated_balance(self):
@@ -112,8 +115,7 @@ class PolxAccount(BaseAccount):
 
     def __polo_put(self, order_request, fill_or_kill=False):
         if order_request.get_amount() == -1:
-            amount = float(self.__api_call(
-                call=lambda: polo.returnBalances())[order_request.get_currency()])
+            amount = self.get_balance(order_request.get_currency())
         else:
             amount = order_request.get_amount()
 

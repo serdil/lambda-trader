@@ -4,7 +4,7 @@ import os
 from telegram_handler import TelegramHandler
 
 from lambdatrader.config import (
-    TELEGRAM_TOKEN, BOT_NAME, TELEGRAM_CHAT_IDS
+    TELEGRAM_TOKEN, BOT_NAME, TELEGRAM_CHAT_IDS, TELEGRAM_ENABLED
 )
 from lambdatrader.utils import get_project_directory
 
@@ -50,8 +50,9 @@ def add_all_handlers(logger):
     logger.addHandler(file_handler_debug)
     logger.addHandler(file_handler_info)
     logger.addHandler(console_handler)
-    for handler in telegram_handlers:
-        logger.addHandler(handler)
+    if TELEGRAM_ENABLED:
+        for handler in telegram_handlers:
+            logger.addHandler(handler)
 
 
 def get_logger_with_all_handlers(name):
@@ -67,6 +68,7 @@ def get_logger_with_console_handler(name):
     logger.setLevel(logging.DEBUG)
     logger.addHandler(console_handler)
     return logger
+
 
 def get_silent_logger(name):
     logger = logging.getLogger(name)
