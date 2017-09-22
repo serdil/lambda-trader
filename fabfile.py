@@ -1,5 +1,6 @@
 from fabric.api import run
 from fabric.context_managers import cd
+from fabric.contrib.project import rsync_project
 from fabric.operations import put
 
 
@@ -14,6 +15,13 @@ def install_pip3():
 def install_programs():
     install_dtach()
     install_pip3()
+
+
+def install_docker():
+    put('./scripts/remote/install-docker.sh', './install-docker.sh')
+    run('chmod +x ./install-docker.sh')
+    run('./install-docker.sh')
+    run('rm ./install-docker.sh')
 
 
 def put_ssh_key():
@@ -61,3 +69,12 @@ def stop_bot():
 def update_bot():
     with cd('lambda-trader'):
         run('git pull origin stable')
+
+
+def set_up_remote_dev():
+    install_programs()
+    install_docker()
+
+
+def rsync_remote_dev():
+    rsync_project(remote_dir='./lambda-trader/')
