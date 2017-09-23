@@ -5,6 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/lambdatrader" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/data" />
       <excludeFolder url="file://$MODULE_DIR$/db" />
+      <excludeFolder url="file://$MODULE_DIR$/exclude" />
       <excludeFolder url="file://$MODULE_DIR$/log" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
       <excludeFolder url="file://$MODULE_DIR$/venv-fabric" />
