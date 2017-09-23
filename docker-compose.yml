@@ -1,0 +1,14 @@
+version: '3'
+services:
+  lambdatrader:
+    build: .
+    command: python3 -m lambdatrader.livetrade
+    depends_on:
+      - mongodb
+  mongodb:
+    image: "mongo:3.4"
+    volumes:
+      - "mongodata:/data/db"
+
+volumes:
+  mongodata:
