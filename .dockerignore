@@ -3,6 +3,7 @@
 tmp/*
 
 exclude/*
+!exclude/.gitkeep
 
 data/*
 !data/.gitkeep
