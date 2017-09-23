@@ -16,3 +16,8 @@ lambdatrader/exclude.py
 
 venv/*
 venv-fabric/*
+
+.idea/dataSources.local.xml
+.idea/workspace.xml
+
+*__pycache__*
