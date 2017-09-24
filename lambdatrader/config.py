@@ -1,3 +1,7 @@
+import os
+
+from lambdatrader.utils import get_project_directory, running_in_docker
+
 POLONIEX_API_KEY = '2P9D3B5N-8GU99V86-WBJ5RIR8-XCR9C8E4'
 POLONIEX_API_SECRET = '3cc9d85847d9d1958d66742a8e7847f1087ae2727bf377ff1142c7abdda265f6938d0b15354ba034c79f8d72e252ecd36ebe2bb61977e1645e8d97dc97ecac82'
 
@@ -25,3 +29,9 @@ BACKTESTING_TAKER_FEE = POLONIEX_TAKER_FEE
 BACKTESTING_MAKER_FEE = POLONIEX_MAKER_FEE
 
 TELEGRAM_ENABLED = False
+
+HISTORY_DB_ENV_VAR = 'HISTORY_DB_DOCKER_PATH' if running_in_docker() else 'HISTORY_DB_HOST_PATH'
+
+HISTORY_DB_PATH = os.getenv(HISTORY_DB_ENV_VAR, os.path.join(get_project_directory(), 'db', 'history.db'))
+
+MONGODB_URI = 'mongodb://mongodb:27017/'

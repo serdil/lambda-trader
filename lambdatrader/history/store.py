@@ -5,10 +5,11 @@ from collections import defaultdict
 
 from blist import sorteddict
 
+from lambdatrader.config import HISTORY_DB_PATH
 from lambdatrader.models.candlestick import Candlestick
-from lambdatrader.utils import get_project_directory, date_floor, date_ceil
+from lambdatrader.utils import date_floor, date_ceil
 
-DATABASE_PATH = os.path.join(get_project_directory(), 'db', 'history.db')
+DATABASE_PATH = HISTORY_DB_PATH
 
 
 class CandlestickStore:

@@ -36,3 +36,7 @@ def get_n_day_seconds(n):
 
 def get_project_directory():
     return os.path.dirname(os.path.dirname(__file__))
+
+
+def running_in_docker():
+    return os.path.isfile('/.dockerenv')

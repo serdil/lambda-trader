@@ -3,6 +3,10 @@ services:
   lambdatrader:
     build: .
     command: python3 -m lambdatrader.livetrade
+    volumes:
+      - "${HISTORY_DB_HOST_PATH}:${HISTORY_DB_DOCKER_PATH}"
+    env_file:
+      - .env
     depends_on:
       - mongodb
   mongodb:
