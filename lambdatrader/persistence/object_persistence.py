@@ -1,7 +1,7 @@
 import pickle
 
-from loghandlers import get_logger_with_all_handlers
-from mongo.mongo_client import get_default_db
+from lambdatrader.loghandlers import get_logger_with_all_handlers
+from lambdatrader.mongo.mongo_client import get_default_db
 
 logger = get_logger_with_all_handlers(__name__)
 
@@ -20,16 +20,17 @@ def create_binary_object_document(key, object):
 
 
 def get_object_with_key(key):
-    logger.debug('get_object_with_key:', key)
+    logger.debug('get_object_with_key:%s', key)
     result = binary_objects.find_one({'key': key})
     if result == None:
         return None
-    logger.debug('got_object_from_db:', key)
+    logger.debug('got_object_from_db:%s', key)
 
     saved_object = pickle.loads(result['object'])
     return saved_object
 
 
 def save_object_with_key(key, object):
-    logger.debug('save_object_with_key:', key)
-    binary_objects.replace_one({'key': key}, object, upsert=True)
+    logger.debug('save_object_with_key:%s', key)
+    new_doc = create_binary_object_document(key, object)
+    binary_objects.find_one_and_update({'key': key}, {'$set': {'object': new_doc['object']}}, upsert=True)

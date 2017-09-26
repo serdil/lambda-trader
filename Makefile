@@ -14,10 +14,32 @@ rsync-remote-dev:
 docker-build:
 	docker build --tag lambdatrader .
 
-.PHONY: run-backtest
+.PHONY: docker-compose-build
+docker-compose-build:
+	docker-compose build
+
+DEBUG_TO_CONSOLE?=False
+
+.PHONY: run-backtest docker-compose-build
 run-backtest:
-	docker-compose run lambdatrader python3 -m lambdatrader.backtest_driver
+	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} lambdatrader python3 -m lambdatrader.backtest_driver
 
 .PHONY: run-livetrade
-run-livetrade:
-	docker-compose run lambdatrader python3 -m lambdatrader.livetrade
+run-livetrade: docker-compose-build
+	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} lambdatrader python3 -m lambdatrader.livetrade
+
+.PHONY: tail-info-log
+tail-info-log:
+	docker-compose exec lambdatrader tail -f log/info.log
+
+.PHONY: tail-debug-log
+tail-debug-log:
+	docker-compose exec lambdatrader tail -f log/debug.log
+
+.PHONY: docker-compose-down
+docker-compose-down:
+	docker-compose down
+
+.PHONY: reset-mongo-volume
+reset-mongo-volume:
+	docker volume rm lambdatrader_mongodata

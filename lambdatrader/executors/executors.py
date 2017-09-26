@@ -13,7 +13,7 @@ from lambdatrader.models.tradinginfo import TradingInfo
 from lambdatrader.utils import pair_from, pair_second
 from lambdatrader.loghandlers import get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger
 from lambdatrader.models.orderrequest import OrderRequest
-from persistence.object_persistence import get_object_with_key, save_object_with_key
+from lambdatrader.persistence.object_persistence import get_object_with_key, save_object_with_key
 
 
 class BaseSignalExecutor:
@@ -86,17 +86,19 @@ class BaseSignalExecutor:
         self.debug('get_memory_from_db')
 
         memory_dict = get_object_with_key(self.get_memory_key())
+
+        if memory_dict is None:
+            memory_dict = {'version': self.MEMORY_VERSION, 'memory': {}}
+
         if memory_dict['version'] != self.MEMORY_VERSION:
             raise RuntimeError('Memory versions do not match,'
                                ' db:{} code:{}'.format(memory_dict['version'], self.MEMORY_VERSION))
-        if memory_dict is None:
-            memory_dict = {'version': self.MEMORY_VERSION, 'memory': {}}
 
         self.debug('got_memory_from_db')
         return memory_dict
 
     def save_memory_to_db(self, memory_dict):
-        self.debug('save_memory_to_db, key:', self.get_memory_key())
+        self.debug('save_memory_to_db, key:%s', self.get_memory_key())
         save_object_with_key(self.get_memory_key(), memory_dict)
 
     def get_memory_key(self):

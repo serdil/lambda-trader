@@ -38,3 +38,5 @@ HISTORY_DB_ENV_VAR = 'HISTORY_DB_DOCKER_PATH' if running_in_docker() else 'HISTO
 HISTORY_DB_PATH = os.getenv(HISTORY_DB_ENV_VAR, os.path.join(get_project_directory(), 'db', 'history.db'))
 
 MONGODB_URI = 'mongodb://mongodb:27017/'
+
+DEBUG_TO_CONSOLE = True if os.getenv('DEBUG_TO_CONSOLE', 'False') == 'True' else False

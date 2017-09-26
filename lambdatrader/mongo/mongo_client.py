@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 
-from config import MONGODB_URI
+from lambdatrader.config import MONGODB_URI
 
 mongo_client = MongoClient(MONGODB_URI)
 default_db = mongo_client.default
