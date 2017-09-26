@@ -259,6 +259,8 @@ class SignalExecutor(BaseSignalExecutor):
                [order.get_currency() for order in self.account.get_open_sell_orders().values()]
 
     def __execute_signal(self, signal: TradeSignal, position_size):
+        self.logger.info('executing_signal:%s', signal)
+
         entry_price = signal.entry.price
         target_price = signal.success_exit.price
         pair = signal.pair
