@@ -5,7 +5,7 @@ from typing import Iterable
 from lambdatrader.config import (
     EXECUTOR__NUM_CHUNKS,
     EXECUTOR__MIN_CHUNK_SIZE,
-)
+    BOT_IDENTIFIER)
 from lambdatrader.models.ordertype import OrderType
 from lambdatrader.models.trade import Trade
 from lambdatrader.models.tradesignal import TradeSignal
@@ -13,9 +13,12 @@ from lambdatrader.models.tradinginfo import TradingInfo
 from lambdatrader.utils import pair_from, pair_second
 from lambdatrader.loghandlers import get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger
 from lambdatrader.models.orderrequest import OrderRequest
+from persistence.object_persistence import get_object_with_key, save_object_with_key
 
 
 class BaseSignalExecutor:
+    MEMORY_VERSION = 0
+
     def __init__(self, market_info, account, live=False, silent=False):
         self.market_info = market_info
         self.account = account
@@ -38,6 +41,9 @@ class BaseSignalExecutor:
         self.__estimated_balances = {}
         self.__frozen_balances = {}
         self.__latest_frozen_balance = None
+
+    def debug(self, msg, *args, **kwargs):
+        self.logger.debug(msg, *args, **kwargs)
 
     def set_history_start(self, date):
         self.__history_start = date
@@ -76,9 +82,31 @@ class BaseSignalExecutor:
     def act(self, signals):
         raise NotImplementedError
 
+    def get_memory_from_db(self):
+        self.debug('get_memory_from_db')
+
+        memory_dict = get_object_with_key(self.get_memory_key())
+        if memory_dict['version'] != self.MEMORY_VERSION:
+            raise RuntimeError('Memory versions do not match,'
+                               ' db:{} code:{}'.format(memory_dict['version'], self.MEMORY_VERSION))
+        if memory_dict is None:
+            memory_dict = {'version': self.MEMORY_VERSION, 'memory': {}}
+
+        self.debug('got_memory_from_db')
+        return memory_dict
+
+    def save_memory_to_db(self, memory_dict):
+        self.debug('save_memory_to_db, key:', self.get_memory_key())
+        save_object_with_key(self.get_memory_key(), memory_dict)
+
+    def get_memory_key(self):
+        return '{}.{}.memory'.format(BOT_IDENTIFIER, self.__class__.__name__)
+
 
 #  Assuming PriceTakeProfitSuccessExit and TimeoutStopLossFailureExit for now.
 class SignalExecutor(BaseSignalExecutor):
+    MEMORY_VERSION = 0
+
     DELTA = 0.0001
 
     NUM_CHUNKS = EXECUTOR__NUM_CHUNKS
@@ -87,11 +115,30 @@ class SignalExecutor(BaseSignalExecutor):
     def __init__(self, market_info, account, live=False, silent=False):
         super().__init__(market_info=market_info, account=account, live=live, silent=silent)
 
-        self.__internal_trades = {}
+        self.debug('initializing_signal_executor')
 
-        self.__tracked_signals = {}
+        self.__memory = self.get_memory_from_db()
+
+        if 'internal_trades' not in self.__memory:
+            self.__memory['memory']['internal_trades'] = {}
+
+        if 'tracked_signals' not in self.__memory:
+            self.__memory['memory']['tracked_signals'] = {}
+
+    def __save_memory(self):
+        self.debug('__save_memory')
+        self.save_memory_to_db(self.__memory)
+
+    @property
+    def __internal_trades(self):
+        return self.__memory['memory']['internal_trades']
+
+    @property
+    def __tracked_signals(self):
+        return self.__memory['memory']['tracked_signals']
 
     def act(self, signals):
+        self.debug('act')
         self.__process_signals()
 
         market_date = self.__get_market_date()
@@ -99,6 +146,10 @@ class SignalExecutor(BaseSignalExecutor):
         self.declare_estimated_balance(date=market_date, balance=estimated_balance)
 
         self.__execute_new_signals(trade_signals=signals)
+
+        if self.LIVE:
+            self.__save_memory()
+        self.debug('end_of_act')
 
     def __process_signals(self):
         for signal_info in list(self.__tracked_signals.values()):
@@ -235,14 +286,14 @@ class SignalExecutor(BaseSignalExecutor):
 
         self.declare_trade_start(date=market_date, trade_id=signal.id)
 
-        self.__print_trade(pair=pair)
+        self.__print_trade_for_backtesting(pair=pair)
 
     def __save_signal_to_tracked_signals_with_tp_sell_order(self, signal, tp_sell_order):
         self.__tracked_signals[signal.id] = {
             'signal': signal, 'tp_sell_order': tp_sell_order
         }
 
-    def __print_trade(self, pair):
+    def __print_trade_for_backtesting(self, pair):
         if not self.LIVE and not self.SILENT:
             estimated_balance = self.account.get_estimated_balance()
             frozen_balance = self.get_frozen_balance()
