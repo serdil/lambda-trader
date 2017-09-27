@@ -36,22 +36,29 @@ print(polo.returnTradeHistory())
 
 print(polo.returnBalances())
 
-if float(polo.returnBalances()['BTC']) >= 0.00011:
-    try:
-        buy_result = polo.buy('BTC_ETH', 0.01, 0.011, orderType='fillOrKill')
-        print(buy_result)
-    except PoloniexError as e:
-        if str(e) == 'Unable to fill order completely.':
-            print(e)
-        else:
-            raise e
+
+enter_next_block = False
+
+if enter_next_block:
+    if float(polo.returnBalances()['BTC']) >= 0.00011:
+        try:
+            buy_result = polo.buy('BTC_ETH', 0.01, 0.011, orderType='fillOrKill')
+            print(buy_result)
+        except PoloniexError as e:
+            if str(e) == 'Unable to fill order completely.':
+                print(e)
+            else:
+                raise e
 
 
-open_orders = polo.returnOpenOrders()
+enter_next_block = False
 
-for orders in open_orders.values():
-    for order in orders:
-        if order['type'] == 'buy':
-            print('cancelling', order)
-            polo.cancelOrder(order['orderNumber'])
+if enter_next_block:
+    open_orders = polo.returnOpenOrders()
+
+    for orders in open_orders.values():
+        for order in orders:
+            if order['type'] == 'buy':
+                print('cancelling', order)
+                polo.cancelOrder(order['orderNumber'])
 
