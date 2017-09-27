@@ -19,10 +19,13 @@ signal_executor = SignalExecutor(market_info=market_info, account=account, live=
 
 
 logger.info('bot running...')
+
+tracked_signals = []
+
 while True:
     try:
-        trade_signals = signal_generator.generate_signals()
-        signal_executor.act(signals=trade_signals)
+        trade_signals = signal_generator.generate_signals(tracked_signals=tracked_signals)
+        tracked_signals = signal_executor.act(signals=trade_signals)
     except PoloniexError as e:  # TODO convert to own error type
         if str(e).find('Connection timed out.') >= 0:
             logger.warning(str(e))

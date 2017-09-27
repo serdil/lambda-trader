@@ -20,13 +20,25 @@ docker-compose-build:
 
 DEBUG_TO_CONSOLE?=False
 
-.PHONY: run-backtest docker-compose-build
-run-backtest:
+.PHONY: run-backtest
+run-backtest: docker-compose-build
 	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} lambdatrader python3 -m lambdatrader.backtest_driver
 
 .PHONY: run-livetrade
 run-livetrade: docker-compose-build
 	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} lambdatrader python3 -m lambdatrader.livetrade
+
+.PHONY: run-mongo-shell
+run-mongo-shell: docker-compose-build
+	docker-compose exec mongodb mongo
+
+.PHONY: run-apitest
+run-apitest: docker-compose-build
+	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} lambdatrader python3 -m lambdatrader.apitest
+
+.PHONY: run-polx-cancel-all
+run-polx-cancel-all: docker-compose-build
+	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} lambdatrader python3 -m lambdatrader.scripts.polx_cancel_all
 
 .PHONY: tail-info-log
 tail-info-log:

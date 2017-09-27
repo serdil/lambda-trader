@@ -88,7 +88,8 @@ class BaseSignalExecutor:
         memory_dict = get_object_with_key(self.get_memory_key())
 
         if memory_dict is None:
-            memory_dict = {'version': self.MEMORY_VERSION, 'memory': {}}
+            self.logger.warning('memory_object_not_found_in_db_creating_new')
+            memory_dict = self.get_default_memory()
 
         if memory_dict['version'] != self.MEMORY_VERSION:
             raise RuntimeError('Memory versions do not match,'
@@ -96,6 +97,9 @@ class BaseSignalExecutor:
 
         self.debug('got_memory_from_db')
         return memory_dict
+
+    def get_default_memory(self):
+        return {'version': self.MEMORY_VERSION, 'memory': {}}
 
     def save_memory_to_db(self, memory_dict):
         self.debug('save_memory_to_db, key:%s', self.get_memory_key())
@@ -119,12 +123,15 @@ class SignalExecutor(BaseSignalExecutor):
 
         self.debug('initializing_signal_executor')
 
-        self.__memory = self.get_memory_from_db()
+        if self.LIVE:
+            self.__memory = self.get_memory_from_db()
+        else:
+            self.__memory = self.get_default_memory()
 
-        if 'internal_trades' not in self.__memory:
+        if 'internal_trades' not in self.__memory_memory:
             self.__memory['memory']['internal_trades'] = {}
 
-        if 'tracked_signals' not in self.__memory:
+        if 'tracked_signals' not in self.__memory_memory:
             self.__memory['memory']['tracked_signals'] = {}
 
     def __save_memory(self):
@@ -132,12 +139,16 @@ class SignalExecutor(BaseSignalExecutor):
         self.save_memory_to_db(self.__memory)
 
     @property
+    def __memory_memory(self):
+        return self.__memory['memory']
+
+    @property
     def __internal_trades(self):
-        return self.__memory['memory']['internal_trades']
+        return self.__memory_memory['internal_trades']
 
     @property
     def __tracked_signals(self):
-        return self.__memory['memory']['tracked_signals']
+        return self.__memory_memory['tracked_signals']
 
     def act(self, signals):
         self.debug('act')
@@ -153,11 +164,17 @@ class SignalExecutor(BaseSignalExecutor):
             self.__save_memory()
         self.debug('end_of_act')
 
+        return self.__get_tracked_signals_list()
+
     def __process_signals(self):
+        self.debug('__process_signals')
+        self.debug('__tracked_signals:%s', self.__tracked_signals)
         for signal_info in list(self.__tracked_signals.values()):
             self.__process_signal(signal_info=signal_info)
 
     def __process_signal(self, signal_info):
+        self.debug('__process_signal')
+
         open_sell_orders_dict = self.account.get_open_sell_orders()
         signal = signal_info['signal']
         sell_order = signal_info['tp_sell_order']
@@ -167,22 +184,31 @@ class SignalExecutor(BaseSignalExecutor):
         market_date = self.__get_market_date()
 
         if sell_order_number not in open_sell_orders_dict:  # Price TP hit
-            self.__conditional_print(datetime.fromtimestamp(market_date), sell_order.get_currency(), 'tp')
+            self.logger.info('tp_hit_for_signal:%s', signal)
+
             close_date = market_date
             profit_amount = self.__calc_profit_amount(amount=internal_trade.amount, buy_rate=internal_trade.rate,
                                                       sell_rate=internal_trade.target_rate)
             self.declare_trade_end(date=close_date,
                                    trade_id=internal_trade_id, profit_amount=profit_amount)
+
+            self.logger.info('trade_closed_p_l:%.5f', profit_amount)
+            self.__print_tp_hit_for_backtesting(market_date=market_date,
+                                                currency=sell_order.get_currency(), profit_amount=profit_amount)
+
             del self.__internal_trades[internal_trade_id]
             del self.__tracked_signals[signal.id]
 
         else:
             #  Check Timeout SL
             if market_date - sell_order.get_date() >= signal.failure_exit.timeout:
-                self.__conditional_print(datetime.fromtimestamp(market_date), sell_order.get_currency(), 'sl')
+                self.logger.info('sl_hit_for_signal:%s', signal)
+                self.logger.info('cancelling_order:%s;', sell_order)
+
                 self.account.cancel_order(order_number=sell_order_number)
                 price = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
 
+                self.logger.info('putting_sell_order_at_current_price')
                 sell_request = OrderRequest(currency=sell_order.get_currency(), _type=OrderType.SELL,
                                             price=price, amount=sell_order.get_amount(), date=market_date)
 
@@ -192,8 +218,18 @@ class SignalExecutor(BaseSignalExecutor):
                 self.declare_trade_end(date=market_date,
                                        trade_id=internal_trade_id, profit_amount=profit_amount)
 
+                self.logger.info('trade_closed_p_l:%.5f', profit_amount)
+                self.__print_sl_hit_for_backtesting(market_date=market_date,
+                                                    currency=sell_order.get_currency(), profit_amount=profit_amount)
+
                 del self.__internal_trades[internal_trade_id]
                 del self.__tracked_signals[signal.id]
+
+    def __print_tp_hit_for_backtesting(self, market_date, currency, profit_amount):
+        self.__conditional_print(datetime.fromtimestamp(market_date), currency, 'tp:', profit_amount)
+
+    def __print_sl_hit_for_backtesting(self, market_date, currency, profit_amount):
+        self.__conditional_print(datetime.fromtimestamp(market_date), currency, 'sl:', profit_amount)
 
     def __calc_profit_amount(self, amount, buy_rate, sell_rate):
         bought_amount = amount - self.__get_taker_fee(amount=amount)
@@ -297,17 +333,22 @@ class SignalExecutor(BaseSignalExecutor):
             'signal': signal, 'tp_sell_order': tp_sell_order
         }
 
-    def __print_trade_for_backtesting(self, pair):
-        if not self.LIVE and not self.SILENT:
-            estimated_balance = self.account.get_estimated_balance()
-            frozen_balance = self.get_frozen_balance()
+    def __get_tracked_signals_list(self):
+        tracked_signals = []
+        for tracked_signal_info in self.__tracked_signals.values():
+            tracked_signals.append(tracked_signal_info['signal'])
+        return tracked_signals
 
-            print()
-            print(datetime.fromtimestamp(self.__get_market_date()), 'TRADE:', pair)
-            print('estimated_balance:', estimated_balance)
-            print('frozen_balance:', frozen_balance)
-            print('num_open_orders:', len(list(self.account.get_open_sell_orders())))
-            print()
+    def __print_trade_for_backtesting(self, pair):
+        estimated_balance = self.account.get_estimated_balance()
+        frozen_balance = self.get_frozen_balance()
+
+        self.__conditional_print()
+        self.__conditional_print(datetime.fromtimestamp(self.__get_market_date()), 'TRADE:', pair)
+        self.__conditional_print('estimated_balance:', estimated_balance)
+        self.__conditional_print('frozen_balance:', frozen_balance)
+        self.__conditional_print('num_open_orders:', len(list(self.account.get_open_sell_orders())))
+        self.__conditional_print()
 
     def __conditional_print(self, *args):
         if not self.LIVE and not self.SILENT:

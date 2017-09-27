@@ -89,7 +89,7 @@ class PolxAccount(BaseAccount):
                      amount=amount, date=date, order_number=order_number)
 
     def new_order(self, order_request, fill_or_kill=False):
-        self.logger.info('new_order: %s', str(order_request))
+        self.logger.info('new_order_request:%s', str(order_request))
         currency = order_request.get_currency()
         order_type = order_request.get_type()
         price = order_request.get_price()
@@ -102,6 +102,7 @@ class PolxAccount(BaseAccount):
         try:
             order_result = self.__polo_put(order_request=order_request, fill_or_kill=fill_or_kill)
             order.set_order_number(order_result['orderNumber'])
+            self.logger.info('order_put:%s', order.get_order_number())
             return order
         except PoloniexError as e:
             if str(e) == 'Unable to fill order completely.':
@@ -110,8 +111,9 @@ class PolxAccount(BaseAccount):
                 raise e
 
     def cancel_order(self, order_number):
-        self.logger.info('cancel_order: %d', order_number)
+        self.logger.info('cancel_order:%d', order_number)
         self.__api_call(call=lambda: polo.cancelOrder(order_number))
+        self.logger.info('order_cancelled:%d', order_number)
 
     def __polo_put(self, order_request, fill_or_kill=False):
         if order_request.get_amount() == -1:

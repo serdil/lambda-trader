@@ -12,6 +12,7 @@ log/*
 db/*
 !db/.gitkeep
 
+lambdatrader/apitest.py
 lambdatrader/exclude.py
 
 venv/*

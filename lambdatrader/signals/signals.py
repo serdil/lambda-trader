@@ -28,28 +28,28 @@ class BaseSignalGenerator:
             self.logger = get_logger_with_console_handler(__name__)
             self.logger.setLevel(ERROR)
 
-    def generate_signals(self):
+    def generate_signals(self, tracked_signals):
         self.debug('generate_signals')
-        trade_signals = self.__analyze_market()
+        trade_signals = self.__analyze_market(tracked_signals=tracked_signals)
         return trade_signals
 
-    def __analyze_market(self):
+    def __analyze_market(self, tracked_signals):
         self.debug('__analyze_market')
-        high_volume_pairs = self.get_allowed_pairs()
-        trade_signals = list(self.__analyze_pairs(pairs=high_volume_pairs))
+        allowed_pairs = self.get_allowed_pairs()
+        trade_signals = list(self.__analyze_pairs(pairs=allowed_pairs, tracked_signals=tracked_signals))
         return trade_signals
 
-    def __analyze_pairs(self, pairs) -> Iterable[TradeSignal]:
+    def __analyze_pairs(self, pairs, tracked_signals) -> Iterable[TradeSignal]:
         self.debug('__analyze_pairs')
         for pair in pairs:
-            trade_signal = self.analyze_pair(pair=pair)
+            trade_signal = self.analyze_pair(pair=pair, tracked_signals=tracked_signals)
             if trade_signal:
                 yield trade_signal
 
     def get_allowed_pairs(self):
         raise NotImplementedError
 
-    def analyze_pair(self, pair):
+    def analyze_pair(self, pair, tracked_signals):
         raise NotImplementedError
 
     def get_market_date(self):
@@ -76,8 +76,12 @@ class RetracementSignalGenerator(BaseSignalGenerator):
         self.debug('high_volume_pairs:%s', str(high_volume_pairs))
         return high_volume_pairs
 
-    def analyze_pair(self, pair) -> Optional[TradeSignal]:
+    def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
         self.debug('analyze_pair')
+
+        if pair in [signal.pair for signal in tracked_signals]:
+            self.debug('pair_already_in_tracked_signals')
+            return
 
         latest_ticker = self.market_info.get_pair_ticker(pair=pair)
         price = latest_ticker.lowest_ask
@@ -89,7 +93,7 @@ class RetracementSignalGenerator(BaseSignalGenerator):
         price_is_lower_than_day_high = target_price < day_high_price
 
         self.debug('market_date:%s', str(market_date))
-        self.debug('latest_ticker:%s', str(latest_ticker))
+        self.debug('latest_ticker:%s:%s', pair, str(latest_ticker))
 
         self.debug('target_price:%s', str(target_price))
         self.debug('day_high_price:%s', str(day_high_price))

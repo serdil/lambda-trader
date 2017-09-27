@@ -22,8 +22,10 @@ def create_binary_object_document(key, object):
 def get_object_with_key(key):
     logger.debug('get_object_with_key:%s', key)
     result = binary_objects.find_one({'key': key})
+
     if result == None:
         return None
+
     logger.debug('got_object_from_db:%s', key)
 
     saved_object = pickle.loads(result['object'])
