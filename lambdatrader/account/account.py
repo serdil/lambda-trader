@@ -56,3 +56,19 @@ class UnableToFillImmediately(TradingException):
 
 class NoSuchOrder(TradingException):
     pass
+
+
+class APIConnectionException(TradingException):
+    pass
+
+
+class RequestLimitExceeded(APIConnectionException):
+    pass
+
+
+class InvalidJSONResponse(APIConnectionException):
+    pass
+
+
+class ConnectionTimeout(APIConnectionException):
+    pass
