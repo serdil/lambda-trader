@@ -1,5 +1,7 @@
 from datetime import datetime
 from logging import ERROR
+from threading import Thread
+
 from typing import Iterable
 
 from account.account import (
@@ -372,16 +374,16 @@ class SignalExecutor(BaseSignalExecutor):
             tracked_signals.append(tracked_signal_info['signal'])
         return tracked_signals
 
-    def retry_on_exception(self, function, exceptions=None):
+    def retry_on_exception(self, task, exceptions=None):
         if exceptions is None:
             exceptions = [ConnectionTimeout, RequestLimitExceeded, InvalidJSONResponse]
 
         try:
-            return function()
+            return task()
         except Exception as e:
             if type(e) in exceptions:
                 self.logger.warning(str(e))
-                return self.retry_on_exception(function=function, exceptions=exceptions)
+                return self.retry_on_exception(task=task, exceptions=exceptions)
             else:
                 raise e
 
@@ -404,6 +406,10 @@ class SignalExecutor(BaseSignalExecutor):
 
     def __in_non_silent_backtesting(self):
         return not self.LIVE and not self.SILENT
+
+    @staticmethod
+    def __run_in_separate_thread(task):
+        Thread(task).run()
 
     class InternalTrade:
         def __init__(self, currency, amount, rate, target_rate):
