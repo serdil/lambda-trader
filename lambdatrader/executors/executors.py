@@ -2,6 +2,9 @@ from datetime import datetime
 from logging import ERROR
 from typing import Iterable
 
+from account.account import (
+    ConnectionTimeout, RequestLimitExceeded, InvalidJSONResponse, UnableToFillImmediately,
+)
 from lambdatrader.config import (
     EXECUTOR__NUM_CHUNKS,
     EXECUTOR__MIN_CHUNK_SIZE,
@@ -155,7 +158,7 @@ class SignalExecutor(BaseSignalExecutor):
         self.__process_signals()
 
         market_date = self.__get_market_date()
-        estimated_balance = self.account.get_estimated_balance()
+        estimated_balance = self.__get_estimated_balance_with_retry()
         self.declare_estimated_balance(date=market_date, balance=estimated_balance)
 
         self.__execute_new_signals(trade_signals=signals)
@@ -166,6 +169,11 @@ class SignalExecutor(BaseSignalExecutor):
 
         return self.__get_tracked_signals_list()
 
+    def __get_estimated_balance_with_retry(self):
+        return self.retry_on_exception(
+            lambda: self.account.get_estimated_balance()
+        )
+
     def __process_signals(self):
         self.debug('__process_signals')
         self.debug('__tracked_signals:%s', self.__tracked_signals)
@@ -175,7 +183,7 @@ class SignalExecutor(BaseSignalExecutor):
     def __process_signal(self, signal_info):
         self.debug('__process_signal')
 
-        open_sell_orders_dict = self.account.get_open_sell_orders()
+        open_sell_orders_dict = self.__get_open_sell_orders_with_retry()
         signal = signal_info['signal']
         sell_order = signal_info['tp_sell_order']
         sell_order_number = sell_order.get_order_number()
@@ -205,14 +213,14 @@ class SignalExecutor(BaseSignalExecutor):
                 self.logger.info('sl_hit_for_signal:%s', signal)
                 self.logger.info('cancelling_order:%s;', sell_order)
 
-                self.account.cancel_order(order_number=sell_order_number)
+                self.__cancel_order_with_retry(order_number=sell_order_number)
                 price = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
 
                 self.logger.info('putting_sell_order_at_current_price')
                 sell_request = OrderRequest(currency=sell_order.get_currency(), _type=OrderType.SELL,
                                             price=price, amount=sell_order.get_amount(), date=market_date)
 
-                self.account.new_order(sell_request)
+                self.__new_order_with_retry(order_request=sell_request)
                 profit_amount = self.__calc_profit_amount(amount=internal_trade.amount, buy_rate=internal_trade.rate,
                                                           sell_rate=price)
                 self.declare_trade_end(date=market_date,
@@ -224,6 +232,16 @@ class SignalExecutor(BaseSignalExecutor):
 
                 del self.__internal_trades[internal_trade_id]
                 del self.__tracked_signals[signal.id]
+
+    def __get_open_sell_orders_with_retry(self):
+        return self.retry_on_exception(
+            lambda: self.account.get_open_sell_orders()
+        )
+
+    def __cancel_order_with_retry(self, order_number):
+        return self.retry_on_exception(
+            lambda: self.account.cancel_order(order_number=order_number)
+        )
 
     def __print_tp_hit_for_backtesting(self, market_date, currency, profit_amount):
         self.__conditional_print(datetime.fromtimestamp(market_date), currency, 'tp:', profit_amount)
@@ -245,14 +263,14 @@ class SignalExecutor(BaseSignalExecutor):
 
     def __get_pairs_with_open_orders(self):
         return set([pair_from('BTC', order.get_currency()) for order in
-                    self.account.get_open_sell_orders().values()])
+                    self.__get_open_sell_orders_with_retry().values()])
 
     def __get_chunk_size(self, estimated_balance):
         return estimated_balance / self.NUM_CHUNKS
 
     def __execute_new_signals(self, trade_signals: Iterable[TradeSignal]):
         for trade_signal in trade_signals:
-            estimated_balance = self.account.get_estimated_balance()
+            estimated_balance = self.__get_estimated_balance_with_retry()
             if self.__can_execute_signal(trade_signal=trade_signal,
                                          estimated_balance=estimated_balance):
                 position_size = self.__get_chunk_size(estimated_balance=estimated_balance)
@@ -286,13 +304,13 @@ class SignalExecutor(BaseSignalExecutor):
     def __btc_balance_is_enough(self, estimated_balance):
         chunk_size = self.__get_chunk_size(estimated_balance=estimated_balance)
         chunk_size_is_large_enough = chunk_size >= self.MIN_CHUNK_SIZE
-        btc_balance = self.account.get_balance('BTC')
+        btc_balance = self.__get_balance_with_retry('BTC')
         btc_balance_is_enough = btc_balance >= chunk_size * (1.0 + self.DELTA)
         return chunk_size_is_large_enough and btc_balance_is_enough
 
     def __no_open_trades_with_pair(self, pair):
         return pair_second(pair) not in \
-               [order.get_currency() for order in self.account.get_open_sell_orders().values()]
+               [order.get_currency() for order in self.__get_open_sell_orders_with_retry().values()]
 
     def __execute_signal(self, signal: TradeSignal, position_size):
         self.logger.info('executing_signal:%s', signal)
@@ -308,14 +326,19 @@ class SignalExecutor(BaseSignalExecutor):
         buy_request = OrderRequest(currency=currency, _type=OrderType.BUY,
                                    price=entry_price, amount=amount_to_buy, date=market_date)
 
-        self.account.new_order(order_request=buy_request, fill_or_kill=True)
+        try:
+            self.__new_order_with_retry(order_request=buy_request, fill_or_kill=True)
+        except UnableToFillImmediately as e:
+            self.logger.warning(str(e))
+            return
 
-        bought_amount = self.account.get_balance(currency)
+        bought_amount = self.__get_balance_with_retry(currency=currency)
 
         sell_request = OrderRequest(currency=currency, _type=OrderType.SELL,
                                     price=target_price, amount=bought_amount, date=market_date)
 
-        sell_order = self.account.new_order(order_request=sell_request)
+        sell_order = self.__new_order_with_retry(order_request=sell_request)
+
 
         self.__save_signal_to_tracked_signals_with_tp_sell_order(signal=signal,
                                                                  tp_sell_order=sell_order)
@@ -328,6 +351,16 @@ class SignalExecutor(BaseSignalExecutor):
 
         self.__print_trade_for_backtesting(pair=pair)
 
+    def __new_order_with_retry(self, order_request, fill_or_kill=False):
+        return self.retry_on_exception(
+            lambda: self.account.new_order(order_request=order_request, fill_or_kill=fill_or_kill)
+        )
+
+    def __get_balance_with_retry(self, currency):
+        return self.retry_on_exception(
+            lambda: self.account.get_balance(currency=currency)
+        )
+
     def __save_signal_to_tracked_signals_with_tp_sell_order(self, signal, tp_sell_order):
         self.__tracked_signals[signal.id] = {
             'signal': signal, 'tp_sell_order': tp_sell_order
@@ -339,20 +372,38 @@ class SignalExecutor(BaseSignalExecutor):
             tracked_signals.append(tracked_signal_info['signal'])
         return tracked_signals
 
-    def __print_trade_for_backtesting(self, pair):
-        estimated_balance = self.account.get_estimated_balance()
-        frozen_balance = self.get_frozen_balance()
+    def retry_on_exception(self, function, exceptions=None):
+        if exceptions is None:
+            exceptions = [ConnectionTimeout, RequestLimitExceeded, InvalidJSONResponse]
 
-        self.__conditional_print()
-        self.__conditional_print(datetime.fromtimestamp(self.__get_market_date()), 'TRADE:', pair)
-        self.__conditional_print('estimated_balance:', estimated_balance)
-        self.__conditional_print('frozen_balance:', frozen_balance)
-        self.__conditional_print('num_open_orders:', len(list(self.account.get_open_sell_orders())))
-        self.__conditional_print()
+        try:
+            return function()
+        except Exception as e:
+            if type(e) in exceptions:
+                self.logger.warning(str(e))
+                return self.retry_on_exception(function=function, exceptions=exceptions)
+            else:
+                raise e
+
+    def __print_trade_for_backtesting(self, pair):
+        if self.__in_non_silent_backtesting():
+            estimated_balance = self.account.get_estimated_balance()
+            frozen_balance = self.get_frozen_balance()
+
+            self.__conditional_print()
+            self.__conditional_print(datetime.fromtimestamp(self.__get_market_date()), 'TRADE:', pair)
+            self.__conditional_print('estimated_balance:', estimated_balance)
+            self.__conditional_print('frozen_balance:', frozen_balance)
+            self.__conditional_print('num_open_orders:',
+                                     len(list(self.account.get_open_sell_orders())))
+            self.__conditional_print()
 
     def __conditional_print(self, *args):
-        if not self.LIVE and not self.SILENT:
+        if self.__in_non_silent_backtesting():
             print(*args)
+
+    def __in_non_silent_backtesting(self):
+        return not self.LIVE and not self.SILENT
 
     class InternalTrade:
         def __init__(self, currency, amount, rate, target_rate):
