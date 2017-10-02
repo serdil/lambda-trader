@@ -1,7 +1,9 @@
 from datetime import datetime
 from logging import ERROR
-from threading import Thread
+from threading import Thread, Lock
+from time import sleep
 
+from copy import deepcopy
 from typing import Iterable
 
 from account.account import (
@@ -128,16 +130,25 @@ class SignalExecutor(BaseSignalExecutor):
 
         self.debug('initializing_signal_executor')
 
+        self.__memory_lock = Lock()
+
         if self.LIVE:
             self.__memory = self.get_memory_from_db()
         else:
             self.__memory = self.get_default_memory()
+
+        self.__lock_memory()
 
         if 'internal_trades' not in self.__memory_memory:
             self.__memory['memory']['internal_trades'] = {}
 
         if 'tracked_signals' not in self.__memory_memory:
             self.__memory['memory']['tracked_signals'] = {}
+
+        self.__unlock_memory()
+
+        if self.LIVE:
+            self.__run_in_separate_thread(self.__heartbeat)
 
     def __save_memory(self):
         self.debug('__save_memory')
@@ -151,11 +162,18 @@ class SignalExecutor(BaseSignalExecutor):
     def __internal_trades(self):
         return self.__memory_memory['internal_trades']
 
+    def __lock_memory(self):
+        self.__memory_lock.acquire()
+
+    def __unlock_memory(self):
+        self.__memory_lock.release()
+
     @property
     def __tracked_signals(self):
         return self.__memory_memory['tracked_signals']
 
     def act(self, signals):
+        self.__lock_memory()
         self.debug('act')
         self.__process_signals()
 
@@ -169,7 +187,10 @@ class SignalExecutor(BaseSignalExecutor):
             self.__save_memory()
         self.debug('end_of_act')
 
-        return self.__get_tracked_signals_list()
+        tracked_signals_list = self.__get_tracked_signals_list()
+
+        self.__unlock_memory()
+        return tracked_signals_list
 
     def __get_estimated_balance_with_retry(self):
         return self.retry_on_exception(
@@ -197,14 +218,16 @@ class SignalExecutor(BaseSignalExecutor):
             self.logger.info('tp_hit_for_signal:%s', signal)
 
             close_date = market_date
-            profit_amount = self.__calc_profit_amount(amount=internal_trade.amount, buy_rate=internal_trade.rate,
+            profit_amount = self.__calc_profit_amount(amount=internal_trade.amount,
+                                                      buy_rate=internal_trade.rate,
                                                       sell_rate=internal_trade.target_rate)
             self.declare_trade_end(date=close_date,
                                    trade_id=internal_trade_id, profit_amount=profit_amount)
 
             self.logger.info('trade_closed_p_l:%.5f', profit_amount)
             self.__print_tp_hit_for_backtesting(market_date=market_date,
-                                                currency=sell_order.get_currency(), profit_amount=profit_amount)
+                                                currency=sell_order.get_currency(),
+                                                profit_amount=profit_amount)
 
             del self.__internal_trades[internal_trade_id]
             del self.__tracked_signals[signal.id]
@@ -219,18 +242,22 @@ class SignalExecutor(BaseSignalExecutor):
                 price = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
 
                 self.logger.info('putting_sell_order_at_current_price')
-                sell_request = OrderRequest(currency=sell_order.get_currency(), _type=OrderType.SELL,
-                                            price=price, amount=sell_order.get_amount(), date=market_date)
+                sell_request = OrderRequest(currency=sell_order.get_currency(),
+                                            _type=OrderType.SELL, price=price,
+                                            amount=sell_order.get_amount(),
+                                            date=market_date)
 
                 self.__new_order_with_retry(order_request=sell_request)
-                profit_amount = self.__calc_profit_amount(amount=internal_trade.amount, buy_rate=internal_trade.rate,
+                profit_amount = self.__calc_profit_amount(amount=internal_trade.amount,
+                                                          buy_rate=internal_trade.rate,
                                                           sell_rate=price)
                 self.declare_trade_end(date=market_date,
                                        trade_id=internal_trade_id, profit_amount=profit_amount)
 
                 self.logger.info('trade_closed_p_l:%.5f', profit_amount)
                 self.__print_sl_hit_for_backtesting(market_date=market_date,
-                                                    currency=sell_order.get_currency(), profit_amount=profit_amount)
+                                                    currency=sell_order.get_currency(),
+                                                    profit_amount=profit_amount)
 
                 del self.__internal_trades[internal_trade_id]
                 del self.__tracked_signals[signal.id]
@@ -262,10 +289,6 @@ class SignalExecutor(BaseSignalExecutor):
 
     def __get_maker_fee(self, amount):
         return self.account.get_maker_fee(amount=amount)
-
-    def __get_pairs_with_open_orders(self):
-        return set([pair_from('BTC', order.get_currency()) for order in
-                    self.__get_open_sell_orders_with_retry().values()])
 
     def __get_chunk_size(self, estimated_balance):
         return estimated_balance / self.NUM_CHUNKS
@@ -345,7 +368,8 @@ class SignalExecutor(BaseSignalExecutor):
         self.__save_signal_to_tracked_signals_with_tp_sell_order(signal=signal,
                                                                  tp_sell_order=sell_order)
 
-        self.__internal_trades[signal.id] = self.InternalTrade(currency=currency, amount=bought_amount,
+        self.__internal_trades[signal.id] = self.InternalTrade(currency=currency,
+                                                               amount=bought_amount,
                                                                rate=entry_price,
                                                                target_rate=target_price)
 
@@ -406,6 +430,53 @@ class SignalExecutor(BaseSignalExecutor):
 
     def __in_non_silent_backtesting(self):
         return not self.LIVE and not self.SILENT
+
+    def __heartbeat(self):
+        if self.LIVE:
+            while True:
+                try:
+                    self.__log_heartbeat_info_conditionally(log_if_no_open_orders=True)
+                    sleep(1800)
+                    self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
+                    sleep(1800)
+                    self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
+                    sleep(1800)
+                    self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
+                    sleep(1800)
+                except Exception as e:
+                    self.logger.exception('exception in heartbeat thread')
+
+    def __log_heartbeat_info_conditionally(self, log_if_no_open_orders=False):
+        trades = self.__copy_internal_trades().values()
+
+        if len(trades) == 0 and not log_if_no_open_orders:
+            return
+
+        trades_p_l = {}
+
+        for trade in trades:
+            pair = pair_from('BTC', trade.currency)
+            highest_bid = self.market_info.get_pair_ticker(pair=pair).highest_bid
+            trades_p_l[pair] = self.__calc_profit_amount(amount=trade.amount,
+                                                         buy_rate=trade.rate,
+                                                         sell_rate=highest_bid)
+
+        estimated_balance = self.__get_estimated_balance_with_retry()
+        self.__log_heartbeat_info(estimated_balance=estimated_balance,
+                                  trades_p_l=trades_p_l)
+
+    def __log_heartbeat_info(self, estimated_balance, trades_p_l):
+        num_open_orders = len(trades_p_l)
+        p_l_summary = ',\n'.join([item.key() + str(item.value()) for item in trades_p_l.items()])
+        self.logger.info('HEARTBEAT: estimated_balance:%f num_open_orders:%d'
+                         ' pairs_with_open_orders:%s\np/l summary:\n%s',
+                         estimated_balance, num_open_orders, p_l_summary)
+
+    def __copy_internal_trades(self):
+        self.__lock_memory()
+        internal_trades_copy = deepcopy(self.__internal_trades)
+        self.__unlock_memory()
+        return internal_trades_copy
 
     @staticmethod
     def __run_in_separate_thread(task):
