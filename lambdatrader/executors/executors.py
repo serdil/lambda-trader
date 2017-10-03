@@ -1,6 +1,6 @@
 from datetime import datetime
 from logging import ERROR
-from threading import Thread, Lock
+from threading import Thread, RLock
 from time import sleep
 
 from copy import deepcopy
@@ -130,22 +130,20 @@ class SignalExecutor(BaseSignalExecutor):
 
         self.debug('initializing_signal_executor')
 
-        self.__memory_lock = Lock()
+        self.__memory_lock = RLock()
 
-        if self.LIVE:
-            self.__memory = self.get_memory_from_db()
-        else:
-            self.__memory = self.get_default_memory()
+        with self.__memory_lock:
 
-        self.__lock_memory()
+            if self.LIVE:
+                self.__memory = self.get_memory_from_db()
+            else:
+                self.__memory = self.get_default_memory()
 
-        if 'internal_trades' not in self.__memory_memory:
-            self.__memory['memory']['internal_trades'] = {}
+                if 'internal_trades' not in self.__memory_memory:
+                    self.__memory['memory']['internal_trades'] = {}
 
-        if 'tracked_signals' not in self.__memory_memory:
-            self.__memory['memory']['tracked_signals'] = {}
-
-        self.__unlock_memory()
+                if 'tracked_signals' not in self.__memory_memory:
+                    self.__memory['memory']['tracked_signals'] = {}
 
         if self.LIVE:
             self.__run_in_separate_thread(self.__heartbeat)
@@ -162,35 +160,28 @@ class SignalExecutor(BaseSignalExecutor):
     def __internal_trades(self):
         return self.__memory_memory['internal_trades']
 
-    def __lock_memory(self):
-        self.__memory_lock.acquire()
-
-    def __unlock_memory(self):
-        self.__memory_lock.release()
-
     @property
     def __tracked_signals(self):
         return self.__memory_memory['tracked_signals']
 
     def act(self, signals):
-        self.__lock_memory()
-        self.debug('act')
-        self.__process_signals()
+        with self.__memory_lock:
+            self.debug('act')
+            self.__process_signals()
 
-        market_date = self.__get_market_date()
-        estimated_balance = self.__get_estimated_balance_with_retry()
-        self.declare_estimated_balance(date=market_date, balance=estimated_balance)
+            market_date = self.__get_market_date()
+            estimated_balance = self.__get_estimated_balance_with_retry()
+            self.declare_estimated_balance(date=market_date, balance=estimated_balance)
 
-        self.__execute_new_signals(trade_signals=signals)
+            self.__execute_new_signals(trade_signals=signals)
 
-        if self.LIVE:
-            self.__save_memory()
-        self.debug('end_of_act')
+            if self.LIVE:
+                self.__save_memory()
+            self.debug('end_of_act')
 
-        tracked_signals_list = self.__get_tracked_signals_list()
+            tracked_signals_list = self.__get_tracked_signals_list()
 
-        self.__unlock_memory()
-        return tracked_signals_list
+            return tracked_signals_list
 
     def __get_estimated_balance_with_retry(self):
         return self.retry_on_exception(
@@ -473,10 +464,9 @@ class SignalExecutor(BaseSignalExecutor):
                          estimated_balance, num_open_orders, p_l_summary)
 
     def __copy_internal_trades(self):
-        self.__lock_memory()
-        internal_trades_copy = deepcopy(self.__internal_trades)
-        self.__unlock_memory()
-        return internal_trades_copy
+        with self.__memory_lock:
+            internal_trades_copy = deepcopy(self.__internal_trades)
+            return internal_trades_copy
 
     @staticmethod
     def __run_in_separate_thread(task):
