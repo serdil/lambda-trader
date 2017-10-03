@@ -6,9 +6,10 @@ from time import sleep
 from copy import deepcopy
 from typing import Iterable
 
-from account.account import (
-    ConnectionTimeout, RequestLimitExceeded, InvalidJSONResponse, UnableToFillImmediately,
+from lambdatrader.account.account import (
+    UnableToFillImmediately,
 )
+from lambdatrader.executors.utils import retry_on_exception
 from lambdatrader.config import (
     EXECUTOR__NUM_CHUNKS,
     EXECUTOR__MIN_CHUNK_SIZE,
@@ -390,17 +391,7 @@ class SignalExecutor(BaseSignalExecutor):
         return tracked_signals
 
     def retry_on_exception(self, task, exceptions=None):
-        if exceptions is None:
-            exceptions = [ConnectionTimeout, RequestLimitExceeded, InvalidJSONResponse]
-
-        try:
-            return task()
-        except Exception as e:
-            if type(e) in exceptions:
-                self.logger.warning(str(e))
-                return self.retry_on_exception(task=task, exceptions=exceptions)
-            else:
-                raise e
+        return retry_on_exception(task=task, logger=self.logger, exceptions=exceptions)
 
     def __print_trade_for_backtesting(self, pair):
         if self.__in_non_silent_backtesting():

@@ -3,10 +3,11 @@ from time import sleep
 
 from poloniex import PoloniexError
 
+from lambdatrader.executors.utils import retry_on_exception
 from lambdatrader.loghandlers import get_logger_with_all_handlers
 from lambdatrader.models.ticker import Ticker
 from lambdatrader.polx.polxclient import polo
-from lambdatrader.polx.utils import APICallExecutor
+from lambdatrader.polx.utils import APICallExecutor, map_exception
 from lambdatrader.utils import get_now_timestamp
 from lambdatrader.marketinfo.marketinfo import BaseMarketInfo
 from lambdatrader.models.enums.exchange import ExchangeEnum
@@ -87,13 +88,19 @@ class PolxMarketInfo(BaseMarketInfo):
 
     def fetch_ticker(self):
         self.logger.debug('fetching_ticker')
-        ticker_response = self.__api_call(call=lambda: polo.returnTicker())
+        ticker_response = self.__get_ticker_with_retry()
         ticker_dict = {}
         for currency, info in ticker_response.items():
             ticker_dict[currency] = self.ticker_info_to_ticker(ticker_info=info)
         self.lock_ticker()
         self.__ticker = ticker_dict
         self.unlock_ticker()
+
+    def __get_ticker_with_retry(self):
+        return retry_on_exception(
+            task=lambda: self.__api_call(call=lambda: polo.returnTicker()),
+            logger=self.logger
+        )
 
     @staticmethod
     def ticker_info_to_ticker(ticker_info):
@@ -121,4 +128,7 @@ class PolxMarketInfo(BaseMarketInfo):
 
     @staticmethod
     def __api_call(call):
-        return APICallExecutor.get_instance().call(call=call)
+        try:
+            return APICallExecutor.get_instance().call(cell=call)
+        except PoloniexError as e:
+            raise map_exception(e)(e.msg)

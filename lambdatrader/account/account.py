@@ -1,3 +1,5 @@
+from lambdatrader.utilities.exceptions import TradingException
+
 
 class BaseAccount:
 
@@ -38,10 +40,6 @@ class BaseAccount:
         raise NotImplementedError
 
 
-class TradingException(Exception):
-    pass
-
-
 class IllegalOrder(TradingException):
     pass
 
@@ -55,20 +53,4 @@ class UnableToFillImmediately(TradingException):
 
 
 class NoSuchOrder(TradingException):
-    pass
-
-
-class APIConnectionException(TradingException):
-    pass
-
-
-class RequestLimitExceeded(APIConnectionException):
-    pass
-
-
-class InvalidJSONResponse(APIConnectionException):
-    pass
-
-
-class ConnectionTimeout(APIConnectionException):
     pass

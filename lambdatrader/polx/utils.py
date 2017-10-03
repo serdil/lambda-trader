@@ -1,6 +1,9 @@
 from queue import Queue, Empty
 from threading import Thread
 
+from lambdatrader.account.account import UnableToFillImmediately
+from lambdatrader.utilities.exceptions import ConnectionTimeout, RequestLimitExceeded, InvalidJSONResponse
+
 
 class APICallExecutor:
     class __APICallExecutor:
@@ -39,3 +42,17 @@ class APICallExecutor:
         if cls.__instance is None:
             cls.__instance = cls.__APICallExecutor()
         return cls.__instance
+
+
+def map_exception(e):
+    e_str = str(e)
+    if 'Unable to fill order completely.' in e_str:
+        return UnableToFillImmediately
+    elif 'Connection timed out.' in e_str:
+        return ConnectionTimeout
+    elif 'Please do not make more than' in e_str:
+        return RequestLimitExceeded
+    elif 'Invalid json response' in e_str:
+        return InvalidJSONResponse
+    else:
+        return e

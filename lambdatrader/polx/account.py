@@ -4,13 +4,12 @@ from poloniex import PoloniexError
 
 from lambdatrader.config import POLONIEX_TAKER_FEE, POLONIEX_MAKER_FEE
 from lambdatrader.account.account import (
-    BaseAccount, UnableToFillImmediately, ConnectionTimeout, RequestLimitExceeded,
-    InvalidJSONResponse,
+    BaseAccount,
 )
 from lambdatrader.loghandlers import get_logger_with_all_handlers
 from lambdatrader.models.order import Order
 from lambdatrader.polx.polxclient import polo
-from lambdatrader.polx.utils import APICallExecutor
+from lambdatrader.polx.utils import APICallExecutor, map_exception
 from lambdatrader.utils import pair_second, pair_from, get_now_timestamp
 from lambdatrader.models.enums.exchange import ExchangeEnum
 from lambdatrader.models.ordertype import OrderType
@@ -108,7 +107,7 @@ class PolxAccount(BaseAccount):
             self.logger.info('order_put:%s', order.get_order_number())
             return order
         except PoloniexError as e:
-            raise self.map_exception(e)(e.msg)
+            raise map_exception(e)(e.msg)
 
     def cancel_order(self, order_number):
             self.logger.info('cancel_order:%d', order_number)
@@ -138,22 +137,9 @@ class PolxAccount(BaseAccount):
             )
             return sell_result
 
-    def __api_call(self, call):
-        try:
-            return APICallExecutor.get_instance().call(call)
-        except PoloniexError as e:
-            raise self.map_exception(e)(e.msg)
-
     @staticmethod
-    def map_exception(e):
-        e_str = str(e)
-        if 'Unable to fill order completely.' in e_str:
-            return UnableToFillImmediately
-        elif 'Connection timed out.' in e_str:
-            return ConnectionTimeout
-        elif 'Please do not make more than' in e_str:
-            return RequestLimitExceeded
-        elif 'Invalid json response' in e_str:
-            return InvalidJSONResponse
-        else:
-            return e
+    def __api_call(call):
+        try:
+            return APICallExecutor.get_instance().call(cell=call)
+        except PoloniexError as e:
+            raise map_exception(e)(e.msg)
