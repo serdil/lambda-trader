@@ -1,7 +1,8 @@
 from datetime import datetime
 from logging import ERROR
 from threading import Thread, RLock
-from time import sleep
+
+from collections import defaultdict
 
 from copy import deepcopy
 from typing import Iterable
@@ -146,8 +147,39 @@ class SignalExecutor(BaseSignalExecutor):
                 if 'tracked_signals' not in self.__memory_memory:
                     self.__memory['memory']['tracked_signals'] = {}
 
+        self.__scheduled_tasks = defaultdict(list)
+
         if self.LIVE:
-            self.__run_in_separate_thread(self.__heartbeat)
+            self.__schedule_task(task=lambda: self.__heartbeat(count=0), time_offset=0)
+            self.__schedule_task(task=self.__process_signals, time_offset=0, period=5)
+            self.__schedule_task(task=self.__report_estimated_balance, time_offset=0, period=60)
+
+    def __schedule_task(self, task, time_offset, period=None):
+        scheduled_time = self.__get_market_date() + time_offset
+        self.__scheduled_tasks[scheduled_time].append((task, period))
+
+    def __run_scheduled_tasks(self):
+        market_date = self.__get_market_date()
+
+        times_to_delete = []
+        tasks_to_readd = []
+        for scheduled_time, tasks in self.__scheduled_tasks.items():
+            if market_date >= scheduled_time:
+                times_to_delete.append(scheduled_time)
+                for task_tuple in tasks:
+                    if task_tuple[1] is not None:
+                        tasks_to_readd.append(task_tuple)
+                    try:
+                        task_tuple[0]()
+                    except Exception:
+                        self.logger.exception('exception in scheduled task')
+
+        for time in times_to_delete:
+            del self.__scheduled_tasks[time]
+
+        for task_tuple in tasks_to_readd:
+            scheduled_time = market_date + task_tuple[1]
+            self.__scheduled_tasks[scheduled_time].append(task_tuple)
 
     def __save_memory(self):
         self.debug('__save_memory')
@@ -168,21 +200,23 @@ class SignalExecutor(BaseSignalExecutor):
     def act(self, signals):
         with self.__memory_lock:
             self.debug('act')
-            self.__process_signals()
 
-            market_date = self.__get_market_date()
-            estimated_balance = self.__get_estimated_balance_with_retry()
-            self.declare_estimated_balance(date=market_date, balance=estimated_balance)
+            self.__run_scheduled_tasks()
 
             self.__execute_new_signals(trade_signals=signals)
 
             if self.LIVE:
                 self.__save_memory()
-            self.debug('end_of_act')
 
             tracked_signals_list = self.__get_tracked_signals_list()
 
+            self.debug('end_of_act')
             return tracked_signals_list
+
+    def __report_estimated_balance(self):
+        market_date = self.__get_market_date()
+        estimated_balance = self.__get_estimated_balance_with_retry()
+        self.declare_estimated_balance(date=market_date, balance=estimated_balance)
 
     def __get_estimated_balance_with_retry(self):
         return self.retry_on_exception(
@@ -413,20 +447,16 @@ class SignalExecutor(BaseSignalExecutor):
     def __in_non_silent_backtesting(self):
         return not self.LIVE and not self.SILENT
 
-    def __heartbeat(self):
+    def __heartbeat(self, count):
         if self.LIVE:
-            while True:
-                try:
+            try:
+                if count % 4 == 0:
                     self.__log_heartbeat_info_conditionally(log_if_no_open_orders=True)
-                    sleep(1800)
+                else:
                     self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
-                    sleep(1800)
-                    self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
-                    sleep(1800)
-                    self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
-                    sleep(1800)
-                except Exception as e:
-                    self.logger.exception('exception in heartbeat thread')
+            except Exception:
+                self.logger.exception('exception in heartbeat')
+            self.__schedule_task(task=lambda: self.__heartbeat(count+1), time_offset=1800)
 
     def __log_heartbeat_info_conditionally(self, log_if_no_open_orders=False):
         trades = self.__copy_internal_trades().values()
