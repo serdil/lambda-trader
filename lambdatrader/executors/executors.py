@@ -147,7 +147,7 @@ class SignalExecutor(BaseSignalExecutor):
                 if 'tracked_signals' not in self.__memory_memory:
                     self.__memory['memory']['tracked_signals'] = {}
 
-        self.__scheduled_tasks = defaultdict(lambda: [])
+        self.__scheduled_tasks = defaultdict(list)
 
         if self.LIVE:
             self.__schedule_task(task=lambda: self.__heartbeat(count=0), time_offset=0)
