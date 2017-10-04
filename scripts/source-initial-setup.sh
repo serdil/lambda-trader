@@ -1,3 +1,6 @@
+rm -rf venv
+rm -rf venv-fabric
+
 source scripts/source-make-venv.sh
 source scripts/source-make-fabric-venv.sh
 
