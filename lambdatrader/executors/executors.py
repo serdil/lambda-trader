@@ -151,10 +151,12 @@ class SignalExecutor(BaseSignalExecutor):
 
         if self.LIVE:
             self.__schedule_task(task=lambda: self.__heartbeat(count=0), time_offset=0)
+            self.__schedule_task(task=self.__process_signals, time_offset=0, period=5)
+            self.__schedule_task(task=self.__report_estimated_balance, time_offset=0, period=60)
 
-    def __schedule_task(self, task, time_offset, recurring=False):
+    def __schedule_task(self, task, time_offset, period=None):
         scheduled_time = self.__get_market_date() + time_offset
-        self.__scheduled_tasks[scheduled_time].append((task, recurring, time_offset))
+        self.__scheduled_tasks[scheduled_time].append((task, period))
 
     def __run_scheduled_tasks(self):
         market_date = self.__get_market_date()
@@ -165,17 +167,18 @@ class SignalExecutor(BaseSignalExecutor):
             if market_date >= scheduled_time:
                 times_to_delete.append(scheduled_time)
                 for task_tuple in tasks:
-                    if task_tuple[1]:
+                    if task_tuple[1] is not None:
                         tasks_to_readd.append(task_tuple)
                     try:
                         task_tuple[0]()
                     except Exception:
                         self.logger.exception('exception in scheduled task')
+
         for time in times_to_delete:
             del self.__scheduled_tasks[time]
 
         for task_tuple in tasks_to_readd:
-            scheduled_time = market_date + task_tuple[2]
+            scheduled_time = market_date + task_tuple[1]
             self.__scheduled_tasks[scheduled_time].append(task_tuple)
 
     def __save_memory(self):
@@ -197,11 +200,8 @@ class SignalExecutor(BaseSignalExecutor):
     def act(self, signals):
         with self.__memory_lock:
             self.debug('act')
-            self.__process_signals()
 
-            market_date = self.__get_market_date()
-            estimated_balance = self.__get_estimated_balance_with_retry()
-            self.declare_estimated_balance(date=market_date, balance=estimated_balance)
+            self.__run_scheduled_tasks()
 
             self.__execute_new_signals(trade_signals=signals)
 
@@ -210,10 +210,13 @@ class SignalExecutor(BaseSignalExecutor):
 
             tracked_signals_list = self.__get_tracked_signals_list()
 
-            self.__run_scheduled_tasks()
-
             self.debug('end_of_act')
             return tracked_signals_list
+
+    def __report_estimated_balance(self):
+        market_date = self.__get_market_date()
+        estimated_balance = self.__get_estimated_balance_with_retry()
+        self.declare_estimated_balance(date=market_date, balance=estimated_balance)
 
     def __get_estimated_balance_with_retry(self):
         return self.retry_on_exception(
