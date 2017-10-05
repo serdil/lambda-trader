@@ -73,14 +73,12 @@ class RetracementSignalGenerator(BaseSignalGenerator):
     def get_allowed_pairs(self):
         self.debug('get_allowed_pairs')
         high_volume_pairs = self.__get_high_volume_pairs()
-        self.debug('high_volume_pairs:%s', str(high_volume_pairs))
         return high_volume_pairs
 
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
-        self.debug('analyze_pair')
 
         if pair in [signal.pair for signal in tracked_signals]:
-            self.debug('pair_already_in_tracked_signals')
+            self.debug('pair_already_in_tracked_signals:%s', pair)
             return
 
         latest_ticker = self.market_info.get_pair_ticker(pair=pair)
@@ -92,24 +90,20 @@ class RetracementSignalGenerator(BaseSignalGenerator):
 
         price_is_lower_than_day_high = target_price < day_high_price
 
-        self.debug('market_date:%s', str(market_date))
-        self.debug('latest_ticker:%s:%s', pair, str(latest_ticker))
-
-        self.debug('target_price:%s', str(target_price))
-        self.debug('day_high_price:%s', str(day_high_price))
-
-        self.debug('price_is_lower_than_day_high:%s', str(price_is_lower_than_day_high))
-
         if not price_is_lower_than_day_high:
             return
 
         current_retracement_ratio = (target_price - price) / (day_high_price - price)
         retracement_ratio_satisfied = current_retracement_ratio <= self.RETRACEMENT_RATIO
 
-        self.debug('current_retracement_ratio:%s', str(current_retracement_ratio))
-        self.debug('retracement_ratio_satisfied:%s', str(retracement_ratio_satisfied))
-
         if retracement_ratio_satisfied:
+            self.debug('retracement_ratio_satisfied')
+            self.debug('current_retracement_ratio:%s', str(current_retracement_ratio))
+            self.debug('market_date:%s', str(market_date))
+            self.debug('latest_ticker:%s:%s', pair, str(latest_ticker))
+            self.debug('target_price:%s', str(target_price))
+            self.debug('day_high_price:%s', str(day_high_price))
+
             entry = PriceEntry(price)
             success_exit = PriceTakeProfitSuccessExit(price=target_price)
             failure_exit = TimeoutStopLossFailureExit(timeout=self.ORDER_TIMEOUT)
