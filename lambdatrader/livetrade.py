@@ -36,4 +36,4 @@ while True:
             logger.exception('unhandled exception')
     except Exception as e:
         logger.exception('unhandled exception')
-    sleep(5)
+    sleep(1)
