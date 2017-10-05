@@ -10,7 +10,7 @@
       <excludeFolder url="file://$MODULE_DIR$/venv" />
       <excludeFolder url="file://$MODULE_DIR$/venv-fabric" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.5.4 virtualenv at ~/workspace/lambda-trader/venv" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.4.4 virtualenv at ~/workspace/lambda-trader/venv" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TestRunnerService">
