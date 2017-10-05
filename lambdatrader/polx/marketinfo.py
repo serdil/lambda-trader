@@ -129,6 +129,6 @@ class PolxMarketInfo(BaseMarketInfo):
     @staticmethod
     def __api_call(call):
         try:
-            return APICallExecutor.get_instance().call(cell=call)
+            return APICallExecutor.get_instance().call(call=call)
         except PoloniexError as e:
-            raise map_exception(e)(e.msg)
+            raise map_exception(e)(str(e))
