@@ -135,17 +135,16 @@ class SignalExecutor(BaseSignalExecutor):
         self.__memory_lock = RLock()
 
         with self.__memory_lock:
-
             if self.LIVE:
                 self.__memory = self.get_memory_from_db()
             else:
                 self.__memory = self.get_default_memory()
 
-                if 'internal_trades' not in self.__memory_memory:
-                    self.__memory['memory']['internal_trades'] = {}
+            if 'internal_trades' not in self.__memory_memory:
+                self.__memory_memory['internal_trades'] = {}
 
-                if 'tracked_signals' not in self.__memory_memory:
-                    self.__memory['memory']['tracked_signals'] = {}
+            if 'tracked_signals' not in self.__memory_memory:
+                self.__memory_memory['tracked_signals'] = {}
 
         self.__scheduled_tasks = defaultdict(list)
 
@@ -163,16 +162,20 @@ class SignalExecutor(BaseSignalExecutor):
 
         times_to_delete = []
         tasks_to_readd = []
+        tasks_to_run = []
         for scheduled_time, tasks in self.__scheduled_tasks.items():
             if market_date >= scheduled_time:
                 times_to_delete.append(scheduled_time)
                 for task_tuple in tasks:
+                    tasks_to_run.append(task_tuple)
                     if task_tuple[1] is not None:
                         tasks_to_readd.append(task_tuple)
-                    try:
-                        task_tuple[0]()
-                    except Exception:
-                        self.logger.exception('exception in scheduled task')
+
+        for task_tuple in tasks_to_run:
+            try:
+                task_tuple[0]()
+            except Exception:
+                self.logger.exception('exception in scheduled task')
 
         for time in times_to_delete:
             del self.__scheduled_tasks[time]
@@ -449,17 +452,18 @@ class SignalExecutor(BaseSignalExecutor):
 
     def __heartbeat(self, count):
         if self.LIVE:
-            try:
-                if count % 4 == 0:
-                    self.__log_heartbeat_info_conditionally(log_if_no_open_orders=True)
-                else:
-                    self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
-            except Exception:
-                self.logger.exception('exception in heartbeat')
-            self.__schedule_task(task=lambda: self.__heartbeat(count+1), time_offset=1800)
+            with self.__memory_lock:
+                try:
+                    if count % 4 == 0:
+                        self.__log_heartbeat_info_conditionally(log_if_no_open_orders=True)
+                    else:
+                        self.__log_heartbeat_info_conditionally(log_if_no_open_orders=False)
+                except Exception:
+                    self.logger.exception('exception in heartbeat')
+                self.__schedule_task(task=lambda: self.__heartbeat(count+1), time_offset=1800)
 
     def __log_heartbeat_info_conditionally(self, log_if_no_open_orders=False):
-        trades = self.__copy_internal_trades().values()
+        trades = self.__internal_trades.values()
 
         if len(trades) == 0 and not log_if_no_open_orders:
             return
@@ -479,14 +483,22 @@ class SignalExecutor(BaseSignalExecutor):
 
     def __log_heartbeat_info(self, estimated_balance, trades_p_l):
         num_open_orders = len(trades_p_l)
-        p_l_summary = ',\n'.join([item.key() + str(item.value()) for item in trades_p_l.items()])
-        self.logger.info('HEARTBEAT: estimated_balance:%f num_open_orders:%d'
-                         ' pairs_with_open_orders:%s\np/l summary:\n%s',
-                         estimated_balance, num_open_orders, p_l_summary)
+        p_l_summary = self.__get_p_l_summary_string(trades_p_l=trades_p_l)
+        if p_l_summary == '':
+            self.logger.info('HEARTBEAT: estimated_balance:%f num_open_orders:%d',
+                             estimated_balance, num_open_orders)
+        else:
+            self.logger.info('HEARTBEAT: estimated_balance:%f num_open_orders:%d'
+                             ' p/l summary: %s',
+                             estimated_balance, num_open_orders, p_l_summary)
+
+    def __get_p_l_summary_string(self, trades_p_l):
+        return ','.join(['{}:{}'.format(item.key(), item.value()) for item in trades_p_l.items()])
 
     def __copy_internal_trades(self):
         with self.__memory_lock:
-            internal_trades_copy = deepcopy(self.__internal_trades)
+            internal_trades = self.__internal_trades
+            internal_trades_copy = deepcopy(internal_trades)
             return internal_trades_copy
 
     @staticmethod
