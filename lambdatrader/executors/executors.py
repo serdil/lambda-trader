@@ -148,16 +148,19 @@ class SignalExecutor(BaseSignalExecutor):
 
         self.__scheduled_tasks = defaultdict(list)
 
+        self.__schedule_task(task=self.__process_signals, time_offset=0, period=5)
+        self.__schedule_task(task=self.__report_estimated_balance, time_offset=0, period=60)
+
         if self.LIVE:
             self.__schedule_task(task=lambda: self.__heartbeat(count=0), time_offset=0)
-            self.__schedule_task(task=self.__process_signals, time_offset=0, period=5)
-            self.__schedule_task(task=self.__report_estimated_balance, time_offset=0, period=60)
 
     def __schedule_task(self, task, time_offset, period=None):
         scheduled_time = self.__get_market_date() + time_offset
         self.__scheduled_tasks[scheduled_time].append((task, period))
 
     def __run_scheduled_tasks(self):
+        self.debug('__run_scheduled_tasks')
+
         market_date = self.__get_market_date()
 
         times_to_delete = []
@@ -173,6 +176,7 @@ class SignalExecutor(BaseSignalExecutor):
 
         for task_tuple in tasks_to_run:
             try:
+                self.debug('__running_task')
                 task_tuple[0]()
             except Exception:
                 self.logger.exception('exception in scheduled task')
@@ -181,6 +185,7 @@ class SignalExecutor(BaseSignalExecutor):
             del self.__scheduled_tasks[time]
 
         for task_tuple in tasks_to_readd:
+            self.debug('__rescheduling_task')
             scheduled_time = market_date + task_tuple[1]
             self.__scheduled_tasks[scheduled_time].append(task_tuple)
 
@@ -493,7 +498,7 @@ class SignalExecutor(BaseSignalExecutor):
                              estimated_balance, num_open_orders, p_l_summary)
 
     def __get_p_l_summary_string(self, trades_p_l):
-        return ','.join(['{}:{}'.format(item.key(), item.value()) for item in trades_p_l.items()])
+        return ','.join(['{}:{}'.format(item[0], item[1]) for item in trades_p_l.items()])
 
     def __copy_internal_trades(self):
         with self.__memory_lock:
