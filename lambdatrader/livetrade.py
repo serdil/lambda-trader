@@ -13,6 +13,8 @@ logger = get_logger_with_all_handlers(__name__)
 market_info = PolxMarketInfo()
 account = PolxAccount()
 
+sleep(3)
+
 signal_generator = RetracementSignalGenerator(market_info=market_info, live=True, silent=False)
 signal_executor = SignalExecutor(market_info=market_info, account=account, live=True, silent=False)
 

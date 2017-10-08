@@ -1,3 +1,4 @@
+import pickle
 from datetime import datetime
 from logging import ERROR
 from threading import Thread, RLock
@@ -7,6 +8,7 @@ from collections import defaultdict
 from copy import deepcopy
 from typing import Iterable
 
+from lambdatrader.evaluation.utils import period_statistics
 from lambdatrader.account.account import (
     UnableToFillImmediately,
 )
@@ -35,43 +37,124 @@ class BaseSignalExecutor:
         self.LIVE = live
         self.SILENT = silent
 
+        self.__set_up_logger()
+        self.__set_up_memory()
+        self.__set_up_memory_fields()
+
+        if self.LIVE:
+            self.set_history_start(self.market_info.get_market_date())
+
+    def __set_up_logger(self):
         if self.LIVE:
             self.logger = get_logger_with_all_handlers(__name__)
-        elif self.SILENT:
-            self.logger = get_silent_logger(__name__)
         else:
-            self.logger = get_logger_with_console_handler(__name__)
-            self.logger.setLevel(ERROR)
+            if self.SILENT:
+                self.logger = get_silent_logger(__name__)
+            else:
+                self.logger = get_logger_with_console_handler(__name__)
+                self.logger.setLevel(ERROR)
 
-        self.__trade_starts = {}
-        self.__trades = []
-        self.__history_start = None
-        self.__history_end = None
-        self.__estimated_balances = {}
-        self.__frozen_balances = {}
-        self.__latest_frozen_balance = None
+    def __set_up_memory(self):
+        self._memory_lock = RLock()
+
+        with self._memory_lock:
+            if self.LIVE:
+                self._memory = self._get_memory_from_db()
+            else:
+                self._memory = self._get_default_memory()
+
+    def __set_up_memory_fields(self):
+        if 'trades' not in self._memory_memory:
+            self._memory_memory['trades'] = []
+
+        if 'history_start' not in self._memory_memory:
+            self._memory_memory['history_start'] = None
+
+        if 'history_end' not in self._memory_memory:
+            self._memory_memory['history_end'] = None
+
+        if 'estimated_balances' not in self._memory_memory:
+            self._memory_memory['estimated_balances'] = {}
+
+        if 'frozen_balances' not in self._memory_memory:
+            self._memory_memory['frozen_balances'] = {}
+
+        if 'latest_frozen_balance' not in self._memory_memory:
+            self._memory_memory['latest_frozen_balance'] = None
+
+    @property
+    def _memory_memory(self):
+        return self._memory['memory']
+
+    @property
+    def __history_start(self):
+        return self._memory_memory['history_start']
+
+    @property
+    def __history_end(self):
+        return self._memory_memory['history_end']
+
+    @property
+    def __trades(self):
+        return self._memory_memory['trades']
+
+    @property
+    def __estimated_balances(self):
+        return self._memory_memory['estimated_balances']
+
+    @property
+    def __frozen_balances(self):
+        return self._memory_memory['frozen_balances']
+
+    @property
+    def __latest_frozen_balance(self):
+        return self._memory_memory['latest_frozen_balance']
+
+    def _get_memory_from_db(self):
+        self.debug('get_memory_from_db')
+
+        memory_dict = get_object_with_key(self._get_memory_key())
+
+        if memory_dict is None:
+            self.logger.warning('memory_object_not_found_in_db_creating_new')
+            memory_dict = self._get_default_memory()
+
+        if memory_dict['version'] != self.MEMORY_VERSION:
+            raise RuntimeError('Memory versions do not match,'
+                               ' db:{} code:{}'.format(memory_dict['version'], self.MEMORY_VERSION))
+
+        self.debug('got_memory_from_db')
+        return memory_dict
+
+    def _get_default_memory(self):
+        return {'version': self.MEMORY_VERSION, 'memory': {}}
+
+    def _save_memory_to_db(self):
+        self.debug('save_memory_to_db, key:%s', self._get_memory_key())
+        save_object_with_key(self._get_memory_key(), self._memory)
+
+    def _get_memory_key(self):
+        return '{}.{}.memory'.format(BOT_IDENTIFIER, self.__class__.__name__)
 
     def debug(self, msg, *args, **kwargs):
         self.logger.debug(msg, *args, **kwargs)
 
     def set_history_start(self, date):
-        self.__history_start = date
+        self._memory_memory['history_start'] = date
 
     def set_history_end(self, date):
-        self.__history_end = date
+        self._memory_memory['history_end'] = date
 
-    def declare_trade_start(self, date, trade_id):
-        self.__trade_starts[trade_id] = date
-
-    def declare_trade_end(self, date, trade_id, profit_amount):
-        start_date = self.__trade_starts[trade_id]
-        end_date = date
-        trade = Trade(_id=trade_id, start_date=start_date, end_date=end_date, profit=profit_amount)
+    def _declare_trade_end(self, trade):
         self.__trades.append(trade)
-        self.__set_frozen_balance(date=date, balance=self.get_frozen_balance() + profit_amount)
+
+        end_date = trade.end_date
+        profit_amount = trade.profit_amount
+        self.__set_frozen_balance(date=end_date, balance=self.get_frozen_balance() + profit_amount)
 
     def declare_estimated_balance(self, date, balance):
         self.__estimated_balances[date] = balance
+        print(self.__frozen_balances)
         if self.__latest_frozen_balance is None:
             self.__set_frozen_balance(date=date, balance=balance)
 
@@ -80,7 +163,7 @@ class BaseSignalExecutor:
 
     def __set_frozen_balance(self, date, balance):
         self.__frozen_balances[date] = balance
-        self.__latest_frozen_balance = balance
+        self._memory_memory['latest_frozen_balance'] = balance
 
     def get_trading_info(self):
         return TradingInfo(history_start=self.__history_start, history_end=self.__history_end,
@@ -90,32 +173,6 @@ class BaseSignalExecutor:
 
     def act(self, signals):
         raise NotImplementedError
-
-    def get_memory_from_db(self):
-        self.debug('get_memory_from_db')
-
-        memory_dict = get_object_with_key(self.get_memory_key())
-
-        if memory_dict is None:
-            self.logger.warning('memory_object_not_found_in_db_creating_new')
-            memory_dict = self.get_default_memory()
-
-        if memory_dict['version'] != self.MEMORY_VERSION:
-            raise RuntimeError('Memory versions do not match,'
-                               ' db:{} code:{}'.format(memory_dict['version'], self.MEMORY_VERSION))
-
-        self.debug('got_memory_from_db')
-        return memory_dict
-
-    def get_default_memory(self):
-        return {'version': self.MEMORY_VERSION, 'memory': {}}
-
-    def save_memory_to_db(self, memory_dict):
-        self.debug('save_memory_to_db, key:%s', self.get_memory_key())
-        save_object_with_key(self.get_memory_key(), memory_dict)
-
-    def get_memory_key(self):
-        return '{}.{}.memory'.format(BOT_IDENTIFIER, self.__class__.__name__)
 
 
 #  Assuming PriceTakeProfitSuccessExit and TimeoutStopLossFailureExit for now.
@@ -132,20 +189,17 @@ class SignalExecutor(BaseSignalExecutor):
 
         self.debug('initializing_signal_executor')
 
-        self.__memory_lock = RLock()
+        self.__set_up_memory_fields()
+        self.__set_up_scheduled_tasks()
 
-        with self.__memory_lock:
-            if self.LIVE:
-                self.__memory = self.get_memory_from_db()
-            else:
-                self.__memory = self.get_default_memory()
+    def __set_up_memory_fields(self):
+        if 'internal_trades' not in self._memory_memory:
+            self._memory_memory['internal_trades'] = {}
 
-            if 'internal_trades' not in self.__memory_memory:
-                self.__memory_memory['internal_trades'] = {}
+        if 'tracked_signals' not in self._memory_memory:
+            self._memory_memory['tracked_signals'] = {}
 
-            if 'tracked_signals' not in self.__memory_memory:
-                self.__memory_memory['tracked_signals'] = {}
-
+    def __set_up_scheduled_tasks(self):
         self.__scheduled_tasks = defaultdict(list)
 
         self.__schedule_task(task=self.__process_signals, time_offset=0, period=5)
@@ -153,6 +207,7 @@ class SignalExecutor(BaseSignalExecutor):
 
         if self.LIVE:
             self.__schedule_task(task=lambda: self.__heartbeat(count=0), time_offset=0)
+            self.__schedule_task(task=self.__compute_statistics, time_offset=0, period=1296000)
 
     def __schedule_task(self, task, time_offset, period=None):
         scheduled_time = self.__get_market_date() + time_offset
@@ -191,22 +246,18 @@ class SignalExecutor(BaseSignalExecutor):
 
     def __save_memory(self):
         self.debug('__save_memory')
-        self.save_memory_to_db(self.__memory)
-
-    @property
-    def __memory_memory(self):
-        return self.__memory['memory']
+        self._save_memory_to_db()
 
     @property
     def __internal_trades(self):
-        return self.__memory_memory['internal_trades']
+        return self._memory_memory['internal_trades']
 
     @property
     def __tracked_signals(self):
-        return self.__memory_memory['tracked_signals']
+        return self._memory_memory['tracked_signals']
 
     def act(self, signals):
-        with self.__memory_lock:
+        with self._memory_lock:
             self.debug('act')
 
             self.__run_scheduled_tasks()
@@ -222,6 +273,7 @@ class SignalExecutor(BaseSignalExecutor):
             return tracked_signals_list
 
     def __report_estimated_balance(self):
+        print('REPORT ESTIMATED BALANCE')
         market_date = self.__get_market_date()
         estimated_balance = self.__get_estimated_balance_with_retry()
         self.declare_estimated_balance(date=market_date, balance=estimated_balance)
@@ -251,12 +303,13 @@ class SignalExecutor(BaseSignalExecutor):
         if sell_order_number not in open_sell_orders_dict:  # Price TP hit
             self.logger.info('tp_hit_for_signal:%s', signal)
 
-            close_date = market_date
             profit_amount = self.__calc_profit_amount(amount=internal_trade.amount,
                                                       buy_rate=internal_trade.rate,
                                                       sell_rate=internal_trade.target_rate)
-            self.declare_trade_end(date=close_date,
-                                   trade_id=internal_trade_id, profit_amount=profit_amount)
+
+            trade = Trade(_id=internal_trade_id, start_date=internal_trade.start_date,
+                          end_date=market_date, profit=profit_amount)
+            self._declare_trade_end(trade=trade)
 
             self.logger.info('trade_closed_p_l:%.5f', profit_amount)
             self.__print_tp_hit_for_backtesting(market_date=market_date,
@@ -285,8 +338,10 @@ class SignalExecutor(BaseSignalExecutor):
                 profit_amount = self.__calc_profit_amount(amount=internal_trade.amount,
                                                           buy_rate=internal_trade.rate,
                                                           sell_rate=price)
-                self.declare_trade_end(date=market_date,
-                                       trade_id=internal_trade_id, profit_amount=profit_amount)
+
+                trade = Trade(_id=internal_trade_id, start_date=internal_trade.start_date,
+                              end_date=market_date, profit=profit_amount)
+                self._declare_trade_end(trade=trade)
 
                 self.logger.info('trade_closed_p_l:%.5f', profit_amount)
                 self.__print_sl_hit_for_backtesting(market_date=market_date,
@@ -402,12 +457,11 @@ class SignalExecutor(BaseSignalExecutor):
         self.__save_signal_to_tracked_signals_with_tp_sell_order(signal=signal,
                                                                  tp_sell_order=sell_order)
 
-        self.__internal_trades[signal.id] = self.InternalTrade(currency=currency,
+        self.__internal_trades[signal.id] = self.InternalTrade(start_date=market_date,
+                                                               currency=currency,
                                                                amount=bought_amount,
                                                                rate=entry_price,
                                                                target_rate=target_price)
-
-        self.declare_trade_start(date=market_date, trade_id=signal.id)
 
         self.__print_trade_for_backtesting(pair=pair)
 
@@ -457,7 +511,7 @@ class SignalExecutor(BaseSignalExecutor):
 
     def __heartbeat(self, count):
         if self.LIVE:
-            with self.__memory_lock:
+            with self._memory_lock:
                 try:
                     if count % 4 == 0:
                         self.__log_heartbeat_info_conditionally(log_if_no_open_orders=True)
@@ -501,17 +555,27 @@ class SignalExecutor(BaseSignalExecutor):
         return ','.join(['{}:{}'.format(item[0], item[1]) for item in trades_p_l.items()])
 
     def __copy_internal_trades(self):
-        with self.__memory_lock:
+        with self._memory_lock:
             internal_trades = self.__internal_trades
             internal_trades_copy = deepcopy(internal_trades)
             return internal_trades_copy
+
+    def __compute_statistics(self):
+        trading_info = self.get_trading_info()
+        self.logger.info('trading_info size:%f MB', self.__compute_object_size(trading_info))
+        statistics = period_statistics(trading_info=trading_info, end=self.__get_market_date())
+        self.logger.info(statistics)
+
+    def __compute_object_size(self, object):
+        return len(pickle.dumps(object, protocol=4)) / 1024 / 1024
 
     @staticmethod
     def __run_in_separate_thread(task):
         Thread(task).run()
 
     class InternalTrade:
-        def __init__(self, currency, amount, rate, target_rate):
+        def __init__(self, start_date, currency, amount, rate, target_rate):
+            self.start_date = start_date
             self.currency = currency
             self.amount = amount
             self.rate = rate
