@@ -154,7 +154,6 @@ class BaseSignalExecutor:
 
     def declare_estimated_balance(self, date, balance):
         self.__estimated_balances[date] = balance
-        print(self.__frozen_balances)
         if self.__latest_frozen_balance is None:
             self.__set_frozen_balance(date=date, balance=balance)
 
@@ -273,7 +272,6 @@ class SignalExecutor(BaseSignalExecutor):
             return tracked_signals_list
 
     def __report_estimated_balance(self):
-        print('REPORT ESTIMATED BALANCE')
         market_date = self.__get_market_date()
         estimated_balance = self.__get_estimated_balance_with_retry()
         self.declare_estimated_balance(date=market_date, balance=estimated_balance)
