@@ -41,9 +41,6 @@ class BaseSignalExecutor:
         self.__set_up_memory()
         self.__set_up_memory_fields()
 
-        if self.LIVE:
-            self.set_history_start(self.market_info.get_market_date())
-
     def __set_up_logger(self):
         if self.LIVE:
             self.logger = get_logger_with_all_handlers(__name__)
@@ -68,10 +65,10 @@ class BaseSignalExecutor:
             self._memory_memory['trades'] = []
 
         if 'history_start' not in self._memory_memory:
-            self._memory_memory['history_start'] = None
+            self._memory_memory['history_start'] = self.market_info.get_market_date()
 
         if 'history_end' not in self._memory_memory:
-            self._memory_memory['history_end'] = None
+            self._memory_memory['history_end'] = self.market_info.get_market_date()
 
         if 'estimated_balances' not in self._memory_memory:
             self._memory_memory['estimated_balances'] = {}
@@ -145,15 +142,20 @@ class BaseSignalExecutor:
     def set_history_end(self, date):
         self._memory_memory['history_end'] = date
 
+    def update_history_end_with_current_date(self):
+        self.set_history_end(self.market_info.get_market_date())
+
     def _declare_trade_end(self, trade):
         self.__trades.append(trade)
 
         end_date = trade.end_date
         profit_amount = trade.profit_amount
         self.__set_frozen_balance(date=end_date, balance=self.get_frozen_balance() + profit_amount)
+        self.update_history_end_with_current_date()
 
     def declare_estimated_balance(self, date, balance):
         self.__estimated_balances[date] = balance
+        self.update_history_end_with_current_date()
         if self.__latest_frozen_balance is None:
             self.__set_frozen_balance(date=date, balance=balance)
 
@@ -163,6 +165,7 @@ class BaseSignalExecutor:
     def __set_frozen_balance(self, date, balance):
         self.__frozen_balances[date] = balance
         self._memory_memory['latest_frozen_balance'] = balance
+        self.update_history_end_with_current_date()
 
     def get_trading_info(self):
         return TradingInfo(history_start=self.__history_start, history_end=self.__history_end,
