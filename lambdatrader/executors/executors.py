@@ -137,6 +137,8 @@ class BaseSignalExecutor:
         self.logger.debug(msg, *args, **kwargs)
 
     def set_history_start(self, date):
+        if date > self.__history_end:
+            raise ValueError('Start date cannot be later than end date.')
         self._memory_memory['history_start'] = date
 
     def set_history_end(self, date):
@@ -312,7 +314,7 @@ class SignalExecutor(BaseSignalExecutor):
                           end_date=market_date, profit=profit_amount)
             self._declare_trade_end(trade=trade)
 
-            self.logger.info('trade_closed_p_l:%.5f', profit_amount)
+            self.logger.info('trade_closed_p_l:%.6f', profit_amount)
             self.__print_tp_hit_for_backtesting(market_date=market_date,
                                                 currency=sell_order.get_currency(),
                                                 profit_amount=profit_amount)
@@ -344,7 +346,7 @@ class SignalExecutor(BaseSignalExecutor):
                               end_date=market_date, profit=profit_amount)
                 self._declare_trade_end(trade=trade)
 
-                self.logger.info('trade_closed_p_l:%.5f', profit_amount)
+                self.logger.info('trade_closed_p_l:%.6f', profit_amount)
                 self.__print_sl_hit_for_backtesting(market_date=market_date,
                                                     currency=sell_order.get_currency(),
                                                     profit_amount=profit_amount)
@@ -553,7 +555,7 @@ class SignalExecutor(BaseSignalExecutor):
                              estimated_balance, num_open_orders, p_l_summary)
 
     def __get_p_l_summary_string(self, trades_p_l):
-        return ','.join(['{}:{}'.format(item[0], item[1]) for item in trades_p_l.items()])
+        return ','.join(['{}:{:.6f}'.format(item[0], item[1]) for item in trades_p_l.items()])
 
     def __copy_internal_trades(self):
         with self._memory_lock:
@@ -565,7 +567,7 @@ class SignalExecutor(BaseSignalExecutor):
         trading_info = self.get_trading_info()
         self.logger.info('trading_info size:%f MB', self.__compute_object_size(trading_info))
         statistics = period_statistics(trading_info=trading_info, end=self.__get_market_date())
-        self.logger.info(statistics)
+        self.logger.info('overall_statistics:%s', statistics)
 
     def __compute_object_size(self, object):
         return len(pickle.dumps(object, protocol=4)) / 1024 / 1024
