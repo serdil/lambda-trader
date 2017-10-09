@@ -110,9 +110,9 @@ class PolxAccount(BaseAccount):
             raise map_exception(e)(e.msg)
 
     def cancel_order(self, order_number):
-            self.logger.info('cancel_order:%d', order_number)
+            self.logger.info('cancel_order:%s', order_number)
             self.__api_call(call=lambda: polo.cancelOrder(order_number))
-            self.logger.info('order_cancelled:%d', order_number)
+            self.logger.info('order_cancelled:%s', order_number)
 
     def __polo_put(self, order_request, fill_or_kill=False):
         if order_request.get_amount() == -1:
