@@ -211,7 +211,7 @@ class SignalExecutor(BaseSignalExecutor):
 
         if self.LIVE:
             self.__schedule_task(task=lambda: self.__heartbeat(count=0), time_offset=0)
-            self.__schedule_task(task=self.__compute_statistics, time_offset=0, period=1296000)
+            self.__schedule_task(task=self.__compute_statistics, time_offset=0, period=21600)
 
     def __schedule_task(self, task, time_offset, period=None):
         scheduled_time = self.__get_market_date() + time_offset
@@ -498,7 +498,8 @@ class SignalExecutor(BaseSignalExecutor):
             frozen_balance = self.get_frozen_balance()
 
             self.__conditional_print()
-            self.__conditional_print(datetime.fromtimestamp(self.__get_market_date()), 'TRADE:', pair)
+            self.__conditional_print(datetime.fromtimestamp(self.__get_market_date()),
+                                     'TRADE:', pair)
             self.__conditional_print('estimated_balance:', estimated_balance)
             self.__conditional_print('frozen_balance:', frozen_balance)
             self.__conditional_print('num_open_orders:',
