@@ -541,19 +541,21 @@ class SignalExecutor(BaseSignalExecutor):
                                                          sell_rate=highest_bid)
 
         estimated_balance = self.__get_estimated_balance_with_retry()
-        self.__log_heartbeat_info(estimated_balance=estimated_balance,
+        frozen_balance = self.get_frozen_balance()
+        self.__log_heartbeat_info(frozen_balance=frozen_balance,
+                                  estimated_balance=estimated_balance,
                                   trades_p_l=trades_p_l)
 
-    def __log_heartbeat_info(self, estimated_balance, trades_p_l):
+    def __log_heartbeat_info(self, frozen_balance, estimated_balance, trades_p_l):
         num_open_orders = len(trades_p_l)
         p_l_summary = self.__get_p_l_summary_string(trades_p_l=trades_p_l)
         if p_l_summary == '':
-            self.logger.info('HEARTBEAT: estimated_balance:%f num_open_orders:%d',
-                             estimated_balance, num_open_orders)
+            self.logger.info('HEARTBEAT: frozen_balance:%f estimated_balance:%f num_open_orders:%d',
+                             frozen_balance, estimated_balance, num_open_orders)
         else:
-            self.logger.info('HEARTBEAT: estimated_balance:%f num_open_orders:%d'
+            self.logger.info('HEARTBEAT: frozen_balance:%f estimated_balance:%f num_open_orders:%d'
                              ' p/l summary: %s',
-                             estimated_balance, num_open_orders, p_l_summary)
+                             frozen_balance, estimated_balance, num_open_orders, p_l_summary)
 
     def __get_p_l_summary_string(self, trades_p_l):
         return ','.join(['{}:{:.6f}'.format(item[0], item[1]) for item in trades_p_l.items()])
