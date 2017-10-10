@@ -2,7 +2,9 @@ from queue import Queue, Empty
 from threading import Thread
 
 from lambdatrader.account.account import UnableToFillImmediately
-from lambdatrader.utilities.exceptions import ConnectionTimeout, RequestLimitExceeded, InvalidJSONResponse
+from lambdatrader.utilities.exceptions import (
+    ConnectionTimeout, RequestLimitExceeded, InvalidJSONResponse, InternalError,
+)
 
 
 class APICallExecutor:
@@ -54,5 +56,7 @@ def map_exception(e):
         return RequestLimitExceeded
     elif 'Invalid json response' in e_str:
         return InvalidJSONResponse
+    elif 'Internal error. Please try again.' in e_str:
+        return InternalError
     else:
         return e

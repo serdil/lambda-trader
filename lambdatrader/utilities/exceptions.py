@@ -16,3 +16,7 @@ class InvalidJSONResponse(APIConnectionException):
 
 class ConnectionTimeout(APIConnectionException):
     pass
+
+
+class InternalError(APIConnectionException):
+    pass

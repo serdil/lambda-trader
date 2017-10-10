@@ -1,11 +1,11 @@
 from lambdatrader.utilities.exceptions import (
-    ConnectionTimeout, RequestLimitExceeded, InvalidJSONResponse,
+    ConnectionTimeout, RequestLimitExceeded, InvalidJSONResponse, InternalError,
 )
 
 
 def retry_on_exception(task, logger, exceptions=None):
     if exceptions is None:
-        exceptions = [ConnectionTimeout, RequestLimitExceeded, InvalidJSONResponse]
+        exceptions = [ConnectionTimeout, RequestLimitExceeded, InvalidJSONResponse, InternalError]
 
     try:
         return task()
