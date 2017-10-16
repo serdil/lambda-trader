@@ -1,5 +1,7 @@
 from time import sleep
 
+from poloniex import PoloniexError
+
 from lambdatrader.polx.polxclient import polo
 
 from lambdatrader.utils import pair_from
@@ -32,19 +34,31 @@ while True:
                     lower_price = highest_bid * 0.999
                     even_lower_price = highest_bid * 0.995
                     even_lower_than_lower = highest_bid * 0.99
-                    polo.sell(pair_from('BTC', key),
-                              highest_bid, float(value),
-                              orderType='fillOrKill')
+                    try:
+                        polo.sell(pair_from('BTC', key),
+                                  highest_bid, float(value),
+                                  orderType='fillOrKill')
+                        continue
+                    except PoloniexError:
+                        pass
                     print('tried to sell for', highest_bid)
                     sleep(5)
-                    polo.sell(pair_from('BTC', key),
-                              lower_price, float(value),
-                              orderType='fillOrKill')
-                    print('tried to sell for', lower_price)
+                    try:
+                        polo.sell(pair_from('BTC', key),
+                                  lower_price, float(value),
+                                  orderType='fillOrKill')
+                        print('tried to sell for', lower_price)
+                        continue
+                    except PoloniexError:
+                        pass
                     sleep(5)
-                    polo.sell(pair_from('BTC', key),
-                              even_lower_than_lower, float(value),
-                              orderType='fillOrKill')
+                    try:
+                        polo.sell(pair_from('BTC', key),
+                                  even_lower_than_lower, float(value),
+                                  orderType='fillOrKill')
+                        continue
+                    except PoloniexError:
+                        pass
                     print('tried to sell for', even_lower_than_lower)
                     print('sold')
             except Exception as e:
