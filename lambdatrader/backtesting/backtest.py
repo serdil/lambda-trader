@@ -17,10 +17,10 @@ def backtest(account: BacktestingAccount, market_info: BacktestingMarketInfo,
     print('start:', datetime.fromtimestamp(start_date))
     print('end:', datetime.fromtimestamp(end_date))
 
-    signal_executor.set_history_start(start_date)
-    signal_executor.set_history_end(end_date)
-
     market_info.set_market_date(start_date)
+
+    signal_executor.set_history_end(end_date)
+    signal_executor.set_history_start(start_date)
 
     tracked_signals = []
     while market_info.get_market_date() < end_date:
