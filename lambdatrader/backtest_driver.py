@@ -2,6 +2,7 @@ from pprint import pprint
 
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
+from lambdatrader.config import BACKTESTING_NUM_DAYS
 from lambdatrader.evaluation.utils import statistics_over_periods, period_statistics
 from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.history.store import CandlestickStore
@@ -10,7 +11,7 @@ from lambdatrader.signals.signals import RetracementSignalGenerator
 
 ONE_DAY = 24 * 3600
 
-BACKTEST_NUM_DAYS = ONE_DAY * 7
+BACKTEST_NUM_DAYS = ONE_DAY * BACKTESTING_NUM_DAYS
 
 market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
 
