@@ -24,3 +24,5 @@ venv-fabric/*
 *__pycache__*
 
 .DS_Store
+
+.env
