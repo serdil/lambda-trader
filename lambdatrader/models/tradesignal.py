@@ -52,6 +52,7 @@ class FailureExitType(Enum):
     COMBINED_AND = 1
     COMBINED_OR = 2
     TIMEOUT_STOP_LOSS = 3
+    VALUE_STOP_LOSS = 4
 
 
 class FailureExit:
@@ -75,6 +76,12 @@ class TimeoutStopLossFailureExit(FailureExit):
     def __init__(self, timeout):
         super().__init__(_type=FailureExitType.TIMEOUT_STOP_LOSS)
         self.timeout = timeout
+
+
+class PriceStopLossFailureExit(FailureExit):
+    def __init__(self, price):
+        super().__init__(_type=FailureExitType.PRICE_STOP_LOSS)
+        self.price = price
 
 
 class TradeSignal:
