@@ -19,7 +19,7 @@ from lambdatrader.config import (
     BOT_IDENTIFIER)
 from lambdatrader.models.ordertype import OrderType
 from lambdatrader.models.trade import Trade
-from lambdatrader.models.tradesignal import TradeSignal
+from lambdatrader.models.tradesignal import TradeSignal, FailureExitType
 from lambdatrader.models.tradinginfo import TradingInfo
 from lambdatrader.utils import pair_from, pair_second
 from lambdatrader.loghandlers import get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger
@@ -323,8 +323,16 @@ class SignalExecutor(BaseSignalExecutor):
             del self.__tracked_signals[signal.id]
 
         else:
-            #  Check Timeout SL
-            if market_date - sell_order.get_date() >= signal.failure_exit.timeout:
+            failure_exit = signal.failure_exit
+            if failure_exit.type == FailureExitType.TIMEOUT_STOP_LOSS:
+                stop_loss_reached = market_date - sell_order.get_date() >= failure_exit.timeout
+            elif failure_exit.type == FailureExitType.PRICE_STOP_LOSS:
+                highest_bid = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
+                stop_loss_reached = highest_bid <= failure_exit.price
+            else:
+                raise Exception('Unknown or unimplemented failure_exit type.')
+
+            if stop_loss_reached:
                 self.logger.info('sl_hit_for_signal:%s', signal)
                 self.logger.info('cancelling_order:%s;', sell_order)
 
