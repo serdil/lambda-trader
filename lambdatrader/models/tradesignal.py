@@ -52,7 +52,7 @@ class FailureExitType(Enum):
     COMBINED_AND = 1
     COMBINED_OR = 2
     TIMEOUT_STOP_LOSS = 3
-    VALUE_STOP_LOSS = 4
+    PRICE_STOP_LOSS = 4
 
 
 class FailureExit:
