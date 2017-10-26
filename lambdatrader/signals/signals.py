@@ -9,8 +9,11 @@ from lambdatrader.config import (
 )
 from lambdatrader.models.tradesignal import (
     PriceEntry, PriceTakeProfitSuccessExit, TimeoutStopLossFailureExit, TradeSignal,
+    PriceStopLossFailureExit,
 )
-from lambdatrader.loghandlers import get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger
+from lambdatrader.loghandlers import (
+    get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger
+)
 
 
 class BaseSignalGenerator:
@@ -114,6 +117,67 @@ class RetracementSignalGenerator(BaseSignalGenerator):
             self.logger.info('trade_signal:%s', str(trade_signal))
 
             return trade_signal
+
+    def __get_high_volume_pairs(self):
+        self.debug('__get_high_volume_pairs')
+        return sorted(
+            filter(lambda p: self.market_info.get_pair_last_24h_btc_volume(p) >= self.HIGH_VOLUME_LIMIT,
+                   self.market_info.get_active_pairs()),
+            key=lambda pair: -self.market_info.get_pair_last_24h_btc_volume(pair=pair)
+        )
+
+
+class NoRecentStopLossSignalGenerator(BaseSignalGenerator):
+    CONSTANT__ONE_DAY_SECONDS = 86400
+
+    STOP_LOSS_FACTOR = 0.90
+    RECENCY_WINDOW = 2 * CONSTANT__ONE_DAY_SECONDS
+    BUY_PROFIT_FACTOR = 1.2
+
+    HIGH_VOLUME_LIMIT = 0
+
+    def get_allowed_pairs(self):
+        self.debug('get_allowed_pairs')
+        high_volume_pairs = self.__get_high_volume_pairs()
+        return high_volume_pairs
+
+    def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
+
+        if pair in [signal.pair for signal in tracked_signals]:
+            self.debug('pair_already_in_tracked_signals:%s', pair)
+            return
+
+        latest_ticker = self.market_info.get_pair_ticker(pair=pair)
+        price = latest_ticker.lowest_ask
+        market_date = self.get_market_date()
+
+        num_candlesticks = self.RECENCY_WINDOW // 300
+        min_so_far = None
+        max_so_far = None
+
+        for i in range(num_candlesticks):
+            candlestick = self.market_info.get_pair_candlestick(pair=pair, ind=i)
+            if not min_so_far:
+                min_so_far = candlestick.low
+            if not max_so_far:
+                max_so_far = candlestick.high
+            min_so_far = min(min_so_far, candlestick.low)
+            max_so_far = max(max_so_far, candlestick.high)
+            if min_so_far / max_so_far < self.STOP_LOSS_FACTOR:
+                return
+
+        target_price = price * self.BUY_PROFIT_FACTOR
+
+        entry = PriceEntry(price)
+        success_exit = PriceTakeProfitSuccessExit(price=target_price)
+        failure_exit = PriceStopLossFailureExit(price=price * self.STOP_LOSS_FACTOR)
+
+        trade_signal = TradeSignal(date=market_date, exchange=None, pair=pair, entry=entry,
+                                   success_exit=success_exit, failure_exit=failure_exit)
+
+        self.logger.info('trade_signal:%s', str(trade_signal))
+
+        return trade_signal
 
     def __get_high_volume_pairs(self):
         self.debug('__get_high_volume_pairs')
