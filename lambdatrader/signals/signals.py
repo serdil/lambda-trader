@@ -130,7 +130,8 @@ class RetracementSignalGenerator(BaseSignalGenerator):
 class NoRecentStopLossSignalGenerator(BaseSignalGenerator):
     CONSTANT__ONE_DAY_SECONDS = 86400
 
-    STOP_LOSS_FACTOR = 0.90
+    RECENT_STOP_LOSS_FACTOR = 0.90
+    ORDER_STOP_LOSS_FACTOR = RECENT_STOP_LOSS_FACTOR
     RECENCY_WINDOW = 2 * CONSTANT__ONE_DAY_SECONDS
     BUY_PROFIT_FACTOR = 1.2
 
@@ -163,14 +164,15 @@ class NoRecentStopLossSignalGenerator(BaseSignalGenerator):
                 max_so_far = candlestick.high
             min_so_far = min(min_so_far, candlestick.low)
             max_so_far = max(max_so_far, candlestick.high)
-            if min_so_far / max_so_far < self.STOP_LOSS_FACTOR:
+            if min_so_far / max_so_far < self.RECENT_STOP_LOSS_FACTOR:
                 return
 
         target_price = price * self.BUY_PROFIT_FACTOR
+        stop_loss_price = price * self.ORDER_STOP_LOSS_FACTOR
 
         entry = PriceEntry(price)
         success_exit = PriceTakeProfitSuccessExit(price=target_price)
-        failure_exit = PriceStopLossFailureExit(price=price * self.STOP_LOSS_FACTOR)
+        failure_exit = PriceStopLossFailureExit(price=stop_loss_price)
 
         trade_signal = TradeSignal(date=market_date, exchange=None, pair=pair, entry=entry,
                                    success_exit=success_exit, failure_exit=failure_exit)
