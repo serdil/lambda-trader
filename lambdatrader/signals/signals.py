@@ -12,6 +12,9 @@ from lambdatrader.models.tradesignal import (
 )
 from lambdatrader.loghandlers import get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger
 
+from lambdatrader.signals.constants import ONE_DAY_SECONDS
+from lambdatrader.signals.optimization import OptimizationMixin
+
 
 class BaseSignalGenerator:
 
@@ -63,8 +66,7 @@ class BaseSignalGenerator:
             print(args)
 
 
-class RetracementSignalGenerator(BaseSignalGenerator):
-    ONE_DAY_SECONDS = 86400
+class RetracementSignalGenerator(BaseSignalGenerator, OptimizationMixin):
 
     HIGH_VOLUME_LIMIT = RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT
 
@@ -77,23 +79,21 @@ class RetracementSignalGenerator(BaseSignalGenerator):
         high_volume_pairs = self.__get_high_volume_pairs()
         return high_volume_pairs
 
-    def set_parameters(self,
-                       order_timeout=RETRACEMENT_SIGNALS__ORDER_TIMEOUT,
-                       buy_profit_factor=RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR,
-                       retracement_ratio=RETRACEMENT_SIGNALS__RETRACEMENT_RATIO):
-        self.ORDER_TIMEOUT_P1 = order_timeout
-        self.RETRACEMENT_RATIO_P3 = buy_profit_factor
-        self.RETRACEMENT_RATIO_P3 = retracement_ratio
+    def optimization_set_params(self, *args):
+        self.ORDER_TIMEOUT_P1 = args[0]
+        self.BUY_PROFIT_FACTOR_P2 = args[1]
+        self.RETRACEMENT_RATIO_P3 = args[2]
 
-    def get_params_info(self):
+    def optimization_get_params_info(self):
         return {
             'num_params': 3,
             'type': ['I', 'F', 'F'],
-            'min': [self.ONE_DAY_SECONDS*0, 1.0, 0.01],
-            'max': [self.ONE_DAY_SECONDS*30, 10.0, 1.00]
+            'min': [ONE_DAY_SECONDS*0, 1.0, 0.01],
+            'max': [ONE_DAY_SECONDS*30, 10.0, 1.00]
         }
 
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
+        self.optimization_update_parameters_if_necessary()
 
         if pair in [signal.pair for signal in tracked_signals]:
             self.debug('pair_already_in_tracked_signals:%s', pair)
