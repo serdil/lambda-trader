@@ -26,7 +26,7 @@ class ObjectiveFunction:
 
     def __call__(self, *args, **kwargs):
         total_cost = 0
-        signal_generator = self.__create_signal_generator(*args)
+        signal_generator = self.__create_signal_generator(args[0])
         for period_no, period in enumerate(self.periods):
             cost_function = self.cost_functions[period_no]
             cost = self.__calc_period_score(signal_generator, period, cost_function)
@@ -36,10 +36,10 @@ class ObjectiveFunction:
             total_cost += cost
         return total_cost
 
-    def __create_signal_generator(self, *args):
+    def __create_signal_generator(self, params):
         signal_generator = self.signal_generator_class(self.market_info,
                                                        live=False, silent=True, optimize=False)
-        signal_generator.set_parameters(*args)
+        signal_generator.set_params(*params)
         return signal_generator
 
     def __calc_period_score(self, signal_generator, period, cost_function):
@@ -100,7 +100,7 @@ class OptimizationMixin:
                self.optimization_get_optimization_frequency()
 
     def __optimize(self):
-        objective_function = self.optimization_get_cost_function()
+        objective_function = self.optimization_get_objective_function()
         num_params = self.__get_num_params()
         min = self.__get_params_min_np()
         max = self.__get_params_max_np()
