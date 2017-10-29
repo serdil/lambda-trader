@@ -73,7 +73,7 @@ class TradingProblem(Problem):
 
 class OptimizationMixin:
 
-    MAX_EVALUATIONS = 1
+    MAX_EVALUATIONS = 10
 
     last_optimized = 0
 
@@ -119,7 +119,7 @@ class OptimizationMixin:
             self.optimization_set_params(*self.__optimize())
             self.last_optimized = self.get_market_date()
 
-    def optimization_select_best_solutions(self, solutions):
+    def optimization_select_best_solution(self, solutions):
         return min(solutions, key=lambda sol: reduce(operator.mul, sol.objectives, 1))
 
     def __should_optimize(self):
@@ -139,9 +139,9 @@ class OptimizationMixin:
         algorithm = NSGAII(
             TradingProblem(num_params, num_costs, platypus_types, objective_function))
         algorithm.run(self.MAX_EVALUATIONS)
-        for solution in algorithm.result:
-            print(solution.variables, solution.objectives)
-        return self.optimization_select_best_solutions(algorithm.result).variables
+        best_solution = self.optimization_select_best_solution(algorithm.result)
+        print(best_solution.variables, best_solution.objectives) # TODO remove
+        return best_solution.variables
 
     def __get_num_params(self):
         return self.optimization_get_params_info()['num_params']

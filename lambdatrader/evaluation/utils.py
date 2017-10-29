@@ -52,11 +52,15 @@ def period_stats_roi_max_drawdown_score(trading_info):
 
 
 def get_roi_live_cost(trading_info):
-    return get_costs(trading_info)['roi_live_cost']
+    result = get_costs(trading_info)['roi_live_cost']
+    print('roi_live', result)
+    return result
 
 
 def get_max_drawdown_live_cost(trading_info):
-    return get_costs(trading_info)['max_drawdown_live_cost']
+    result = get_costs(trading_info)['max_drawdown_live_cost']
+    print('max_drawdown_live', result)
+    return result
 
 
 def get_costs(trading_info):
