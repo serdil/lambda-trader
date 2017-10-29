@@ -27,6 +27,7 @@ class ObjectiveFunction:
         self.market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
 
     def __call__(self, *args, **kwargs):
+        print('params:', args[0])
         total_cost = 0
         signal_generator = self.__create_signal_generator(args[0])
         for period_no, period in enumerate(self.periods):
@@ -80,7 +81,7 @@ class OptimizationMixin:
 
     def optimization_get_cost_function(self):
         return lambda trading_info: \
-            math.e**(-period_stats_roi_max_drawdown_score(trading_info)) * 100000
+            math.e**(-period_stats_roi_max_drawdown_score(trading_info))
 
     def optimization_get_objective_function(self):
         periods_info = self.optimization_get_optimization_periods_info()

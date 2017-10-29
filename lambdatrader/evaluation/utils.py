@@ -43,4 +43,7 @@ def period_stats_roi_max_drawdown_score(trading_info):
 
     if max_drawdown_live == 0:
         max_drawdown_live = 0.0001
-    return  roi_live / max_drawdown_live / period_length
+
+    score = roi_live / max_drawdown_live / period_length * 100000
+    print('roi_live:', roi_live, 'max_draw:', max_drawdown_live, 'score:', score)
+    return score
