@@ -1,4 +1,7 @@
-from evaluation.utils import period_stats_roi_max_drawdown_score
+import numpy as np
+import rbfopt
+
+from lambdatrader.evaluation.utils import period_stats_roi_max_drawdown_score
 from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
@@ -7,7 +10,50 @@ from lambdatrader.history.store import CandlestickStore
 from lambdatrader.signals.constants import ONE_DAY_SECONDS
 
 
+class ObjectiveFunction:
+    MAX_COST = 1000000000
+
+    def __init__(self, signal_generator_class,
+                 market_date, periods, weights, max_costs, cost_functions):
+        self.signal_generator_class = signal_generator_class
+        self.market_date = market_date
+        self.periods = periods
+        self.weights = weights
+        self.max_costs = max_costs
+        self.cost_functions = cost_functions
+
+        self.market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
+
+    def __call__(self, *args, **kwargs):
+        total_cost = 0
+        signal_generator = self.__create_signal_generator(*args)
+        for period_no, period in enumerate(self.periods):
+            cost_function = self.cost_functions[period_no]
+            cost = self.__calc_period_score(signal_generator, period, cost_function)
+            if cost > self.max_costs[period_no]:
+                cost = self.MAX_COST
+            cost = cost * self.weights[period_no] / sum(self.weights)
+            total_cost += cost
+        return total_cost
+
+    def __create_signal_generator(self, *args):
+        signal_generator = self.signal_generator_class(self.market_info,
+                                                       live=False, silent=True, optimize=False)
+        signal_generator.set_parameters(*args)
+        return signal_generator
+
+    def __calc_period_score(self, signal_generator, period, cost_function):
+        account = BacktestingAccount(market_info=self.market_info, balances={'BTC': 100})
+        signal_executor = SignalExecutor(market_info=self.market_info, account=account)
+        backtest.backtest(account=account, market_info=self.market_info,
+                          signal_generators=[signal_generator], signal_executor=signal_executor,
+                          start=self.market_date-period, end=self.market_date)
+        return cost_function(signal_executor.get_trading_info())
+
+
 class OptimizationMixin:
+
+    MAX_EVALUATIONS = 10
 
     last_optimized = 0
 
@@ -54,46 +100,42 @@ class OptimizationMixin:
                self.optimization_get_optimization_frequency()
 
     def __optimize(self):
-        # TODO implement optimization routine
-        return [1] * self.optimization_get_params_info()['num_params']
+        objective_function = self.optimization_get_cost_function()
+        num_params = self.__get_num_params()
+        min = self.__get_params_min_np()
+        max = self.__get_params_max_np()
+        types = self.__get_params_types_np()
 
+        bb = rbfopt.RbfoptUserBlackBox(num_params, min, max,
+                                       types, objective_function)
+        settings = rbfopt.RbfoptSettings(max_evaluations=self.MAX_EVALUATIONS)
+        alg = rbfopt.RbfoptAlgorithm(settings, bb)
 
-class ObjectiveFunction:
-    MAX_COST = 1000000000
+        val, params, itercount, evalcount, fast_evalcount = alg.optimize()
+        params = self.__convert_params_to_original_type(params, self.__get_params_types())
+        return params
 
-    def __init__(self, signal_generator_class,
-                 market_date, periods, weights, max_costs, cost_functions):
-        self.signal_generator_class = signal_generator_class
-        self.market_date = market_date
-        self.periods = periods
-        self.weights = weights
-        self.max_costs = max_costs
-        self.cost_functions = cost_functions
+    def __get_num_params(self):
+        return self.optimization_get_params_info()['num_params']
 
-        self.market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
+    def __get_params_min_np(self):
+        return np.array(self.optimization_get_params_info()['min'])
 
-    def __call__(self, *args, **kwargs):
-        total_cost = 0
-        signal_generator = self.__create_signal_generator(*args)
-        for period_no, period in enumerate(self.periods):
-            cost_function = self.cost_functions[period_no]
-            cost = self.__calc_period_score(signal_generator, period, cost_function)
-            if cost > self.max_costs[period_no]:
-                cost = self.MAX_COST
-            cost = cost * self.weights[period_no] / sum(self.weights)
-            total_cost += cost
-        return total_cost
+    def __get_params_max_np(self):
+        return np.array(self.optimization_get_params_info()['max'])
 
-    def __create_signal_generator(self, *args):
-        signal_generator = self.signal_generator_class(self.market_info,
-                                                       live=False, silent=True, optimize=False)
-        signal_generator.set_parameters(*args)
-        return signal_generator
+    def __get_params_types_np(self):
+        return np.array(self.__get_params_types())
 
-    def __calc_period_score(self, signal_generator, period, cost_function):
-        account = BacktestingAccount(market_info=self.market_info, balances={'BTC': 100})
-        signal_executor = SignalExecutor(market_info=self.market_info, account=account)
-        backtest.backtest(account=account, market_info=self.market_info,
-                          signal_generators=[signal_generator], signal_executor=signal_executor,
-                          start=self.market_date-period, end=self.market_date)
-        return cost_function(signal_executor.get_trading_info())
+    def __get_params_types(self):
+        return self.optimization_get_params_info()['type']
+
+    @staticmethod
+    def __convert_params_to_original_type(params, types):
+        orig_params = []
+        for i, param in enumerate(params):
+            if types[i] == 'I':
+                orig_params.append(int(param))
+            elif types[i] == 'F':
+                orig_params.append(param)
+        return orig_params
