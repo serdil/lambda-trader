@@ -74,12 +74,19 @@ class RetracementSignalGenerator(BaseSignalGenerator, OptimizationMixin):
     BUY_PROFIT_FACTOR_P2 = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
     RETRACEMENT_RATIO_P3 = RETRACEMENT_SIGNALS__RETRACEMENT_RATIO
 
+    def __init__(self, market_info, live=False, silent=False, optimize=True):
+        super().__init__(market_info, live, silent)
+        self.__optimize = optimize
+
     def get_allowed_pairs(self):
         self.debug('get_allowed_pairs')
         high_volume_pairs = self.__get_high_volume_pairs()
         return high_volume_pairs
 
     def optimization_set_params(self, *args):
+        self.set_params(*args)
+
+    def set_params(self, *args):
         self.ORDER_TIMEOUT_P1 = args[0]
         self.BUY_PROFIT_FACTOR_P2 = args[1]
         self.RETRACEMENT_RATIO_P3 = args[2]
@@ -93,7 +100,8 @@ class RetracementSignalGenerator(BaseSignalGenerator, OptimizationMixin):
         }
 
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
-        self.optimization_update_parameters_if_necessary()
+        if self.__optimize:
+            self.optimization_update_parameters_if_necessary()
 
         if pair in [signal.pair for signal in tracked_signals]:
             self.debug('pair_already_in_tracked_signals:%s', pair)
