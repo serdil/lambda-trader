@@ -1,3 +1,6 @@
+from functools import reduce
+import operator
+
 import numpy as np
 from platypus import NSGAII, Problem, Real, Integer
 
@@ -116,6 +119,9 @@ class OptimizationMixin:
             self.optimization_set_params(*self.__optimize())
             self.last_optimized = self.get_market_date()
 
+    def optimization_select_best_solutions(self, solutions):
+        return min(solutions, key=lambda sol: reduce(operator.mul, sol.objectives, 1))
+
     def __should_optimize(self):
         return self.get_market_date() - self.last_optimized >= \
                self.optimization_get_optimization_frequency()
@@ -135,7 +141,7 @@ class OptimizationMixin:
         algorithm.run(self.MAX_EVALUATIONS)
         for solution in algorithm.result:
             print(solution.variables, solution.objectives)
-        return algorithm.result[0].variables
+        return self.optimization_select_best_solutions(algorithm.result).variables
 
     def __get_num_params(self):
         return self.optimization_get_params_info()['num_params']
