@@ -18,6 +18,7 @@ class Statistics:
         return self.__trading_info
 
     def calc_stats_for_period(self, start_date, end_date):
+        period_length = end_date - start_date
         num_of_trades = self.__num_of_trades(start_date=start_date, end_date=end_date)
         maximum_drawdown_live = self.__max_drawdown_live(start_date=start_date, end_date=end_date)
         maximum_drawdown_frozen = self.__max_drawdown_frozen(start_date=start_date,
@@ -31,6 +32,7 @@ class Statistics:
                                                                            end_date=end_date)
 
         return {
+            'period_length': period_length,
             'num_of_trades': num_of_trades,
             'maximum_drawdown_live': maximum_drawdown_live,
             'maximum_drawdown_frozen': maximum_drawdown_frozen,
@@ -165,6 +167,8 @@ class Statistics:
         longest_drawdown_period_frozen = \
             cls.__periods_longest_drawdown_period_frozen(period_stats=period_stats)
 
+        period_length = period_stats['period_length']
+        total_length = period_length * len(period_stats)
         median_roi_live = cls.__periods_median_roi_live(period_stats=period_stats)
         first_q_roi_live = cls.__periods_first_q_roi_live(period_stats=period_stats)
         minimum_roi_live = cls.__periods_minimum_roi_live(period_stats=period_stats)
@@ -179,6 +183,8 @@ class Statistics:
         minimum_success_rate = cls.__periods_minimum_success_rate(period_stats=period_stats)
 
         return {
+            'period_length': period_length,
+            'total_length': total_length,
             'longest_drawdown_period_live': longest_drawdown_period_live,
             'longest_drawdown_period_frozen': longest_drawdown_period_frozen,
             'median_roi_live': median_roi_live,

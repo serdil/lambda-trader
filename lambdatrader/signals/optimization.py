@@ -1,3 +1,4 @@
+from evaluation.utils import period_stats_roi_max_drawdown_score
 from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
@@ -28,8 +29,7 @@ class OptimizationMixin:
         }
 
     def optimization_get_cost_function(self):
-        # TODO implement real cost function
-        return lambda: 1
+        return lambda trading_info: - period_stats_roi_max_drawdown_score(trading_info)
 
     def optimization_get_objective_function(self):
         periods_info = self.optimization_get_optimization_periods_info()
