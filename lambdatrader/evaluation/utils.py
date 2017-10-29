@@ -36,5 +36,11 @@ def statistics_over_periods(trading_info: TradingInfo, start=None, end=None, per
 
 def period_stats_roi_max_drawdown_score(trading_info):
     period_stats = period_statistics(trading_info)
-    return period_stats['roi_live'] / \
-           period_stats['maximum_drawdown_live'] / period_stats['period_length']
+
+    roi_live = period_stats['roi_live']
+    period_length = period_stats['period_length']
+    max_drawdown_live = period_stats['maximum_drawdown_live']
+
+    if max_drawdown_live == 0:
+        max_drawdown_live = 0.0001
+    return  roi_live / max_drawdown_live / period_length

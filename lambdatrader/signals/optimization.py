@@ -47,7 +47,7 @@ class ObjectiveFunction:
         signal_executor = SignalExecutor(market_info=self.market_info, account=account)
         backtest.backtest(account=account, market_info=self.market_info,
                           signal_generators=[signal_generator], signal_executor=signal_executor,
-                          start=self.market_date-period, end=self.market_date)
+                          start=self.market_date-period, end=self.market_date, silent=True)
         return cost_function(signal_executor.get_trading_info())
 
 
@@ -70,7 +70,7 @@ class OptimizationMixin:
         return {
             'periods': [7*ONE_DAY_SECONDS, 35*ONE_DAY_SECONDS, 91*ONE_DAY_SECONDS],
             'weights': [3, 2, 1],
-            'max_costs': [10, 20, 30],
+            'max_costs': [0, 0, 0],
             'cost_functions': [self.optimization_get_cost_function()] * 3
         }
 

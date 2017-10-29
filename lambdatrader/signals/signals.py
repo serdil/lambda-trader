@@ -95,8 +95,8 @@ class RetracementSignalGenerator(BaseSignalGenerator, OptimizationMixin):
         return {
             'num_params': 3,
             'type': ['I', 'F', 'F'],
-            'min': [ONE_DAY_SECONDS*0, 1.0, 0.01],
-            'max': [ONE_DAY_SECONDS*30, 10.0, 1.00]
+            'min': [ONE_DAY_SECONDS//24, 1.01, 0.01],
+            'max': [ONE_DAY_SECONDS*30, 10.0, 0.99]
         }
 
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
