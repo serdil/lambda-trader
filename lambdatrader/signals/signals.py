@@ -99,6 +99,13 @@ class RetracementSignalGenerator(BaseSignalGenerator, OptimizationMixin):
             'max': [ONE_DAY_SECONDS*30, 10.0, 0.99]
         }
 
+    def optimization_get_optimization_periods_info(self):
+        return {
+            'periods': [7*ONE_DAY_SECONDS],
+            'weights': [1],
+            'max_costs': [10]
+        }
+
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
         if self.__optimize:
             self.optimization_update_parameters_if_necessary()

@@ -27,20 +27,15 @@ class ObjectiveFunction:
         self.market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
 
     def __call__(self, *args, **kwargs):
-        print('OBJECTIVE FUNCTION CALLED:', args[0])
-        print('periods:', self.periods)
         total_cost = 0
         signal_generator = self.__create_signal_generator(args[0])
         for period_no, period in enumerate(self.periods):
-            print('period_no,period', period_no, period)
             cost_function = self.cost_functions[period_no]
             cost = self.__calc_period_score(signal_generator, period, cost_function)
-            print('PERIOD REAL COST:', cost)
             if cost > self.max_costs[period_no]:
                 cost = self.MAX_COST
             cost = cost * self.weights[period_no] / sum(self.weights)
             total_cost += cost
-        print('OBJECTIVE FUNCTION RETURN, TOTAL_COST:', total_cost)
         return total_cost
 
     def __create_signal_generator(self, params):
@@ -53,9 +48,7 @@ class ObjectiveFunction:
         start_date = self.market_date-period
         self.market_info.set_market_date(start_date)
         account = BacktestingAccount(market_info=self.market_info, balances={'BTC': 100})
-
-        # TODO: make silent=True
-        signal_executor = SignalExecutor(market_info=self.market_info, account=account, silent=False)
+        signal_executor = SignalExecutor(market_info=self.market_info, account=account, silent=True)
         backtest.backtest(account=account, market_info=self.market_info,
                           signal_generators=[signal_generator], signal_executor=signal_executor,
                           start=self.market_date-period, end=self.market_date, silent=True)
