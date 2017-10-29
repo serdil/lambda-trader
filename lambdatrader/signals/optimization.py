@@ -19,18 +19,30 @@ class OptimizationMixin:
     def optimization_get_optimization_frequency(self):
         return 7 * ONE_DAY_SECONDS
 
-    def optimization_get_objective_function(self):
-        periods = [7*ONE_DAY_SECONDS, 35*ONE_DAY_SECONDS, 91*ONE_DAY_SECONDS]
-        weights = [3, 2, 1]
-        max_costs = [10, 20, 30]
+    def optimization_get_optimization_periods_info(self):
+        return {
+            'periods': [7*ONE_DAY_SECONDS, 35*ONE_DAY_SECONDS, 91*ONE_DAY_SECONDS],
+            'weights': [3, 2, 1],
+            'max_costs': [10, 20, 30],
+            'cost_functions': [self.optimization_get_cost_function()] * 3
+        }
+
+    def optimization_get_cost_function(self):
         # TODO implement real cost function
-        cost_function = lambda: 1
+        return lambda: 1
+
+    def optimization_get_objective_function(self):
+        periods_info = self.optimization_get_optimization_periods_info()
+        num_periods = len(periods_info['periods'])
+        cost_functions = periods_info['cost_functions'] \
+            if 'cost_functions' in periods_info\
+            else [self.optimization_get_cost_function()] * num_periods
         return ObjectiveFunction(signal_generator_class=self.__class__,
                                  market_date=self.get_market_date(),
-                                 periods=periods,
-                                 weights=weights,
-                                 max_costs=max_costs,
-                                 cost_function=cost_function)
+                                 periods=periods_info['periods'],
+                                 weights=periods_info['weights'],
+                                 max_costs=periods_info['max_costs'],
+                                 cost_functions=cost_functions)
 
     def optimization_update_parameters_if_necessary(self):
         if self.__should_optimize():
@@ -50,13 +62,13 @@ class ObjectiveFunction:
     MAX_COST = 1000000000
 
     def __init__(self, signal_generator_class,
-                 market_date, periods, weights, max_costs, cost_function):
+                 market_date, periods, weights, max_costs, cost_functions):
         self.signal_generator_class = signal_generator_class
         self.market_date = market_date
         self.periods = periods
         self.weights = weights
         self.max_costs = max_costs
-        self.cost_function = cost_function
+        self.cost_functions = cost_functions
 
         self.market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
 
@@ -64,7 +76,8 @@ class ObjectiveFunction:
         total_cost = 0
         signal_generator = self.__create_signal_generator(*args)
         for period_no, period in enumerate(self.periods):
-            cost = self.__calc_period_score(signal_generator, period)
+            cost_function = self.cost_functions[period_no]
+            cost = self.__calc_period_score(signal_generator, period, cost_function)
             if cost > self.max_costs[period_no]:
                 cost = self.MAX_COST
             cost = cost * self.weights[period_no] / sum(self.weights)
@@ -77,10 +90,10 @@ class ObjectiveFunction:
         signal_generator.set_parameters(*args)
         return signal_generator
 
-    def __calc_period_score(self, signal_generator, period):
+    def __calc_period_score(self, signal_generator, period, cost_function):
         account = BacktestingAccount(market_info=self.market_info, balances={'BTC': 100})
         signal_executor = SignalExecutor(market_info=self.market_info, account=account)
         backtest.backtest(account=account, market_info=self.market_info,
                           signal_generators=[signal_generator], signal_executor=signal_executor,
-                          start=self.market_date - period, end=self.market_date)
-        return self.cost_function(signal_executor.get_trading_info())
+                          start=self.market_date-period, end=self.market_date)
+        return cost_function(signal_executor.get_trading_info())
