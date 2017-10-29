@@ -61,6 +61,7 @@ class TradingProblem(Problem):
 
     def __init__(self, nvars, nobjs, types, objective_function):
         super().__init__(nvars, nobjs)
+        self.types[:] = types
         self.objective_function = objective_function
 
     def evaluate(self, solution):
@@ -69,7 +70,7 @@ class TradingProblem(Problem):
 
 class OptimizationMixin:
 
-    MAX_EVALUATIONS = 1000
+    MAX_EVALUATIONS = 1
 
     last_optimized = 0
 
@@ -131,7 +132,10 @@ class OptimizationMixin:
 
         algorithm = NSGAII(
             TradingProblem(num_params, num_costs, platypus_types, objective_function))
-        algorithm.run(10000)
+        algorithm.run(self.MAX_EVALUATIONS)
+        for solution in algorithm.result:
+            print(solution.variables, solution.objectives)
+        return algorithm.result[0].variables
 
     def __get_num_params(self):
         return self.optimization_get_params_info()['num_params']

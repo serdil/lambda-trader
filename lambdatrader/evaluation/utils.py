@@ -66,7 +66,7 @@ def get_costs(trading_info):
     length_norm = period_length / 1000000
 
     roi_live = period_stats['roi_live']
-    max_drawdown_live = period_stats['max_drawdown_live']
+    max_drawdown_live = period_stats['maximum_drawdown_live']
     return {
         'roi_live_cost': __descending(roi_live / length_norm),
         'max_drawdown_live_cost': __descending(-max_drawdown_live)
