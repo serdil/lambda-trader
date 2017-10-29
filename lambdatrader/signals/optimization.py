@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import rbfopt
 
@@ -25,15 +27,20 @@ class ObjectiveFunction:
         self.market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
 
     def __call__(self, *args, **kwargs):
+        print('OBJECTIVE FUNCTION CALLED:', args[0])
+        print('periods:', self.periods)
         total_cost = 0
         signal_generator = self.__create_signal_generator(args[0])
         for period_no, period in enumerate(self.periods):
+            print('period_no,period', period_no, period)
             cost_function = self.cost_functions[period_no]
             cost = self.__calc_period_score(signal_generator, period, cost_function)
+            print('PERIOD REAL COST:', cost)
             if cost > self.max_costs[period_no]:
                 cost = self.MAX_COST
             cost = cost * self.weights[period_no] / sum(self.weights)
             total_cost += cost
+        print('OBJECTIVE FUNCTION RETURN, TOTAL_COST:', total_cost)
         return total_cost
 
     def __create_signal_generator(self, params):
@@ -43,8 +50,12 @@ class ObjectiveFunction:
         return signal_generator
 
     def __calc_period_score(self, signal_generator, period, cost_function):
+        start_date = self.market_date-period
+        self.market_info.set_market_date(start_date)
         account = BacktestingAccount(market_info=self.market_info, balances={'BTC': 100})
-        signal_executor = SignalExecutor(market_info=self.market_info, account=account)
+
+        # TODO: make silent=True
+        signal_executor = SignalExecutor(market_info=self.market_info, account=account, silent=False)
         backtest.backtest(account=account, market_info=self.market_info,
                           signal_generators=[signal_generator], signal_executor=signal_executor,
                           start=self.market_date-period, end=self.market_date, silent=True)
@@ -70,12 +81,12 @@ class OptimizationMixin:
         return {
             'periods': [7*ONE_DAY_SECONDS, 35*ONE_DAY_SECONDS, 91*ONE_DAY_SECONDS],
             'weights': [3, 2, 1],
-            'max_costs': [0, 0, 0],
+            'max_costs': [10, 10, 10],
             'cost_functions': [self.optimization_get_cost_function()] * 3
         }
 
     def optimization_get_cost_function(self):
-        return lambda trading_info: - period_stats_roi_max_drawdown_score(trading_info)
+        return lambda trading_info: math.e**(-period_stats_roi_max_drawdown_score(trading_info))
 
     def optimization_get_objective_function(self):
         periods_info = self.optimization_get_optimization_periods_info()
