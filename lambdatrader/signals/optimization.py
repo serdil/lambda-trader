@@ -57,7 +57,7 @@ class ObjectiveFunction:
 
 class OptimizationMixin:
 
-    MAX_EVALUATIONS = 10
+    MAX_EVALUATIONS = 1000
 
     last_optimized = 0
 
@@ -79,7 +79,8 @@ class OptimizationMixin:
         }
 
     def optimization_get_cost_function(self):
-        return lambda trading_info: math.e**(-period_stats_roi_max_drawdown_score(trading_info))
+        return lambda trading_info: \
+            math.e**(-period_stats_roi_max_drawdown_score(trading_info)) * 100000
 
     def optimization_get_objective_function(self):
         periods_info = self.optimization_get_optimization_periods_info()
