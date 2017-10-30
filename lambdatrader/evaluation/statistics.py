@@ -167,7 +167,7 @@ class Statistics:
         longest_drawdown_period_frozen = \
             cls.__periods_longest_drawdown_period_frozen(period_stats=period_stats)
 
-        period_length = period_stats['period_length']
+        period_length = period_stats[0]['period_length']
         total_length = period_length * len(period_stats)
         median_roi_live = cls.__periods_median_roi_live(period_stats=period_stats)
         first_q_roi_live = cls.__periods_first_q_roi_live(period_stats=period_stats)

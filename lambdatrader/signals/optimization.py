@@ -5,7 +5,7 @@ import numpy as np
 from platypus import NSGAII, Problem, Real, Integer
 
 from lambdatrader.evaluation.utils import (
-    get_roi_live_cost, get_max_drawdown_live_cost,
+    get_costs,
 )
 from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
@@ -32,6 +32,7 @@ class ObjectiveFunction:
     def __call__(self, *args, **kwargs):
         solution = args[0]
         variables = solution.variables
+        print('variables:', variables)
         objectives = solution.objectives
         for i in range(len(objectives)):
             objectives[i] = 0
@@ -73,7 +74,7 @@ class TradingProblem(Problem):
 
 class OptimizationMixin:
 
-    MAX_EVALUATIONS = 10
+    MAX_EVALUATIONS = 100
 
     last_optimized = 0
 
@@ -98,8 +99,11 @@ class OptimizationMixin:
         return 2
 
     def optimization_get_costs_function(self):
-        return lambda trading_info: \
-            [get_roi_live_cost(trading_info), get_max_drawdown_live_cost(trading_info)]
+        return self._costs_function
+
+    def _costs_function(self, trading_info):
+        costs = get_costs(trading_info)
+        return [costs['roi_live_cost'], costs['max_drawdown_live_cost']]
 
     def optimization_get_objective_function(self):
         periods_info = self.optimization_get_optimization_periods_info()
