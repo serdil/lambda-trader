@@ -1,4 +1,6 @@
-from pprint import pprint
+import pprint
+
+import logging
 
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
@@ -8,6 +10,8 @@ from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.history.store import CandlestickStore
 from lambdatrader.backtesting import backtest
 from lambdatrader.signals.signals import RetracementSignalGenerator
+
+logger = logging.getLogger(__name__)
 
 ONE_DAY = 24 * 3600
 
@@ -28,32 +32,29 @@ signal_executor = SignalExecutor(market_info=market_info, account=account)
 backtest.backtest(account=account, market_info=market_info, signal_generators=signal_generators,
                   signal_executor=signal_executor, start=start_date, end=end_date)
 
-print()
-print('Backtest Complete!')
 
-print()
-print('Estimated Balance:', account.get_estimated_balance())
-print('Open Orders:', list(account.get_open_orders()))
+logger.info('Backtest Complete!')
+
+logger.info('Estimated Balance: %f', account.get_estimated_balance())
+logger.info('Open Orders:%s', str(list(account.get_open_orders())))
 
 trading_info = signal_executor.get_trading_info()
 
-print()
-print(trading_info)
+
+logger.info(str(trading_info))
 
 stats = period_statistics(trading_info=trading_info)
 
-print()
-print('Statistics over whole trading period:')
-pprint(stats)
+
+logger.info('Statistics over whole trading period:')
+logger.info(pprint.pformat(stats))
 
 stats_over_weekly_periods = statistics_over_periods(trading_info=trading_info, period_days=7)
 
-print()
-print('Statistics over weekly periods:')
-pprint(stats_over_weekly_periods)
+logger.info('Statistics over weekly periods:')
+logger.info(pprint.pformat(stats_over_weekly_periods))
 
 stats_over_monthly_periods = statistics_over_periods(trading_info=trading_info, period_days=30)
 
-print()
-print('Statistics over monthly periods:')
-pprint(stats_over_monthly_periods)
+logger.info('Statistics over monthly periods:')
+logger.info(pprint.pformat(stats_over_monthly_periods))
