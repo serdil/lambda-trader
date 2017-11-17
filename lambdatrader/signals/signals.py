@@ -80,7 +80,7 @@ class RetracementSignalGenerator(BaseSignalGenerator, OptimizationMixin):
 
     def get_allowed_pairs(self):
         self.debug('get_allowed_pairs')
-        high_volume_pairs = self.__get_high_volume_pairs()
+        high_volume_pairs = ['BTC_LSK']
         return high_volume_pairs
 
     def optimization_set_params(self, *args):
