@@ -74,7 +74,7 @@ class TradingProblem(Problem):
 
 class OptimizationMixin:
 
-    MAX_EVALUATIONS = 100
+    MAX_EVALUATIONS = 10000
 
     last_optimized = 0
 

@@ -96,7 +96,7 @@ class RetracementSignalGenerator(BaseSignalGenerator, OptimizationMixin):
             'num_params': 3,
             'type': ['F', 'F', 'F'],
             'min': [ONE_DAY_SECONDS//24, 1.01, 0.01],
-            'max': [ONE_DAY_SECONDS*30, 10.0, 0.99]
+            'max': [ONE_DAY_SECONDS*7, 2.00, 0.99]
         }
 
     def optimization_get_optimization_periods_info(self):
