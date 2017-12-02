@@ -4,6 +4,13 @@ from uuid import uuid1
 FIVE_MINUTES = 5 * 60
 
 
+class SignalPhase:
+    PRE_ENTRY = 1
+    IN_PROCESS = 2
+    STOP_LOSS = 3
+    CLOSED = 4
+
+
 class EntryType:
     PRICE = 1
 
@@ -95,6 +102,10 @@ class TradeSignal:
         self.failure_exit = failure_exit
         self.good_for = good_for
 
+        self.current_phase = SignalPhase.PRE_ENTRY
+        self.buy_order = None
+        self.sell_order = None
+
         if _id:
             self.id = _id
         else:
@@ -102,3 +113,19 @@ class TradeSignal:
 
     def __repr__(self):
         return 'TradeSignal(date={},pair={})'.format(self.date, self.pair)
+
+    def set_pre_entry_buy_order(self, buy_order):
+        self.buy_order = buy_order
+
+    def set_phase_in_process(self, tp_sell_order):
+        self.current_phase = SignalPhase.IN_PROCESS
+        self.sell_order = tp_sell_order
+
+    def set_phase_stop_loss(self, sl_sell_order):
+        self.current_phase = SignalPhase.STOP_LOSS
+        self.sell_order = sl_sell_order
+
+    def set_phase_closed(self):
+        self.current_phase = SignalPhase.CLOSED
+        self.buy_order = None
+        self.sell_order = None
