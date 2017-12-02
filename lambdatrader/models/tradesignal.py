@@ -103,7 +103,6 @@ class TradeSignal:
         self.good_for = good_for
 
         self.current_phase = SignalPhase.PRE_ENTRY
-        self.buy_order = None
         self.sell_order = None
 
         if _id:
@@ -113,9 +112,6 @@ class TradeSignal:
 
     def __repr__(self):
         return 'TradeSignal(date={},pair={})'.format(self.date, self.pair)
-
-    def set_pre_entry_buy_order(self, buy_order):
-        self.buy_order = buy_order
 
     def set_phase_in_process(self, tp_sell_order):
         self.current_phase = SignalPhase.IN_PROCESS
