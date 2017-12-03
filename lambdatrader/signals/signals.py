@@ -122,3 +122,110 @@ class RetracementSignalGenerator(BaseSignalGenerator):
                    self.market_info.get_active_pairs()),
             key=lambda pair: -self.market_info.get_pair_last_24h_btc_volume(pair=pair)
         )
+
+
+class TriangleSignalGenerator(BaseSignalGenerator):
+
+    HIGH_VOLUME_LIMIT = 0
+    ORDER_TIMEOUT = 24 * 3600
+
+    BUY_PROFIT_FACTOR = 1.05
+
+    NUM_SLICES = 4
+    SLICE_WIDTH = 5  # in number of candlesticks
+    NARROWING_FACTOR = 0.7
+
+    def get_allowed_pairs(self):
+        self.debug('get_allowed_pairs')
+        # high_volume_pairs = self.__get_high_volume_pairs()
+        high_volume_pairs = ['BTC_LTC']
+        return high_volume_pairs
+
+    def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
+
+        if pair in [signal.pair for signal in tracked_signals]:
+            self.debug('pair_already_in_tracked_signals:%s', pair)
+            return
+
+        latest_ticker = self.market_info.get_pair_ticker(pair=pair)
+        price = latest_ticker.lowest_ask
+        market_date = self.get_market_date()
+
+        target_price = price * self.BUY_PROFIT_FACTOR
+        day_high_price = latest_ticker.high24h
+
+        price_is_lower_than_day_high = target_price < day_high_price
+
+        if not price_is_lower_than_day_high:
+            return
+
+        triangle_condition = self.__get_triangle_condition(pair=pair)
+
+        if triangle_condition:
+            self.debug('triangle_condition_satisfied')
+            self.debug('market_date:%s', str(market_date))
+            self.debug('latest_ticker:%s:%s', pair, str(latest_ticker))
+            self.debug('target_price:%s', str(target_price))
+            self.debug('day_high_price:%s', str(day_high_price))
+
+            entry = PriceEntry(price)
+            success_exit = PriceTakeProfitSuccessExit(price=target_price)
+            failure_exit = TimeoutStopLossFailureExit(timeout=self.ORDER_TIMEOUT)
+
+            trade_signal = TradeSignal(date=market_date, exchange=None, pair=pair, entry=entry,
+                                       success_exit=success_exit, failure_exit=failure_exit)
+
+            self.logger.info('trade_signal:%s', str(trade_signal))
+
+            return trade_signal
+
+    def __get_triangle_condition(self, pair):
+        NUM_SLICES = self.NUM_SLICES
+        SLICE_WIDTH = self.SLICE_WIDTH
+        NARROWING_FACTOR = self.NARROWING_FACTOR
+
+        past_candlesticks = []
+
+        try:
+            for i in range(NUM_SLICES * SLICE_WIDTH):
+                past_candlesticks.append(self.market_info.get_pair_candlestick(pair, i))
+        except IndexError:
+            print('IndexError')
+            return False
+
+        past_candlesticks = past_candlesticks[::-1]
+
+        slice_widths = []
+
+        for i in range(NUM_SLICES):
+            slice_max = -1
+            slice_min = 10000000000
+
+            for j in range(i * SLICE_WIDTH, (i+1) * SLICE_WIDTH):
+                candlestick = past_candlesticks[j]
+                if candlestick.high > slice_max:
+                    slice_max = candlestick.high
+                if candlestick.low < slice_min:
+                    slice_min = candlestick.low
+
+            slice_width = slice_max - slice_min
+            slice_widths.append(slice_width)
+
+        prev_width = None
+        for i, width in enumerate(slice_widths):
+            if i != 0:
+                if prev_width == 0:
+                    continue
+                if width / prev_width > NARROWING_FACTOR:
+                    return False
+            prev_width = width
+        return True
+
+
+    def __get_high_volume_pairs(self):
+        self.debug('__get_high_volume_pairs')
+        return sorted(
+            filter(lambda p: self.market_info.get_pair_last_24h_btc_volume(p) >= self.HIGH_VOLUME_LIMIT,
+                   self.market_info.get_active_pairs()),
+            key=lambda pair: -self.market_info.get_pair_last_24h_btc_volume(pair=pair)
+        )
