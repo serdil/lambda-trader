@@ -131,14 +131,14 @@ class TriangleSignalGenerator(BaseSignalGenerator):
 
     BUY_PROFIT_FACTOR = 1.05
 
-    NUM_SLICES = 4
+    NUM_SLICES = 5
     SLICE_WIDTH = 5  # in number of candlesticks
-    NARROWING_FACTOR = 0.7
+    NARROWING_FACTOR = 0.6
 
     def get_allowed_pairs(self):
         self.debug('get_allowed_pairs')
-        # high_volume_pairs = self.__get_high_volume_pairs()
-        high_volume_pairs = ['BTC_LTC']
+        high_volume_pairs = self.__get_high_volume_pairs()
+        # high_volume_pairs = ['BTC_LTC']
         return high_volume_pairs
 
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
