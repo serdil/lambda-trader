@@ -12,7 +12,7 @@ def backtest(account: BacktestingAccount, market_info: BacktestingMarketInfo,
     normalized_start = date_ceil(start)
     normalized_end = date_floor(end)
     start_date = max(market_info.get_min_pair_start_time(), normalized_start)
-    end_date = min(market_info.get_max_pair_end_time(), normalized_end)
+    end_date = min(market_info.get_min_pair_end_time(), normalized_end)
 
     print('start:', datetime.fromtimestamp(start_date))
     print('end:', datetime.fromtimestamp(end_date))
