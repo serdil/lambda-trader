@@ -342,12 +342,13 @@ class SignalExecutor(BaseSignalExecutor):
                 self.logger.info('cancelling_order:%s;', sell_order)
 
                 self.__cancel_order_with_retry(order_number=sell_order_number)
+                amount_to_sell = self.__get_balance_with_retry(sell_order.get_currency())
                 price = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
 
                 self.logger.info('trying_to_sell_at_current_price')
                 sell_request = OrderRequest(currency=sell_order.get_currency(),
                                             _type=OrderType.SELL, price=price,
-                                            amount=sell_order.get_amount(),
+                                            amount=amount_to_sell,
                                             date=market_date)
                 try:
                     self.__new_order_with_retry(order_request=sell_request, fill_or_kill=True)
