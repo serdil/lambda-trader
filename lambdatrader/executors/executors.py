@@ -22,7 +22,9 @@ from lambdatrader.models.trade import Trade
 from lambdatrader.models.tradesignal import TradeSignal, FailureExitType
 from lambdatrader.models.tradinginfo import TradingInfo
 from lambdatrader.utils import pair_from, pair_second
-from lambdatrader.loghandlers import get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger
+from lambdatrader.loghandlers import (
+    get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger,
+)
 from lambdatrader.models.orderrequest import OrderRequest
 from lambdatrader.persistence.object_persistence import get_object_with_key, save_object_with_key
 
@@ -179,7 +181,8 @@ class BaseSignalExecutor:
         raise NotImplementedError
 
 
-#  Assuming PriceTakeProfitSuccessExit and TimeoutStopLossFailureExit for now.
+#  Assuming PriceTakeProfitSuccessExit and TimeoutStopLossFailureExit and PriceStopLossFailureExit
+#  for now.
 class SignalExecutor(BaseSignalExecutor):
     MEMORY_VERSION = 0
 
@@ -373,15 +376,18 @@ class SignalExecutor(BaseSignalExecutor):
         )
 
     def __print_tp_hit_for_backtesting(self, market_date, currency, profit_amount):
-        self.__conditional_print(datetime.fromtimestamp(market_date), currency, 'tp:', profit_amount)
+        self.__conditional_print(datetime.fromtimestamp(market_date),
+                                 currency, 'tp:', profit_amount)
 
     def __print_sl_hit_for_backtesting(self, market_date, currency, profit_amount):
-        self.__conditional_print(datetime.fromtimestamp(market_date), currency, 'sl:', profit_amount)
+        self.__conditional_print(datetime.fromtimestamp(market_date),
+                                 currency, 'sl:', profit_amount)
 
     def __calc_profit_amount(self, amount, buy_rate, sell_rate):
         bought_amount = amount - self.__get_taker_fee(amount=amount)
         btc_omitted = amount * buy_rate
-        btc_added = bought_amount * sell_rate - self.__get_maker_fee(amount=bought_amount * sell_rate)
+        btc_added = (bought_amount * sell_rate -
+                     self.__get_maker_fee(amount=bought_amount * sell_rate))
         return btc_added - btc_omitted
 
     def __get_taker_fee(self, amount):
