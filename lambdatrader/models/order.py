@@ -30,6 +30,34 @@ class Order:
     def set_order_number(self, order_number):
         self.__order_number = order_number
 
+    @property
+    def order_number(self):
+        return self.get_order_number()
+
+    @property
+    def currency(self):
+        return self.currency
+
+    @property
+    def type(self):
+        return self.type
+
+    @property
+    def price(self):
+        return self.price
+
+    @property
+    def amount(self):
+        return self.amount
+
+    @property
+    def date(self):
+        return self.date
+
+    @property
+    def is_filled(self):
+        return self.is_filled
+
     def get_order_number(self):
         return self.__order_number
 

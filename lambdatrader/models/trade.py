@@ -1,10 +1,10 @@
 class Trade:
-    def __init__(self, _id, start_date, end_date, profit):
+    def __init__(self, _id, _type, pair, rate, amount, fee, total, date):
         self.id = _id
-        self.start_date = start_date
-        self.end_date = end_date
-        self.profit_amount = profit
-
-    def __repr__(self):
-        return 'Trade(start={}, end={}, profit={})'.format(
-            self.start_date, self.end_date, self.profit_amount)
+        self.type = _type
+        self.pair = pair
+        self.rate = rate
+        self.amount = amount
+        self.fee = fee
+        self.total = total
+        self.date = date

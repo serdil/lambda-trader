@@ -41,3 +41,7 @@ class BaseMarketInfo:
 
     def on_all_pairs_candlestick(self, handler):
         raise NotImplementedError
+
+    @property
+    def date(self):
+        return self.get_market_date()

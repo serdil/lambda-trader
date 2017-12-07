@@ -1,32 +1,29 @@
 import pickle
+from collections import defaultdict
+from copy import deepcopy
 from datetime import datetime
 from logging import ERROR
 from threading import Thread, RLock
-
-from collections import defaultdict
-
-from copy import deepcopy
 from typing import Iterable
 
-from lambdatrader.evaluation.utils import period_statistics
 from lambdatrader.account.account import (
     UnableToFillImmediately,
 )
-from lambdatrader.executors.utils import retry_on_exception
 from lambdatrader.config import (
-    EXECUTOR__NUM_CHUNKS,
-    EXECUTOR__MIN_CHUNK_SIZE,
-    BOT_IDENTIFIER)
-from lambdatrader.models.ordertype import OrderType
-from lambdatrader.models.trade import Trade
-from lambdatrader.models.tradesignal import TradeSignal, FailureExitType
-from lambdatrader.models.tradinginfo import TradingInfo
-from lambdatrader.utils import pair_from, pair_second
+    EXECUTOR__NUM_CHUNKS, EXECUTOR__MIN_CHUNK_SIZE, BOT_IDENTIFIER,
+)
+from lambdatrader.evaluation.utils import period_statistics
+from lambdatrader.executors.utils import retry_on_exception
 from lambdatrader.loghandlers import (
     get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger,
 )
+from lambdatrader.models.conceptualtrade import ConceptualTrade
 from lambdatrader.models.orderrequest import OrderRequest
+from lambdatrader.models.ordertype import OrderType
+from lambdatrader.models.tradinginfo import TradingInfo
 from lambdatrader.persistence.object_persistence import get_object_with_key, save_object_with_key
+from lambdatrader.utils import pair_from, pair_second
+from signals.tradesignal import TradeSignal, FailureExitType, SignalPhase
 
 
 class BaseSignalExecutor:
@@ -292,78 +289,97 @@ class SignalExecutor(BaseSignalExecutor):
     def __process_signals(self):
         self.debug('__process_signals')
         self.debug('__tracked_signals:%s', self.__tracked_signals)
-        for signal_info in list(self.__tracked_signals.values()):
-            self.__process_signal(signal_info=signal_info)
+        for signal in self.__get_tracked_signals_list():
+            self.__process_signal(signal=signal)
 
-    def __process_signal(self, signal_info):
+    def __process_signal(self, signal: TradeSignal):
         self.debug('__process_signal')
 
+        if signal.current_phase in [SignalPhase.PRE_ENTRY, SignalPhase.CLOSED]:
+            return
+
         open_sell_orders_dict = self.__get_open_sell_orders_with_retry()
-        signal = signal_info['signal']
-        sell_order = signal_info['tp_sell_order']
+        sell_order = signal.sell_order
         sell_order_number = sell_order.get_order_number()
-        internal_trade_id = signal.id
-        internal_trade = self.__internal_trades[internal_trade_id]
         market_date = self.__get_market_date()
 
-        if sell_order_number not in open_sell_orders_dict:  # Price TP hit
-            self.logger.info('tp_hit_for_signal:%s', signal)
+        self.__process_signal_trades(signal=signal)
 
-            profit_amount = self.__calc_profit_amount(amount=internal_trade.amount,
-                                                      buy_rate=internal_trade.rate,
-                                                      sell_rate=internal_trade.target_rate)
+        if signal.current_phase == SignalPhase.IN_PROCESS:
+            if sell_order_number not in open_sell_orders_dict:  # Price TP hit
+                self.logger.info('tp_hit_for_signal:%s', signal)
 
-            trade = Trade(_id=internal_trade_id, start_date=internal_trade.start_date,
-                          end_date=market_date, profit=profit_amount)
-            self._declare_trade_end(trade=trade)
+                signal.set_phase_closed(exit_date=market_date)
+                del self.__tracked_signals[signal.id]
 
-            self.logger.info('trade_closed_p_l:%.6f', profit_amount)
-            self.__print_tp_hit_for_backtesting(market_date=market_date,
-                                                currency=sell_order.get_currency(),
-                                                profit_amount=profit_amount)
+                profit_amount = self.__calc_profit_amount(signal=signal)
 
-            del self.__internal_trades[internal_trade_id]
-            del self.__tracked_signals[signal.id]
-
-        else:
-            failure_exit = signal.failure_exit
-            if failure_exit.type == FailureExitType.TIMEOUT_STOP_LOSS:
-                stop_loss_reached = market_date - sell_order.get_date() >= failure_exit.timeout
-            elif failure_exit.type == FailureExitType.PRICE_STOP_LOSS:
-                highest_bid = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
-                stop_loss_reached = highest_bid <= failure_exit.price
-            else:
-                raise Exception('Unknown or unimplemented failure_exit type.')
-
-            if stop_loss_reached:
-                self.logger.info('sl_hit_for_signal:%s', signal)
-                self.logger.info('cancelling_order:%s;', sell_order)
-
-                self.__cancel_order_with_retry(order_number=sell_order_number)
-                price = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
-
-                self.logger.info('putting_sell_order_at_current_price')
-                sell_request = OrderRequest(currency=sell_order.get_currency(),
-                                            _type=OrderType.SELL, price=price,
-                                            amount=sell_order.get_amount(),
-                                            date=market_date)
-
-                self.__new_order_with_retry(order_request=sell_request)
-                profit_amount = self.__calc_profit_amount(amount=internal_trade.amount,
-                                                          buy_rate=internal_trade.rate,
-                                                          sell_rate=price)
-
-                trade = Trade(_id=internal_trade_id, start_date=internal_trade.start_date,
-                              end_date=market_date, profit=profit_amount)
+                trade = ConceptualTrade(_id=signal.id, start_date=signal.entry_date,
+                                        end_date=market_date, profit=profit_amount)
                 self._declare_trade_end(trade=trade)
 
                 self.logger.info('trade_closed_p_l:%.6f', profit_amount)
-                self.__print_sl_hit_for_backtesting(market_date=market_date,
+                self.__print_tp_hit_for_backtesting(market_date=market_date,
                                                     currency=sell_order.get_currency(),
                                                     profit_amount=profit_amount)
 
-                del self.__internal_trades[internal_trade_id]
+            else:
+                failure_exit = signal.failure_exit
+                if failure_exit.type == FailureExitType.TIMEOUT_STOP_LOSS:
+                    stop_lossreached = market_date - sell_order.get_date() >= failure_exit.timeout
+                elif failure_exit.type == FailureExitType.PRICE_STOP_LOSS:
+                    highest_bid = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
+                    stop_loss_reached = highest_bid <= failure_exit.price
+                else:
+                    raise Exception('Unknown or unimplemented failure_exit type.')
+
+                if stop_loss_reached:
+                    self.logger.info('sl_hit_for_signal:%s', signal)
+                    self.logger.info('cancelling_order:%s;', sell_order)
+
+                    self.__cancel_order_with_retry(order_number=sell_order_number)
+                    price = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
+
+                    self.logger.info('putting_sell_order_at_current_price')
+
+                    sell_request = OrderRequest(currency=sell_order.get_currency(),
+                                                _type=OrderType.SELL, price=price,
+                                                amount=sell_order.get_amount(), date=market_date)
+
+                    sl_sell_order = self.__new_order_with_retry(order_request=sell_request)
+
+                    signal.set_phase_stop_loss(sl_sell_order=sl_sell_order)
+
+        elif signal.current_phase == SignalPhase.STOP_LOSS:
+            if sell_order_number not in open_sell_orders_dict:
+                self.logger.info('sl_order_filled_for_signal:%s', signal)
+
+                signal.set_phase_closed(exit_date=market_date)
                 del self.__tracked_signals[signal.id]
+
+                profit_amount = self.__calc_profit_amount(signal=signal)
+
+                trade = ConceptualTrade(_id=signal.id, start_date=signal.entry_date,
+                                        end_date=market_date, profit=profit_amount)
+                self._declare_trade_end(trade=trade)
+
+                self.logger.info('trade_closed_p_l:%.6f', profit_amount)
+            else:
+                pass
+
+
+    def __process_signal_trades(self, signal):
+        if signal.current_phase == SignalPhase.IN_PROCESS:
+            tp_trades = self.__get_order_trades_with_retry(signal.sell_order.get_order_number())
+            signal.add_tp_trade(*tp_trades)
+        elif signal.current_phase == SignalPhase.STOP_LOSS:
+            sl_trades = self.__get_order_trades_with_retry(signal.sell_order.get_order_number())
+            signal.add_tp_trade(*sl_trades)
+
+    def __get_order_trades_with_retry(self, order_number):
+        return self.retry_on_exception(
+            lambda: self.account.get_order_trades(order_number=order_number)
+        )
 
     def __get_open_sell_orders_with_retry(self):
         return self.retry_on_exception(
@@ -383,9 +399,9 @@ class SignalExecutor(BaseSignalExecutor):
         self.__conditional_print(datetime.fromtimestamp(market_date),
                                  currency, 'sl:', profit_amount)
 
-    def __calc_profit_amount(self, amount, buy_rate, sell_rate):
+    def __calc_profit_amount(self, signal):
         bought_amount = amount - self.__get_taker_fee(amount=amount)
-        btc_omitted = amount * buy_rate
+        btc_omitted = signal.spent_btc_amount
         btc_added = (bought_amount * sell_rate -
                      self.__get_maker_fee(amount=bought_amount * sell_rate))
         return btc_added - btc_omitted
@@ -470,15 +486,13 @@ class SignalExecutor(BaseSignalExecutor):
 
         sell_order = self.__new_order_with_retry(order_request=sell_request)
 
+        signal.set_phase_in_process(entry_date=sell_order.get_date(),
+                                    entry_rate=entry_price,
+                                    spent_btc=position_size,
+                                    bought_amount=bought_amount,
+                                    tp_sell_order=sell_order)
 
-        self.__save_signal_to_tracked_signals_with_tp_sell_order(signal=signal,
-                                                                 tp_sell_order=sell_order)
-
-        self.__internal_trades[signal.id] = self.InternalTrade(start_date=market_date,
-                                                               currency=currency,
-                                                               amount=bought_amount,
-                                                               rate=entry_price,
-                                                               target_rate=target_price)
+        self.__save_signal_to_tracked_signals(signal=signal)
 
         self.__print_trade_for_backtesting(pair=pair)
 
@@ -492,16 +506,11 @@ class SignalExecutor(BaseSignalExecutor):
             lambda: self.account.get_balance(currency=currency)
         )
 
-    def __save_signal_to_tracked_signals_with_tp_sell_order(self, signal, tp_sell_order):
-        self.__tracked_signals[signal.id] = {
-            'signal': signal, 'tp_sell_order': tp_sell_order
-        }
+    def __save_signal_to_tracked_signals(self, signal):
+        self.__tracked_signals[signal.id] = signal
 
     def __get_tracked_signals_list(self):
-        tracked_signals = []
-        for tracked_signal_info in self.__tracked_signals.values():
-            tracked_signals.append(tracked_signal_info['signal'])
-        return tracked_signals
+        return list(self.__tracked_signals.values())
 
     def retry_on_exception(self, task, exceptions=None):
         return retry_on_exception(task=task, logger=self.logger, exceptions=exceptions)

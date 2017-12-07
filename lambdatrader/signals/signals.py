@@ -1,4 +1,4 @@
-from logging import ERROR
+rom logging import ERROR
 from typing import Iterable, Optional
 
 from lambdatrader.config import (
@@ -7,10 +7,24 @@ from lambdatrader.config import (
     RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR,
     RETRACEMENT_SIGNALS__RETRACEMENT_RATIO,
 )
-from lambdatrader.models.tradesignal import (
+from signals.tradesignal import (
     PriceEntry, PriceTakeProfitSuccessExit, TimeoutStopLossFailureExit, TradeSignal,
 )
 from lambdatrader.loghandlers import get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger
+
+from logging import ERROR
+from typing import Iterable, Optional
+
+from lambdatrader.config import (
+    RETRACEMENT_SIGNALS__ORDER_TIMEOUT, RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT,
+    RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR, RETRACEMENT_SIGNALS__RETRACEMENT_RATIO,
+)
+from lambdatrader.loghandlers import (
+    get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger,
+)
+from signals.tradesignal import (
+    PriceEntry, PriceTakeProfitSuccessExit, TimeoutStopLossFailureExit, TradeSignal,
+)
 
 
 class BaseSignalGenerator:

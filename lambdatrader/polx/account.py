@@ -13,6 +13,7 @@ from lambdatrader.polx.utils import APICallExecutor, map_exception
 from lambdatrader.utils import pair_second, pair_from, get_now_timestamp
 from lambdatrader.models.enums.exchange import ExchangeEnum
 from lambdatrader.models.ordertype import OrderType
+from models.trade import Trade
 
 
 class PolxAccount(BaseAccount):
@@ -79,16 +80,45 @@ class PolxAccount(BaseAccount):
                 open_orders[order.get_order_number()] = order
         return open_orders
 
-    @staticmethod
-    def __order_from_polx_info(key, value):
+    def get_order_trades(self, order_number):
+        self.logger.debug('get_order_trades')
+        try:
+            response = self.__api_call(
+                call=lambda: polo.returnOrderTrades(orderNumber=order_number))
+            return [self.__convert_polx_order_trade_to_trade(item) for item in response]
+        except PoloniexError as e:
+            raise map_exception(e)(e.msg)
+
+    @classmethod
+    def __convert_polx_order_trade_to_trade(cls, polx_order_trade):
+        trade_id = int(polx_order_trade['globalTradeID'])
+        pair = polx_order_trade['currencyPair']
+        rate = float(polx_order_trade['rate'])
+        amount = float(polx_order_trade['amount'])
+        total = float(polx_order_trade['total'])
+        fee = float(polx_order_trade['fee'])
+        date = cls.__parse_polx_date(polx_order_trade['date'])
+
+        trade_type_str = polx_order_trade['type']
+        trade_type = OrderType.BUY if trade_type_str == 'buy' else OrderType.SELL
+
+        return Trade(_id=trade_id, _type=trade_type, pair=pair,
+                     rate=rate, amount=amount, fee=fee, total=total, date=date)
+
+    @classmethod
+    def __order_from_polx_info(cls, key, value):
         currency = pair_second(key)
         _type = OrderType.BUY if value['type'] == 'buy' else OrderType.SELL
-        date = datetime.strptime(value['date'], '%Y-%m-%d %H:%M:%S').timestamp()
+        date = cls.__parse_polx_date(value['date'])
         order_number = value['orderNumber']
         amount = float(value['amount'])
         price = float(value['rate'])
         return Order(currency=currency, _type=_type, price=price,
                      amount=amount, date=date, order_number=order_number)
+
+    @staticmethod
+    def __parse_polx_date(polx_date_str):
+        return datetime.strptime(polx_date_str, '%Y-%m-%d %H:%M:%S').timestamp()
 
     def new_order(self, order_request, fill_or_kill=False):
         self.logger.info('new_order_request:%s', str(order_request))
