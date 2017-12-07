@@ -307,7 +307,7 @@ class SignalExecutor(BaseSignalExecutor):
                              signal_info['in_stop_loss_stage']
 
         # Price TP hit
-        if (not in_stop_loss_stage) and sell_order_number not in open_sell_orders_dict:
+        if not in_stop_loss_stage and sell_order_number not in open_sell_orders_dict:
             self.logger.info('tp_hit_for_signal:%s', signal)
 
             profit_amount = self.__calc_profit_amount(amount=internal_trade.amount,
@@ -337,11 +337,12 @@ class SignalExecutor(BaseSignalExecutor):
                 raise Exception('Unknown or unimplemented failure_exit type.')
 
             if stop_loss_reached:
-                signal_info['in_stop_loss_stage'] = True
                 self.logger.info('sl_hit_for_signal:%s', signal)
                 self.logger.info('cancelling_order:%s;', sell_order)
 
-                self.__cancel_order_with_retry(order_number=sell_order_number)
+                if not in_stop_loss_stage:
+                    self.__cancel_order_with_retry(order_number=sell_order_number)
+                signal_info['in_stop_loss_stage'] = True
                 amount_to_sell = self.__get_balance_with_retry(sell_order.get_currency())
                 price = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
 
