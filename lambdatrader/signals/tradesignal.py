@@ -231,11 +231,12 @@ class TradeSignal:
                 self._set_phase_stop_loss(sl_sell_order=sl_sell_order)
 
     def _check_stop_loss_order(self):
+        open_sell_orders = self._get_open_sell_orders_with_retry()
+        highest_bid = self.market.get_pair_ticker(pair=self.pair).highest_bid
         self._process_trades()
-        if self.sell_order.order_number not in self._get_open_sell_orders_with_retry():  # SL Filled
+        if self.sell_order.order_number not in open_sell_orders:  # SL Filled
             self._set_phase_closed(exit_date=self.market.date)
         else:
-            highest_bid = self.market.get_pair_ticker(pair=self.pair).highest_bid
             self.sell_order = self._move_order(order=self.sell_order, rate=highest_bid)
 
     def _process_trades(self):
