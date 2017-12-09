@@ -53,6 +53,7 @@ class FailureExitType(Enum):
     COMBINED_OR = 2
     TIMEOUT_STOP_LOSS = 3
     PRICE_STOP_LOSS = 4
+    FUNCTION = 5
 
 
 class FailureExit:
@@ -77,6 +78,12 @@ class TimeoutStopLossFailureExit(FailureExit):
         super().__init__(_type=FailureExitType.TIMEOUT_STOP_LOSS)
         self.timeout = timeout
         self.sl_timeout = sl_timeout
+
+
+class FunctionFailureExit(FailureExit):
+    def __init__(self, failure_func):
+        super().__init__(_type=FailureExitType.FUNCTION)
+        self.failure_func = failure_func
 
 
 class PriceStopLossFailureExit(FailureExit):
