@@ -73,9 +73,10 @@ class CombinedOrFailureExit(FailureExit):
 
 
 class TimeoutStopLossFailureExit(FailureExit):
-    def __init__(self, timeout):
+    def __init__(self, timeout, sl_timeout):
         super().__init__(_type=FailureExitType.TIMEOUT_STOP_LOSS)
         self.timeout = timeout
+        self.sl_timeout = sl_timeout
 
 
 class PriceStopLossFailureExit(FailureExit):

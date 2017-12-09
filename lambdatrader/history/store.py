@@ -29,8 +29,9 @@ class CandlestickStore:
             self.__sync_with_existing_pairs_in_db()
 
         def get_pairs(self):
-            return list(set(self.__history.keys()) | set(self.__chunks_in_memory.keys())
-                        | set(self.__chunks_in_db.keys()) | self.__synced_pairs)
+            return list(filter(lambda pair: pair not in ['BTC_NOTE', 'BTC_SJCX', 'BTC_NAUT'],
+                               list(set(self.__history.keys()) | set(self.__chunks_in_memory.keys())
+                                    | set(self.__chunks_in_db.keys()) | self.__synced_pairs)))
 
         def append_candlestick(self, pair, candlestick: Candlestick):
             self.__sync_pair_if_not_synced(pair)
