@@ -70,7 +70,7 @@ class RetracementSignalGenerator(BaseSignalGenerator):
     BUY_PROFIT_FACTOR = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
     RETRACEMENT_RATIO = RETRACEMENT_SIGNALS__RETRACEMENT_RATIO
 
-    WEEKLY_DRAWDOWN_RATIO = 0.5
+    WEEKLY_DRAWDOWN_RATIO = 3
 
     PAIRS_RETRACEMENT_RATIOS = {}
 
@@ -127,10 +127,11 @@ class RetracementSignalGenerator(BaseSignalGenerator):
         cur_max = -1
         min_since_cur_max = 1000000
 
-        max_drawdown_range = 0
+        max_drawdown_max = 1
+        max_drawdown_range = 1
 
         for i in range(one_week_num_candles-1, -1):
-            candle = self.market_info.get_pair_candlestick(i)
+            candle = self.market_info.get_pair_candlestick(pair, i)
             if candle.max > cur_max:
                 cur_max = candle.max
                 min_since_cur_max = candle.min
@@ -139,10 +140,11 @@ class RetracementSignalGenerator(BaseSignalGenerator):
                 min_since_cur_max = candle.min
 
             if cur_max - min_since_cur_max > max_drawdown_range:
+                max_drawdown_max = cur_max
                 max_drawdown_range = cur_max - min_since_cur_max
 
-        return max_drawdown_range * self.WEEKLY_DRAWDOWN_RATIO
-
+        return self.BUY_PROFIT_FACTOR / (max_drawdown_range / max_drawdown_max) / \
+               self.WEEKLY_DRAWDOWN_RATIO
 
 
     def __get_high_volume_pairs(self):
