@@ -70,7 +70,8 @@ class RetracementSignalGenerator(BaseSignalGenerator):
     BUY_PROFIT_FACTOR = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
     RETRACEMENT_RATIO = RETRACEMENT_SIGNALS__RETRACEMENT_RATIO
 
-    WEEKLY_DRAWDOWN_RATIO = 1
+    LOOKBACK_DRAWDOWN_RATIO = 1
+    LOOKBACK_DAYS = 1
 
     PAIRS_RETRACEMENT_RATIOS = {}
 
@@ -124,14 +125,14 @@ class RetracementSignalGenerator(BaseSignalGenerator):
             return trade_signal
 
     def __calc_pair_retracement_ratio(self, pair):
-        one_week_num_candles = 24 * 3600 // 300
+        lookback_num_candles = self.LOOKBACK_DAYS * 24 * 3600 // 300
         cur_max = -1
         min_since_cur_max = 1000000
 
         max_drawdown_max = 0
         max_drawdown_range = 0
 
-        for i in range(one_week_num_candles-1, -1, -1):
+        for i in range(lookback_num_candles-1, -1, -1):
             candle = self.market_info.get_pair_candlestick(pair, i)
             # print(candle.low, candle.high)
             if candle.high > cur_max:
@@ -150,7 +151,7 @@ class RetracementSignalGenerator(BaseSignalGenerator):
         weekly_max_drawdown = max_drawdown_range / max_drawdown_max
         # print('BPF WEEKMAXDRAW WEEKDRAWRAT', self.BUY_PROFIT_FACTOR, weekly_max_drawdown, self.WEEKLY_DRAWDOWN_RATIO)
 
-        return (self.BUY_PROFIT_FACTOR-1) / weekly_max_drawdown / self.WEEKLY_DRAWDOWN_RATIO
+        return (self.BUY_PROFIT_FACTOR-1) / weekly_max_drawdown / self.LOOKBACK_DRAWDOWN_RATIO
 
 
     def __get_high_volume_pairs(self):
