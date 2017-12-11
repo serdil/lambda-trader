@@ -26,8 +26,14 @@ class BacktestingMarketInfo(BaseMarketInfo):
         self.market_time += 300
 
     def get_pair_candlestick(self, pair, ind=0):
-        return self.candlestick_store.get_candlestick(pair=pair, 
-                                                      date=self.market_time - ind * 300)
+        if ind < 0:
+            raise Exception('Cannot look ahead.')
+        try:
+            return self.candlestick_store.get_candlestick(pair=pair,
+                                                          date=self.market_time - ind * 300)
+        except KeyError as e:
+            print('Error while getting candlestick for pair:', pair)
+            raise e
 
     def get_pair_latest_candlestick(self, pair):
         return self.get_pair_candlestick(pair=pair, ind=0)
