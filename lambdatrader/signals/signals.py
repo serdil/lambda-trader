@@ -70,12 +70,18 @@ class RetracementSignalGenerator(BaseSignalGenerator):
     BUY_PROFIT_FACTOR = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
     RETRACEMENT_RATIO = RETRACEMENT_SIGNALS__RETRACEMENT_RATIO
 
+    WEEKLY_DRAWDOWN_RATIO = 0.5
+
+    PAIRS_RETRACEMENT_RATIOS = {}
+
     def get_allowed_pairs(self):
         self.debug('get_allowed_pairs')
         high_volume_pairs = self.__get_high_volume_pairs()
         return high_volume_pairs
 
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
+
+        self.PAIRS_RETRACEMENT_RATIOS[pair] = self.__calc_pair_retracement_ratio(pair)
 
         if pair in [signal.pair for signal in tracked_signals]:
             self.debug('pair_already_in_tracked_signals:%s', pair)
@@ -94,7 +100,8 @@ class RetracementSignalGenerator(BaseSignalGenerator):
             return
 
         current_retracement_ratio = (target_price - price) / (day_high_price - price)
-        retracement_ratio_satisfied = current_retracement_ratio <= self.RETRACEMENT_RATIO
+        retracement_ratio_satisfied = current_retracement_ratio <= \
+                                      self.PAIRS_RETRACEMENT_RATIOS[pair]
 
         if retracement_ratio_satisfied:
             self.debug('retracement_ratio_satisfied')
@@ -114,6 +121,29 @@ class RetracementSignalGenerator(BaseSignalGenerator):
             self.logger.info('trade_signal:%s', str(trade_signal))
 
             return trade_signal
+
+    def __calc_pair_retracement_ratio(self, pair):
+        one_week_num_candles = 24 * 3600 // 300
+        cur_max = -1
+        min_since_cur_max = 1000000
+
+        max_drawdown_range = 0
+
+        for i in range(one_week_num_candles-1, -1):
+            candle = self.market_info.get_pair_candlestick(i)
+            if candle.max > cur_max:
+                cur_max = candle.max
+                min_since_cur_max = candle.min
+
+            if candle.min < min_since_cur_max:
+                min_since_cur_max = candle.min
+
+            if cur_max - min_since_cur_max > max_drawdown_range:
+                max_drawdown_range = cur_max - min_since_cur_max
+
+        return max_drawdown_range * self.WEEKLY_DRAWDOWN_RATIO
+
+
 
     def __get_high_volume_pairs(self):
         self.debug('__get_high_volume_pairs')
