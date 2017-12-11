@@ -30,7 +30,7 @@ class CandlestickStore:
 
         def get_pairs(self):
             return list(filter(lambda pair: pair not in ['BTC_NOTE', 'BTC_SJCX', 'BTC_NAUT',
-                                                         'BTC_CVC'],
+                                                         'BTC_CVC', 'BTC_OMG', 'BTC_GAS'],
                                list(set(self.__history.keys()) | set(self.__chunks_in_memory.keys())
                                     | set(self.__chunks_in_db.keys()) | self.__synced_pairs)))
 
