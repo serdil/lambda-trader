@@ -66,8 +66,7 @@ class BaseSignalGenerator:
 class RetracementSignalGenerator(BaseSignalGenerator):
 
     HIGH_VOLUME_LIMIT = RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT
-    ORDER_TIMEOUT = 1 * 24 * 3600
-    SL_ORDER_TIMEOUT = 7 * 24 * 3600
+    ORDER_TIMEOUT = RETRACEMENT_SIGNALS__ORDER_TIMEOUT
     BUY_PROFIT_FACTOR = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
     RETRACEMENT_RATIO = RETRACEMENT_SIGNALS__RETRACEMENT_RATIO
 
@@ -107,8 +106,7 @@ class RetracementSignalGenerator(BaseSignalGenerator):
 
             entry = PriceEntry(price)
             success_exit = PriceTakeProfitSuccessExit(price=target_price)
-            failure_exit = TimeoutStopLossFailureExit(timeout=self.ORDER_TIMEOUT,
-                                                      sl_timeout=self.SL_ORDER_TIMEOUT)
+            failure_exit = TimeoutStopLossFailureExit(timeout=self.ORDER_TIMEOUT)
 
             trade_signal = TradeSignal(date=market_date, exchange=None, pair=pair, entry=entry,
                                        success_exit=success_exit, failure_exit=failure_exit)
