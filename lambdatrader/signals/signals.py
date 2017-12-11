@@ -70,7 +70,7 @@ class RetracementSignalGenerator(BaseSignalGenerator):
     BUY_PROFIT_FACTOR = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
     RETRACEMENT_RATIO = RETRACEMENT_SIGNALS__RETRACEMENT_RATIO
 
-    WEEKLY_DRAWDOWN_RATIO = 3
+    WEEKLY_DRAWDOWN_RATIO = 1
 
     PAIRS_RETRACEMENT_RATIOS = {}
 
@@ -82,6 +82,7 @@ class RetracementSignalGenerator(BaseSignalGenerator):
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
 
         self.PAIRS_RETRACEMENT_RATIOS[pair] = self.__calc_pair_retracement_ratio(pair)
+        # print(pair, self.PAIRS_RETRACEMENT_RATIOS[pair])
 
         if pair in [signal.pair for signal in tracked_signals]:
             self.debug('pair_already_in_tracked_signals:%s', pair)
@@ -127,30 +128,36 @@ class RetracementSignalGenerator(BaseSignalGenerator):
         cur_max = -1
         min_since_cur_max = 1000000
 
-        max_drawdown_max = 1
-        max_drawdown_range = 1
+        max_drawdown_max = 0
+        max_drawdown_range = 0
 
-        for i in range(one_week_num_candles-1, -1):
+        for i in range(one_week_num_candles-1, -1, -1):
             candle = self.market_info.get_pair_candlestick(pair, i)
-            if candle.max > cur_max:
-                cur_max = candle.max
-                min_since_cur_max = candle.min
+            # print(candle.low, candle.high)
+            if candle.high > cur_max:
+                cur_max = candle.high
+                min_since_cur_max = candle.low
 
-            if candle.min < min_since_cur_max:
-                min_since_cur_max = candle.min
+            if candle.low < min_since_cur_max:
+                min_since_cur_max = candle.low
 
             if cur_max - min_since_cur_max > max_drawdown_range:
                 max_drawdown_max = cur_max
                 max_drawdown_range = cur_max - min_since_cur_max
 
-        return self.BUY_PROFIT_FACTOR / (max_drawdown_range / max_drawdown_max) / \
-               self.WEEKLY_DRAWDOWN_RATIO
+        # print('WEEK_MAX_RANGE', max_drawdown_range)
+
+        weekly_max_drawdown = max_drawdown_range / max_drawdown_max
+        # print('BPF WEEKMAXDRAW WEEKDRAWRAT', self.BUY_PROFIT_FACTOR, weekly_max_drawdown, self.WEEKLY_DRAWDOWN_RATIO)
+
+        return (self.BUY_PROFIT_FACTOR-1) / weekly_max_drawdown / self.WEEKLY_DRAWDOWN_RATIO
 
 
     def __get_high_volume_pairs(self):
         self.debug('__get_high_volume_pairs')
         return sorted(
-            filter(lambda p: self.market_info.get_pair_last_24h_btc_volume(p) >= self.HIGH_VOLUME_LIMIT,
+            filter(lambda p: self.market_info.get_pair_last_24h_btc_volume(p) >=
+                             self.HIGH_VOLUME_LIMIT,
                    self.market_info.get_active_pairs()),
             key=lambda pair: -self.market_info.get_pair_last_24h_btc_volume(pair=pair)
         )
