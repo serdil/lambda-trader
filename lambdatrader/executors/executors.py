@@ -306,7 +306,11 @@ class SignalExecutor(BaseSignalExecutor):
         internal_trade = self.__internal_trades[internal_trade_id]
         market_date = self.__get_market_date()
 
-        if sell_order_number not in open_sell_orders_dict:  # Price TP hit
+        in_stop_loss_stage = 'in_stop_loss_stage' in signal_info and\
+                             signal_info['in_stop_loss_stage']
+
+        # Price TP hit
+        if not in_stop_loss_stage and sell_order_number not in open_sell_orders_dict:
             self.logger.info('tp_hit_for_signal:%s', signal)
 
             profit_amount = self.__calc_profit_amount(amount=internal_trade.amount,
@@ -339,16 +343,23 @@ class SignalExecutor(BaseSignalExecutor):
                 self.logger.info('sl_hit_for_signal:%s', signal)
                 self.logger.info('cancelling_order:%s;', sell_order)
 
-                self.__cancel_order_with_retry(order_number=sell_order_number)
+                if not in_stop_loss_stage:
+                    self.__cancel_order_with_retry(order_number=sell_order_number)
+                signal_info['in_stop_loss_stage'] = True
+                amount_to_sell = self.__get_balance_with_retry(sell_order.get_currency())
                 price = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
 
-                self.logger.info('putting_sell_order_at_current_price')
+                self.logger.info('trying_to_sell_at_current_price')
                 sell_request = OrderRequest(currency=sell_order.get_currency(),
                                             _type=OrderType.SELL, price=price,
-                                            amount=sell_order.get_amount(),
+                                            amount=amount_to_sell,
                                             date=market_date)
+                try:
+                    self.__new_order_with_retry(order_request=sell_request, fill_or_kill=True)
+                except UnableToFillImmediately as e:
+                    self.logger.warning(str(e))
+                    return
 
-                self.__new_order_with_retry(order_request=sell_request)
                 profit_amount = self.__calc_profit_amount(amount=internal_trade.amount,
                                                           buy_rate=internal_trade.rate,
                                                           sell_rate=price)

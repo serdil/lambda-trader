@@ -107,7 +107,7 @@ class PolxAccount(BaseAccount):
             self.logger.info('order_put:%s', order.get_order_number())
             return order
         except PoloniexError as e:
-            raise map_exception(e)(e.msg)
+            raise map_exception(e)
 
     def cancel_order(self, order_number):
             self.logger.info('cancel_order:%s', order_number)
@@ -142,4 +142,4 @@ class PolxAccount(BaseAccount):
         try:
             return APICallExecutor.get_instance().call(call=call)
         except PoloniexError as e:
-            raise map_exception(e)(str(e))
+            raise map_exception(e)

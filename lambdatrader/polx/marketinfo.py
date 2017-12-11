@@ -131,4 +131,4 @@ class PolxMarketInfo(BaseMarketInfo):
         try:
             return APICallExecutor.get_instance().call(call=call)
         except PoloniexError as e:
-            raise map_exception(e)(str(e))
+            raise map_exception(e)
