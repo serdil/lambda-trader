@@ -20,11 +20,12 @@ docker-compose-build:
 
 DEBUG_TO_CONSOLE?=False
 
-BACKTESTING_NUM_DAYS?=7
+DAYS?=7
+OFFSET?=0
 
 .PHONY: run-backtest
 run-backtest: docker-compose-build
-	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} -e BACKTESTING_NUM_DAYS=${BACKTESTING_NUM_DAYS} lambdatrader python3 -m lambdatrader.backtest_driver
+	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} -e BACKTESTING_NUM_DAYS=${DAYS} -e BACKTESTING_END_OFFSET_DAYS=${OFFSET} lambdatrader python3 -m lambdatrader.backtest_driver
 
 .PHONY: run-livetrade
 run-livetrade: docker-compose-build
