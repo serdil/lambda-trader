@@ -31,6 +31,10 @@ run-backtest: docker-compose-build
 run-livetrade: docker-compose-build
 	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} lambdatrader python3 -m lambdatrader.livetrade
 
+.PHONY: run-sync-polx-candlesticks
+run-sync-polx-candlesticks: docker-compose-build
+	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} lambdatrader python3 -m lambdatrader.sync_polx_candlesticks
+
 .PHONY: run-mongo-shell
 run-mongo-shell: docker-compose-build
 	docker-compose exec mongodb mongo
