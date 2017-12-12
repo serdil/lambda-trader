@@ -9,7 +9,6 @@ from lambdatrader.models.candlestick import Candlestick
 from lambdatrader.utils import date_floor, date_ceil
 
 DATABASE_PATH = HISTORY_DB_PATH
-print(DATABASE_PATH)
 
 class CandlestickStore:  # TODO make thread safe
 
