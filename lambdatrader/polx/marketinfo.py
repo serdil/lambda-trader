@@ -169,10 +169,14 @@ class PolxMarketInfo(BaseMarketInfo):
     def polx_chart_data_to_candlesticks(chart_data):
         candlesticks = []
         for c in chart_data:
-            candlesticks.append(Candlestick(date=c['date'], high=c['high'],  low=c['low'],
-                                            _open=c['open'], close=c['close'],
-                                            base_volume=c['volume'], quote_volume=c['quoteVolume'],
-                                            weighted_average=c['weightedAverage']))
+            candlesticks.append(Candlestick(date=float(c['date']),
+                                            high=float(c['high']),
+                                            low=float(c['low']),
+                                            _open=float(c['open']),
+                                            close=float(c['close']),
+                                            base_volume=float(c['volume']),
+                                            quote_volume=float(c['quoteVolume']),
+                                            weighted_average=float(c['weightedAverage'])))
         return candlesticks
 
     @staticmethod
