@@ -149,7 +149,8 @@ class RetracementSignalGenerator(BaseSignalGenerator):
         # print('WEEK_MAX_RANGE', max_drawdown_range)
 
         weekly_max_drawdown = max_drawdown_range / max_drawdown_max
-        # print('BPF WEEKMAXDRAW WEEKDRAWRAT', self.BUY_PROFIT_FACTOR, weekly_max_drawdown, self.WEEKLY_DRAWDOWN_RATIO)
+        # print('BPF WEEKMAXDRAW WEEKDRAWRAT', self.BUY_PROFIT_FACTOR,
+        #  weekly_max_drawdown, self.WEEKLY_DRAWDOWN_RATIO)
 
         return (self.BUY_PROFIT_FACTOR-1) / weekly_max_drawdown / self.LOOKBACK_DRAWDOWN_RATIO
 
