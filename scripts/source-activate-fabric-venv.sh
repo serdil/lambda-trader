@@ -1,0 +1,1 @@
+source venv-fabric/bin/activate

@@ -19,10 +19,12 @@ def get_now_timestamp():
 
 
 def date_floor(date):
+    date = int(date)
     return date - (date % 300)
 
 
 def date_ceil(date):
+    date = int(date)
     return date - (date % 300) + 300
 
 
@@ -36,3 +38,7 @@ def get_n_day_seconds(n):
 
 def get_project_directory():
     return os.path.dirname(os.path.dirname(__file__))
+
+
+def running_in_docker():
+    return os.path.isfile('/.dockerenv')

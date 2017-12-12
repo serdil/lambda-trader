@@ -1,5 +1,7 @@
 tmp/*
+
 exclude/*
+!exclude/.gitkeep
 
 data/*
 !data/.gitkeep
@@ -9,3 +11,18 @@ log/*
 
 db/*
 !db/.gitkeep
+
+lambdatrader/apitest.py
+lambdatrader/exclude.py
+
+venv/*
+venv-fabric/*
+
+.idea/dataSources.local.xml
+.idea/workspace.xml
+
+*__pycache__*
+
+.DS_Store
+
+.env

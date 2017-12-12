@@ -1,17 +1,17 @@
-import os
 import sqlite3
 
 from collections import defaultdict
 
 from blist import sorteddict
 
+from lambdatrader.config import HISTORY_DB_PATH
 from lambdatrader.models.candlestick import Candlestick
-from lambdatrader.utils import get_project_directory, date_floor, date_ceil
+from lambdatrader.utils import date_floor, date_ceil
 
-DATABASE_PATH = os.path.join(get_project_directory(), 'db', 'history.db')
+DATABASE_PATH = HISTORY_DB_PATH
 
 
-class CandlestickStore:
+class CandlestickStore:  # TODO make thread safe
 
     class __CandlestickStore:
 
@@ -132,7 +132,7 @@ class CandlestickStore:
                 self.__chunks_in_db[pair].add(chunk_no)
             self.__chunks_in_memory[pair].add(chunk_no)
 
-        def __persist_chunks(self):
+        def persist_chunks(self):
             for pair, chunks_in_memory in self.__chunks_in_memory.items():
                 for i, chunk_no in enumerate(sorted(chunks_in_memory)):
                     if chunk_no not in self.__chunks_in_db[pair]:

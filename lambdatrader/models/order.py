@@ -1,10 +1,6 @@
-from enum import Enum
 from uuid import uuid1
 
-
-class OrderType(Enum):
-    BUY = 1
-    SELL = 2
+from lambdatrader.models.ordertype import OrderType
 
 
 class Order:
@@ -30,6 +26,9 @@ class Order:
                ' price=' + str(self.__price) + ' amount=' + str(self.__amount) +\
                ' date=' + str(self.__date) + ' is_filled=' + str(self.__is_filled) + \
                ' order_number=' + str(self.__order_number) + ')'
+
+    def set_order_number(self, order_number):
+        self.__order_number = order_number
 
     def get_order_number(self):
         return self.__order_number

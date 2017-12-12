@@ -1,0 +1,1 @@
+virtualenv --python=python2.7 venv-fabric
