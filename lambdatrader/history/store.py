@@ -132,7 +132,7 @@ class CandlestickStore:  # TODO make thread safe
                 self.__chunks_in_db[pair].add(chunk_no)
             self.__chunks_in_memory[pair].add(chunk_no)
 
-        def __persist_chunks(self):
+        def persist_chunks(self):
             for pair, chunks_in_memory in self.__chunks_in_memory.items():
                 for i, chunk_no in enumerate(sorted(chunks_in_memory)):
                     if chunk_no not in self.__chunks_in_db[pair]:
