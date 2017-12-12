@@ -27,12 +27,14 @@ class PolxMarketInfo(BaseMarketInfo):
     def on_all_pairs_tick(self, handler):
         raise NotImplementedError
 
-    def __init__(self):
+    def __init__(self, async_fetch_ticker=True):
         self.logger = get_logger_with_all_handlers(__name__)
 
         self.__ticker = {}
         self.__ticker_lock = Lock()
-        self.__start_fetcher_thread()
+
+        if async_fetch_ticker:
+            self.__start_fetcher_thread()
 
     def get_exchange(self) -> ExchangeEnum:
         return ExchangeEnum.POLONIEX
@@ -57,16 +59,12 @@ class PolxMarketInfo(BaseMarketInfo):
         return self.__ticker[pair].base_volume
 
     def get_pair_last_24h_high(self, pair):
-        self.lock_ticker()
-        value = self.__ticker[pair].high24h
-        self.unlock_ticker()
-        return value
+        with self.__ticker_lock:
+            return self.__ticker[pair].high24h
 
     def get_active_pairs(self):
-        self.lock_ticker()
-        pairs_list = [pair for pair in self.__ticker if pair[:3] == 'BTC']
-        self.unlock_ticker()
-        return pairs_list
+        with self.__ticker_lock:
+            return [pair for pair in self.__ticker if pair[:3] == 'BTC']
 
     def is_candlesticks_supported(self):
         return False
@@ -92,9 +90,8 @@ class PolxMarketInfo(BaseMarketInfo):
         ticker_dict = {}
         for currency, info in ticker_response.items():
             ticker_dict[currency] = self.ticker_info_to_ticker(ticker_info=info)
-        self.lock_ticker()
-        self.__ticker = ticker_dict
-        self.unlock_ticker()
+        with self.__ticker_lock:
+            self.__ticker = ticker_dict
 
     def __get_ticker_with_retry(self):
         return retry_on_exception(
