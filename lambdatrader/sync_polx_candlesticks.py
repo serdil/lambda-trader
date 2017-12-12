@@ -4,7 +4,7 @@ from lambdatrader.history.store import CandlestickStore
 from lambdatrader.loghandlers import get_logger_with_all_handlers
 from lambdatrader.polx.marketinfo import PolxMarketInfo
 
-logger = get_logger_with_all_handlers(__name__)
+logger = get_logger_with_all_handlers('sync_polx_candlesticks')
 
 market_info = PolxMarketInfo(candlestick_store=CandlestickStore.get_instance(),
                              async_fetch_ticker=False, async_fetch_candlesticks=False)
