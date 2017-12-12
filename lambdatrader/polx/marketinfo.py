@@ -147,6 +147,7 @@ class PolxMarketInfo(BaseMarketInfo):
 
         if end_date - start_date > 300:
             candlesticks = self.__get_pair_candlesticks_with_retry(pair, start_date, end_date)
+            self.logger.debug('fetched_pair_candlesticks: %s %s', pair, len(candlesticks))
             for candlestick in candlesticks:
                 self.candlestick_store.append_candlestick(pair, candlestick)
 
