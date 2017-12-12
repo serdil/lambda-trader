@@ -182,7 +182,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
             trade_signal = TradeSignal(date=market_date, exchange=None, pair=pair, entry=entry,
                                        success_exit=success_exit, failure_exit=failure_exit)
 
-            self.logger.info('trade_signal:%s', str(trade_signal))
+            self.logger.debug('trade_signal:%s', str(trade_signal))
 
             return trade_signal
 
