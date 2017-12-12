@@ -62,8 +62,8 @@ info-log:
 	docker-compose exec ${SERVICE} cat log/info.log
 
 .PHONY: debug-log
-info-log:
-	docker-compose exec ${SERVICE} cat log/info.log
+debug-log:
+	docker-compose exec ${SERVICE} cat log/debug.log
 
 .PHONY: docker-compose-down
 docker-compose-down:
