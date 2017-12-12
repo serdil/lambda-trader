@@ -18,8 +18,8 @@ market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_insta
 
 account = BacktestingAccount(market_info=market_info, balances={'BTC': 100})
 
-start_date = market_info.get_max_pair_end_time() - 1 * BACKTEST_NUM_DAYS - 3 * 24 * 3600
-end_date = market_info.get_max_pair_end_time() - 0 * BACKTEST_NUM_DAYS - 3 * 24 * 3600
+start_date = market_info.get_max_pair_end_time() - 1 * BACKTEST_NUM_DAYS - BACKTEST_END_OFFSET_DAYS
+end_date = market_info.get_max_pair_end_time() - 0 * BACKTEST_NUM_DAYS - BACKTEST_END_OFFSET_DAYS
 
 signal_generators = [
         RetracementSignalGenerator(market_info=market_info)
