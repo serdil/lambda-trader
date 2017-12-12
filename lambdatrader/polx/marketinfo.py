@@ -169,7 +169,7 @@ class PolxMarketInfo(BaseMarketInfo):
     def polx_chart_data_to_candlesticks(chart_data):
         candlesticks = []
         for c in chart_data:
-            candlesticks.append(Candlestick(date=float(c['date']),
+            candlesticks.append(Candlestick(date=int(c['date']),
                                             high=float(c['high']),
                                             low=float(c['low']),
                                             _open=float(c['open']),
