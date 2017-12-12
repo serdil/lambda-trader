@@ -10,7 +10,7 @@ from lambdatrader.signals.signals import RetracementSignalGenerator
 
 logger = get_logger_with_all_handlers(__name__)
 
-market_info = PolxMarketInfo()
+market_info = PolxMarketInfo(async_fetch_ticker=False)
 account = PolxAccount()
 
 sleep(3)

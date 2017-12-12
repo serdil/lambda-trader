@@ -36,6 +36,7 @@ class BaseSignalGenerator:
     def __analyze_market(self, tracked_signals):
         self.debug('__analyze_market')
         allowed_pairs = self.get_allowed_pairs()
+        self.market_info.fetch_ticker()
         trade_signals = list(self.__analyze_pairs(pairs=allowed_pairs, tracked_signals=tracked_signals))
         return trade_signals
 
