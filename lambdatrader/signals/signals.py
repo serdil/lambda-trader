@@ -127,7 +127,7 @@ class RetracementSignalGenerator(BaseSignalGenerator):
         )
 
 
-class DynamicRetracementSignalGenerator(BaseSignalGenerator):
+class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicate logic
 
     HIGH_VOLUME_LIMIT = RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT
     ORDER_TIMEOUT = RETRACEMENT_SIGNALS__ORDER_TIMEOUT
