@@ -64,7 +64,7 @@ class PolxMarketInfo(BaseMarketInfo):
         return get_now_timestamp()
 
     def get_pair_candlestick(self, pair, ind=0):
-        date = date_floor(self.get_market_date()) - ind * 300
+        date = self.candlestick_store.get_pair_newest_date(pair) - ind * 300
         return self.candlestick_store.get_candlestick(pair=pair, date=date)
 
     def get_pair_latest_candlestick(self, pair):
