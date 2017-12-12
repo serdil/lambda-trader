@@ -2,8 +2,8 @@ from time import sleep
 
 from poloniex import PoloniexError
 
-from config import ASYNC_FETCH_POLX_CANDLESTICKS
-from history.store import CandlestickStore
+from lambdatrader.config import ASYNC_FETCH_POLX_CANDLESTICKS
+from lambdatrader.history.store import CandlestickStore
 from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.loghandlers import get_logger_with_all_handlers
 from lambdatrader.polx.marketinfo import PolxMarketInfo

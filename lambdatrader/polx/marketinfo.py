@@ -11,8 +11,8 @@ from lambdatrader.models.ticker import Ticker
 from lambdatrader.polx.polxclient import polo
 from lambdatrader.polx.utils import APICallExecutor, map_exception
 from lambdatrader.utils import get_now_timestamp, date_floor
-from models.candlestick import Candlestick
-from polx.constants import OLDEST_DATE
+from lambdatrader.models.candlestick import Candlestick
+from lambdatrader.polx.constants import OLDEST_DATE
 
 
 class PolxMarketInfo(BaseMarketInfo):

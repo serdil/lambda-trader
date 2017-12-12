@@ -1,8 +1,8 @@
 from logging import getLogger
 from time import sleep
 
-from history.store import CandlestickStore
-from polx.marketinfo import PolxMarketInfo
+from lambdatrader.history.store import CandlestickStore
+from lambdatrader.polx.marketinfo import PolxMarketInfo
 
 logger = getLogger(__name__)
 
