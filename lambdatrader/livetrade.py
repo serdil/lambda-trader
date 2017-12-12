@@ -34,6 +34,7 @@ while True:
     try:
         tracked_signals = signal_executor.act(signals=trade_signals)
         trade_signals = signal_generator.generate_signals(tracked_signals=tracked_signals)
+        sleep(1)
     except PoloniexError as e:  # TODO convert to own error type
         if str(e).find('Connection timed out.') >= 0:
             logger.warning(str(e))
@@ -42,7 +43,8 @@ while True:
         elif str(e).find('Invalid json response') >= 0:
             logger.error(str(e))
         else:
-            logger.exception('unhandled exception')
+            logger.exception('unhandled exception, waiting for 10 seconds before retrying...')
+            sleep(10)
     except Exception as e:
-        logger.exception('unhandled exception')
-    sleep(1)
+        logger.exception('unhandled exception, waiting for 10 seconds before retrying...')
+        sleep(10)
