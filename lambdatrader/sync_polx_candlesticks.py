@@ -1,8 +1,8 @@
 from time import sleep
 
 from lambdatrader.history.store import CandlestickStore
+from lambdatrader.loghandlers import get_logger_with_all_handlers
 from lambdatrader.polx.marketinfo import PolxMarketInfo
-from loghandlers import get_logger_with_all_handlers
 
 logger = get_logger_with_all_handlers(__name__)
 
