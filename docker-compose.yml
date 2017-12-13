@@ -9,6 +9,7 @@ services:
       - .env
     depends_on:
       - mongodb
+
   mongodb:
     image: "mongo:3.4"
     volumes:

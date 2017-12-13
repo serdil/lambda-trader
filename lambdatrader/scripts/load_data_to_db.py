@@ -40,4 +40,4 @@ for file_path in files:
                 )
             )
 
-store._CandlestickStore__persist_chunks()  # TODO Do this in CandlestickStore.
+store.persist_chunks()  # TODO Do this in CandlestickStore.
