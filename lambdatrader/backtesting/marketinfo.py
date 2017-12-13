@@ -168,3 +168,6 @@ class BacktestingMarketInfo(BaseMarketInfo):
 
     def on_all_pairs_tick(self, handler):
         raise NotImplementedError
+
+    def fetch_ticker(self):
+        pass
