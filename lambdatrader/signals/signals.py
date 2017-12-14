@@ -145,7 +145,10 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
 
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
 
-        self.PAIRS_RETRACEMENT_RATIOS[pair] = self.__calc_pair_retracement_ratio(pair)
+        try:
+            self.PAIRS_RETRACEMENT_RATIOS[pair] = self.__calc_pair_retracement_ratio(pair)
+        except KeyError:
+            return
 
         if pair in [signal.pair for signal in tracked_signals]:
             self.debug('pair_already_in_tracked_signals:%s', pair)
