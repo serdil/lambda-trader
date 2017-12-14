@@ -177,7 +177,8 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
 
             entry = PriceEntry(price)
             success_exit = PriceTakeProfitSuccessExit(price=target_price)
-            failure_exit = TimeoutStopLossFailureExit(timeout=self.ORDER_TIMEOUT)
+            failure_exit = TimeoutStopLossFailureExit(timeout=
+                                                      self.days_to_seconds(self.LOOKBACK_DAYS))
 
             trade_signal = TradeSignal(date=market_date, exchange=None, pair=pair, entry=entry,
                                        success_exit=success_exit, failure_exit=failure_exit)
@@ -192,7 +193,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         return (self.BUY_PROFIT_FACTOR-1) / period_max_drawdown / self.LOOKBACK_DRAWDOWN_RATIO
 
     def __calc_max_drawdown_since_n_days(self, pair, num_days):
-        lookback_num_candles = int(num_days * 24 * 3600 // 300)
+        lookback_num_candles = self.days_to_candlesticks(num_days)
         cur_max = -1
         min_since_cur_max = 1000000
 
@@ -217,7 +218,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         return period_max_drawdown
 
     def __calc_n_days_high(self, pair, num_days):
-        lookback_num_candles = int(num_days * 24 * 3600 // 300)
+        lookback_num_candles = self.days_to_candlesticks(num_days)
         high = 0
 
         for i in range(lookback_num_candles - 1, -1, -1):
@@ -227,6 +228,14 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
                 high = candle.high
 
         return high
+
+    @staticmethod
+    def days_to_seconds(days):
+        return int(days * 24 * 3600)
+
+    @staticmethod
+    def days_to_candlesticks(days):
+        return int(days * 24 * 3600 // 300)
 
     def __get_high_volume_pairs(self):
         self.debug('__get_high_volume_pairs')
