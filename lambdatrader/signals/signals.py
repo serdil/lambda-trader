@@ -190,6 +190,9 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
     def __calc_pair_retracement_ratio(self, pair):
         period_max_drawdown = self.__calc_max_drawdown_since_n_days(pair, self.LOOKBACK_DAYS)
 
+        if period_max_drawdown == 0:
+            return 0.000000001
+
         return (self.BUY_PROFIT_FACTOR-1) / period_max_drawdown / self.LOOKBACK_DRAWDOWN_RATIO
 
     def __calc_max_drawdown_since_n_days(self, pair, num_days):
@@ -213,6 +216,9 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
             if cur_max - min_since_cur_max > max_drawdown_range:
                 max_drawdown_max = cur_max
                 max_drawdown_range = cur_max - min_since_cur_max
+
+        if max_drawdown_max == 0:
+            return 0
 
         period_max_drawdown = max_drawdown_range / max_drawdown_max
         return period_max_drawdown
