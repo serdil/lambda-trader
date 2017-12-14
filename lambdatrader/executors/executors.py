@@ -357,7 +357,7 @@ class SignalExecutor(BaseSignalExecutor):
                                             amount=amount_to_sell,
                                             date=market_date)
                 try:
-                    self.__new_order_with_retry(order_request=sell_request, fill_or_kill=False)
+                    self.__new_order_with_retry(order_request=sell_request, fill_or_kill=True)
                 except UnableToFillImmediately as e:
                     self.logger.warning(str(e))
                     return
