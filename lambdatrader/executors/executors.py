@@ -394,11 +394,15 @@ class SignalExecutor(BaseSignalExecutor):
         self.__conditional_print(datetime.fromtimestamp(market_date),
                                  currency, 'sl:', profit_amount)
 
-    def __calc_profit_amount(self, amount, buy_rate, sell_rate):
+    def __calc_profit_amount(self, amount, buy_rate, sell_rate, sell_is_fill_or_kill=True):
         bought_amount = amount - self.__get_taker_fee(amount=amount)
         btc_omitted = amount * buy_rate
-        btc_added = (bought_amount * sell_rate -
-                     self.__get_maker_fee(amount=bought_amount * sell_rate))
+        if sell_is_fill_or_kill:
+            btc_added = (bought_amount * sell_rate -
+                         self.__get_taker_fee(amount=bought_amount * sell_rate))
+        else:
+            btc_added = (bought_amount * sell_rate -
+                         self.__get_maker_fee(amount=bought_amount * sell_rate))
         return btc_added - btc_omitted
 
     def __get_taker_fee(self, amount):
