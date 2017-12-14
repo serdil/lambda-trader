@@ -148,6 +148,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         try:
             self.PAIRS_RETRACEMENT_RATIOS[pair] = self.__calc_pair_retracement_ratio(pair)
         except KeyError:
+            self.logger.warning('Key error while getting candlestick for pair: %s', pair)
             return
 
         if pair in [signal.pair for signal in tracked_signals]:
