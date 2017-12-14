@@ -145,7 +145,11 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
 
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
 
-        self.PAIRS_RETRACEMENT_RATIOS[pair] = self.__calc_pair_retracement_ratio(pair)
+        try:
+            self.PAIRS_RETRACEMENT_RATIOS[pair] = self.__calc_pair_retracement_ratio(pair)
+        except KeyError:
+            self.logger.warning('Key error while getting candlestick for pair: %s', pair)
+            return
 
         if pair in [signal.pair for signal in tracked_signals]:
             self.debug('pair_already_in_tracked_signals:%s', pair)
@@ -156,14 +160,14 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         market_date = self.get_market_date()
 
         target_price = price * self.BUY_PROFIT_FACTOR
-        day_high_price = latest_ticker.high24h
+        period_high_price = self.__calc_n_days_high(pair=pair, num_days=self.LOOKBACK_DAYS)
 
-        price_is_lower_than_day_high = target_price < day_high_price
+        price_is_lower_than_period_high = target_price < period_high_price
 
-        if not price_is_lower_than_day_high:
+        if not price_is_lower_than_period_high:
             return
 
-        current_retracement_ratio = (target_price - price) / (day_high_price - price)
+        current_retracement_ratio = (target_price - price) / (period_high_price - price)
         retracement_ratio_satisfied = current_retracement_ratio <= \
                                       self.PAIRS_RETRACEMENT_RATIOS[pair]
 
@@ -173,7 +177,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
             self.debug('market_date:%s', str(market_date))
             self.debug('latest_ticker:%s:%s', pair, str(latest_ticker))
             self.debug('target_price:%s', str(target_price))
-            self.debug('day_high_price:%s', str(day_high_price))
+            self.debug('day_high_price:%s', str(period_high_price))
 
             entry = PriceEntry(price)
             success_exit = PriceTakeProfitSuccessExit(price=target_price)
@@ -187,14 +191,22 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
             return trade_signal
 
     def __calc_pair_retracement_ratio(self, pair):
-        lookback_num_candles = self.LOOKBACK_DAYS * 24 * 3600 // 300
+        period_max_drawdown = self.__calc_max_drawdown_since_n_days(pair, self.LOOKBACK_DAYS)
+
+        if period_max_drawdown == 0:
+            return 0.000000001
+
+        return (self.BUY_PROFIT_FACTOR-1) / period_max_drawdown / self.LOOKBACK_DRAWDOWN_RATIO
+
+    def __calc_max_drawdown_since_n_days(self, pair, num_days):
+        lookback_num_candles = int(num_days * 24 * 3600 // 300)
         cur_max = -1
         min_since_cur_max = 1000000
 
         max_drawdown_max = 0
         max_drawdown_range = 0
 
-        for i in range(lookback_num_candles-1, -1, -1):
+        for i in range(lookback_num_candles - 1, -1, -1):
             candle = self.market_info.get_pair_candlestick(pair, i)
 
             if candle.high > cur_max:
@@ -208,10 +220,23 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
                 max_drawdown_max = cur_max
                 max_drawdown_range = cur_max - min_since_cur_max
 
-        weekly_max_drawdown = max_drawdown_range / max_drawdown_max
+        if max_drawdown_max == 0:
+            return 0
 
-        return (self.BUY_PROFIT_FACTOR-1) / weekly_max_drawdown / self.LOOKBACK_DRAWDOWN_RATIO
+        period_max_drawdown = max_drawdown_range / max_drawdown_max
+        return period_max_drawdown
 
+    def __calc_n_days_high(self, pair, num_days):
+        lookback_num_candles = int(num_days * 24 * 3600 // 300)
+        high = 0
+
+        for i in range(lookback_num_candles - 1, -1, -1):
+            candle = self.market_info.get_pair_candlestick(pair, i)
+
+            if candle.high > high:
+                high = candle.high
+
+        return high
 
     def __get_high_volume_pairs(self):
         self.debug('__get_high_volume_pairs')
