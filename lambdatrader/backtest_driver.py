@@ -43,9 +43,6 @@ print('Open Orders:', list(account.get_open_orders()))
 
 trading_info = signal_executor.get_trading_info()
 
-print()
-print(trading_info)
-
 stats = period_statistics(trading_info=trading_info)
 
 print()
