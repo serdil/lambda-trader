@@ -10,7 +10,7 @@ from lambdatrader.history.store import CandlestickStore
 from lambdatrader.signals.signals import (
     DynamicRetracementSignalGenerator,
 )
-from utils import date_floor
+from lambdatrader.utils import date_floor
 
 ONE_DAY = 24 * 3600
 
