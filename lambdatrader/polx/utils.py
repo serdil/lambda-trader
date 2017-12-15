@@ -49,14 +49,14 @@ class APICallExecutor:
 def map_exception(e):
     e_str = str(e)
     if 'Unable to fill order completely.' in e_str:
-        return UnableToFillImmediately
+        return UnableToFillImmediately(e_str)
     elif 'Connection timed out.' in e_str:
-        return ConnectionTimeout
+        return ConnectionTimeout(e_str)
     elif 'Please do not make more than' in e_str:
-        return RequestLimitExceeded
+        return RequestLimitExceeded(e_str)
     elif 'Invalid json response' in e_str:
-        return InvalidJSONResponse
+        return InvalidJSONResponse(e_str)
     elif 'Internal error. Please try again.' in e_str:
-        return InternalError
+        return InternalError(e_str)
     else:
         return e

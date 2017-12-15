@@ -35,9 +35,12 @@ class BaseMarketInfo:
 
     def on_all_pairs_tick(self, handler):
         raise NotImplementedError
-    
+
     def on_pair_candlestick(self, handler):
         raise NotImplementedError
 
     def on_all_pairs_candlestick(self, handler):
+        raise NotImplementedError
+
+    def fetch_ticker(self):
         raise NotImplementedError

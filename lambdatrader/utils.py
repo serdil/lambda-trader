@@ -19,10 +19,12 @@ def get_now_timestamp():
 
 
 def date_floor(date):
+    date = int(date)
     return date - (date % 300)
 
 
 def date_ceil(date):
+    date = int(date)
     return date - (date % 300) + 300
 
 
