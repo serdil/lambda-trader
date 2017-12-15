@@ -24,7 +24,7 @@ account = BacktestingAccount(market_info=market_info, balances={'BTC': 100})
 start_date = market_info.get_max_pair_end_time() \
              - BACKTEST_NUM_SECONDS - BACKTEST_END_OFFSET_SECONDS
 end_date = market_info.get_max_pair_end_time() \
-           - BACKTEST_NUM_SECONDS - BACKTEST_END_OFFSET_SECONDS
+           - BACKTEST_END_OFFSET_SECONDS
 
 signal_generators = [
         DynamicRetracementSignalGenerator(market_info=market_info)
