@@ -10,18 +10,21 @@ from lambdatrader.history.store import CandlestickStore
 from lambdatrader.signals.signals import (
     DynamicRetracementSignalGenerator,
 )
+from utils import date_floor
 
 ONE_DAY = 24 * 3600
 
-BACKTEST_NUM_DAYS = ONE_DAY * BACKTESTING_NUM_DAYS
-BACKTEST_END_OFFSET_DAYS = ONE_DAY * BACKTESTING_END_OFFSET_DAYS
+BACKTEST_NUM_SECONDS = date_floor(ONE_DAY * BACKTESTING_NUM_DAYS)
+BACKTEST_END_OFFSET_SECONDS = date_floor(ONE_DAY * BACKTESTING_END_OFFSET_DAYS)
 
 market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
 
 account = BacktestingAccount(market_info=market_info, balances={'BTC': 100})
 
-start_date = market_info.get_max_pair_end_time() - 1 * BACKTEST_NUM_DAYS - BACKTEST_END_OFFSET_DAYS
-end_date = market_info.get_max_pair_end_time() - 0 * BACKTEST_NUM_DAYS - BACKTEST_END_OFFSET_DAYS
+start_date = market_info.get_max_pair_end_time() \
+             - BACKTEST_NUM_SECONDS - BACKTEST_END_OFFSET_SECONDS
+end_date = market_info.get_max_pair_end_time() \
+           - BACKTEST_NUM_SECONDS - BACKTEST_END_OFFSET_SECONDS
 
 signal_generators = [
         DynamicRetracementSignalGenerator(market_info=market_info)
