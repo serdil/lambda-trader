@@ -143,13 +143,17 @@ class BacktestingAccount(BaseAccount):
                     self.__remove_filled_orders()
 
     def __order_satisfied(self, order: Order):
-        candlestick = self.market_info.get_pair_latest_candlestick(
-            pair_from('BTC', order.get_currency())
-        )
-        if order.get_type() == OrderType.SELL:
-            return candlestick.high >= order.get_price()
-        elif order.get_type() == OrderType.BUY:
-            return candlestick.low <= order.get_price()
+        try:
+            candlestick = self.market_info.get_pair_latest_candlestick(
+                pair_from('BTC', order.get_currency())
+            )
+            if order.get_type() == OrderType.SELL:
+                return candlestick.high >= order.get_price()
+            elif order.get_type() == OrderType.BUY:
+                return candlestick.low <= order.get_price()
+        except KeyError as e:
+            print('KeyError: ', order.get_currency(), e)
+            return False
 
     def __fill_order(self, order: Order):
         if order.get_type() == OrderType.SELL:
@@ -180,7 +184,11 @@ class BacktestingAccount(BaseAccount):
             raise NotEnoughBalance(str(amount))
 
     def __check_sell_price_valid(self, currency, price):
-        if price > self.market_info.get_pair_ticker(pair_from('BTC', currency)).highest_bid:
+        try:
+            if price > self.market_info.get_pair_ticker(pair_from('BTC', currency)).highest_bid:
+                raise UnableToFillImmediately
+        except KeyError as e:
+            print('KeyError: ', currency, e)
             raise UnableToFillImmediately
 
     def __instant_buy(self, currency, price, amount):
@@ -197,7 +205,11 @@ class BacktestingAccount(BaseAccount):
             raise NotEnoughBalance(str(amount))
 
     def __check_buy_price_valid(self, currency, price):
-        if price < self.market_info.get_pair_ticker(pair_from('BTC', currency)).lowest_ask:
+        try:
+            if price < self.market_info.get_pair_ticker(pair_from('BTC', currency)).lowest_ask:
+                raise UnableToFillImmediately
+        except KeyError as e:
+            print('KeyError: ', currency, e)
             raise UnableToFillImmediately
 
     def __remove_filled_orders(self):
