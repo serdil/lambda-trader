@@ -75,7 +75,8 @@ class RetracementSignalGenerator(BaseSignalGenerator):
 
     def get_allowed_pairs(self):
         self.debug('get_allowed_pairs')
-        high_volume_pairs = self.__get_high_volume_pairs()
+        high_volume_pairs = [pair for pair in self.__get_high_volume_pairs()
+                             if pair not in ['BTC_DOGE', 'BTC_BCN']]
         return high_volume_pairs
 
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
