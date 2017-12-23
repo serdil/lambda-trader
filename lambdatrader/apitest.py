@@ -1,6 +1,6 @@
 from poloniex import PoloniexError
 
-from lambdatrader.polx.polxclient import polo
+from lambdatrader.exchanges.poloniex.polxclient import polo
 
 ### PUBLIC METHODS ###
 

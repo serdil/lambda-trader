@@ -1,7 +1,7 @@
 import pickle
 
 from lambdatrader.loghandlers import get_logger_with_all_handlers
-from lambdatrader.mongo.mongo_client import get_default_db
+from lambdatrader.mongo_client import get_default_db
 
 logger = get_logger_with_all_handlers(__name__)
 

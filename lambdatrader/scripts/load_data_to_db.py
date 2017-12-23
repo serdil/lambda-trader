@@ -2,9 +2,10 @@ import csv
 import glob
 import os
 
-from lambdatrader.history.store import CandlestickStore
+from lambdatrader.candlestickstore import CandlestickStore
+
 from lambdatrader.models.candlestick import Candlestick
-from lambdatrader.utils import pair_from, get_project_directory
+from lambdatrader.utilities.utils import pair_from, get_project_directory
 
 files = glob.glob(os.path.join(os.path.abspath(get_project_directory()), 'data/') + '*.csv')
 

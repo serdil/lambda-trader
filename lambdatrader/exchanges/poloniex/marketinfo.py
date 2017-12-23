@@ -1,18 +1,18 @@
 from threading import Thread, RLock
 from time import sleep
 
+from lambdatrader.exchanges.poloniex.constants import OLDEST_DATE
+from lambdatrader.exchanges.poloniex.polxclient import polo
 from poloniex import PoloniexError
 
+from lambdatrader.exchanges.poloniex.utils import APICallExecutor, map_exception
 from lambdatrader.executors.utils import retry_on_exception
 from lambdatrader.loghandlers import get_logger_with_all_handlers
-from lambdatrader.marketinfo.marketinfo import BaseMarketInfo
-from lambdatrader.models.enums.exchange import ExchangeEnum
-from lambdatrader.models.ticker import Ticker
-from lambdatrader.polx.polxclient import polo
-from lambdatrader.polx.utils import APICallExecutor, map_exception
-from lambdatrader.utils import get_now_timestamp, date_floor
+from lambdatrader.marketinfo import BaseMarketInfo
 from lambdatrader.models.candlestick import Candlestick
-from lambdatrader.polx.constants import OLDEST_DATE
+from lambdatrader.exchanges.enums import ExchangeEnum
+from lambdatrader.models.ticker import Ticker
+from lambdatrader.utilities.utils import get_now_timestamp
 
 
 class PolxMarketInfo(BaseMarketInfo):
