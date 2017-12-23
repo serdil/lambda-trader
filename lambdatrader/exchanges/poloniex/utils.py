@@ -1,7 +1,7 @@
 from queue import Queue, Empty
 from threading import Thread
 
-from lambdatrader.account.account import UnableToFillImmediately
+from lambdatrader.account import UnableToFillImmediately
 from lambdatrader.utilities.exceptions import (
     ConnectionTimeout, RequestLimitExceeded, InvalidJSONResponse, InternalError,
 )

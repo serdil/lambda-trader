@@ -1,13 +1,13 @@
 from time import sleep
 
+from lambdatrader.candlestickstore import CandlestickStore
+from lambdatrader.exchanges.poloniex.marketinfo import PolxMarketInfo
 from poloniex import PoloniexError
 
 from lambdatrader.config import ASYNC_FETCH_POLX_CANDLESTICKS
+from lambdatrader.exchanges.poloniex.account import PolxAccount
 from lambdatrader.executors.executors import SignalExecutor
-from lambdatrader.history.store import CandlestickStore
 from lambdatrader.loghandlers import get_logger_with_all_handlers
-from lambdatrader.polx.account import PolxAccount
-from lambdatrader.polx.marketinfo import PolxMarketInfo
 from lambdatrader.signals.signals import (
     DynamicRetracementSignalGenerator,
 )

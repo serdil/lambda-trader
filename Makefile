@@ -27,15 +27,15 @@ SERVICE?=lambdatrader
 
 .PHONY: run-backtest
 run-backtest: docker-compose-build
-	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} -e BACKTESTING_NUM_DAYS=${DAYS} -e BACKTESTING_END_OFFSET_DAYS=${OFFSET} ${SERVICE} python3 -m lambdatrader.backtest_driver
+	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} -e BACKTESTING_NUM_DAYS=${DAYS} -e BACKTESTING_END_OFFSET_DAYS=${OFFSET} ${SERVICE} python3 -m lambdatrader.entrypoints.backtest_driver
 
 .PHONY: run-livetrade
 run-livetrade: docker-compose-build
-	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} ${SERVICE} python3 -m lambdatrader.livetrade
+	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} ${SERVICE} python3 -m lambdatrader.entrypoints.livetrade
 
 .PHONY: run-sync-polx-candlesticks
 run-sync-polx-candlesticks: docker-compose-build
-	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} ${SERVICE} python3 -m lambdatrader.sync_polx_candlesticks
+	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} ${SERVICE} python3 -m lambdatrader.entrypoints.sync_polx_candlesticks
 
 .PHONY: run-mongo-shell
 run-mongo-shell: docker-compose-build

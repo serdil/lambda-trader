@@ -1,32 +1,29 @@
 import pickle
+from collections import defaultdict
+from copy import deepcopy
 from datetime import datetime
 from logging import ERROR
 from threading import Thread, RLock
-
-from collections import defaultdict
-
-from copy import deepcopy
 from typing import Iterable
 
-from lambdatrader.evaluation.utils import period_statistics
-from lambdatrader.account.account import (
+from lambdatrader.account import (
     UnableToFillImmediately,
 )
-from lambdatrader.executors.utils import retry_on_exception
 from lambdatrader.config import (
-    EXECUTOR__NUM_CHUNKS,
-    EXECUTOR__MIN_CHUNK_SIZE,
-    BOT_IDENTIFIER)
-from lambdatrader.models.ordertype import OrderType
-from lambdatrader.models.trade import Trade
-from lambdatrader.models.tradesignal import TradeSignal, FailureExitType
-from lambdatrader.models.tradinginfo import TradingInfo
-from lambdatrader.utils import pair_from, pair_second
+    EXECUTOR__NUM_CHUNKS, EXECUTOR__MIN_CHUNK_SIZE, BOT_IDENTIFIER,
+)
+from lambdatrader.evaluation.utils import period_statistics
+from lambdatrader.executors.utils import retry_on_exception
 from lambdatrader.loghandlers import (
     get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger,
 )
 from lambdatrader.models.orderrequest import OrderRequest
-from lambdatrader.persistence.object_persistence import get_object_with_key, save_object_with_key
+from lambdatrader.models.ordertype import OrderType
+from lambdatrader.models.trade import Trade
+from lambdatrader.models.tradesignal import TradeSignal, FailureExitType
+from lambdatrader.models.tradinginfo import TradingInfo
+from lambdatrader.object_persistence import get_object_with_key, save_object_with_key
+from lambdatrader.utilities.utils import pair_from, pair_second
 
 
 class BaseSignalExecutor:
