@@ -12,7 +12,9 @@ from lambdatrader.loghandlers import (
 )
 from lambdatrader.models.tradesignal import (
     PriceEntry, PriceTakeProfitSuccessExit, TimeoutStopLossFailureExit, TradeSignal,
+    PriceStopLossFailureExit,
 )
+from lambdatrader.models.enums.exchange import ExchangeEnum
 
 
 class BaseSignalGenerator:
@@ -256,3 +258,80 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
                    self.market_info.get_active_pairs()),
             key=lambda pair: -self.market_info.get_pair_last_24h_btc_volume(pair=pair)
         )
+
+
+class GoldenCrossSignalGenerator(BaseSignalGenerator):
+    HIGH_VOLUME_LIMIT = 10
+    SL_RATIO = 0.90
+    TP_RATIO = 1.30
+
+    pair_last_fast_mas = {}
+    pair_last_slow_mas = {}
+
+    def get_allowed_pairs(self):
+        return self.get_high_volume_pairs()
+
+    def get_high_volume_pairs(self):
+        return sorted(
+            filter(lambda p: self.market_info.get_pair_last_24h_btc_volume(p) >=
+                             self.HIGH_VOLUME_LIMIT,
+                   self.market_info.get_active_pairs()),
+            key=lambda pair: -self.market_info.get_pair_last_24h_btc_volume(pair=pair)
+        )
+
+    def analyze_pair(self, pair, tracked_signals):
+
+        if pair in [signal.pair for signal in tracked_signals]:
+            return
+
+        try:
+
+            latest_tick = self.market_info.get_pair_ticker(pair)
+
+            golden_cross = self.is_golden_cross(pair, latest_tick)
+
+            if golden_cross:
+                entry_price = latest_tick.lowest_ask
+                entry = PriceEntry(entry_price)
+                failure_exit = PriceStopLossFailureExit(price=self.SL_RATIO*entry_price)
+                success_exit = PriceTakeProfitSuccessExit(price=self.TP_RATIO*entry_price)
+                return TradeSignal(date=self.market_info.get_market_date(),
+                                   exchange=ExchangeEnum.POLONIEX,
+                                   pair=pair,
+                                   entry=entry,
+                                   success_exit=success_exit,
+                                   failure_exit=failure_exit)
+        except KeyError as e:
+            print('{} KeyError:{}:{}:{}'.format(self.__class__.__name__,
+                                                pair, self.get_market_date(), e))
+
+    def is_golden_cross(self, pair, latest_tick):
+        return_value = False
+
+        fast_ma = self.moving_average(pair, period=50)
+        slow_ma = self.moving_average(pair, period=200)
+
+        if pair in self.pair_last_fast_mas and pair in self.pair_last_slow_mas:
+            fast_above_slow = fast_ma > slow_ma
+
+            last_fast = self.pair_last_fast_mas[pair]
+            last_slow = self.pair_last_slow_mas[pair]
+
+            last_fast_below_last_slow = last_fast < last_slow
+
+            price = latest_tick.lowest_ask
+            price_above_both_mas = price > fast_ma and price > slow_ma
+
+            return_value = fast_above_slow and last_fast_below_last_slow and price_above_both_mas
+
+        self.pair_last_fast_mas[pair] = fast_ma
+        self.pair_last_slow_mas[pair] = slow_ma
+        return return_value
+
+    def moving_average(self, pair, period):
+        sum = 0
+
+        for i in range(period):
+            sum += self.market_info.get_pair_candlestick(pair, i).close
+
+        return sum / period

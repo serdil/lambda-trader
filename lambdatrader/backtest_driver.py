@@ -8,7 +8,7 @@ from lambdatrader.evaluation.utils import statistics_over_periods, period_statis
 from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.history.store import CandlestickStore
 from lambdatrader.signals.signals import (
-    DynamicRetracementSignalGenerator,
+    GoldenCrossSignalGenerator,
 )
 from lambdatrader.utils import date_floor
 
@@ -27,7 +27,7 @@ end_date = market_info.get_max_pair_end_time() \
            - BACKTEST_END_OFFSET_SECONDS
 
 signal_generators = [
-        DynamicRetracementSignalGenerator(market_info=market_info)
+        GoldenCrossSignalGenerator(market_info=market_info)
     ]
 signal_executor = SignalExecutor(market_info=market_info, account=account)
 
