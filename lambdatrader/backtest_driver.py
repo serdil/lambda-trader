@@ -3,7 +3,9 @@ from pprint import pprint
 from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.config import BACKTESTING_NUM_DAYS, BACKTESTING_END_OFFSET_DAYS
+from lambdatrader.config import (
+    BACKTESTING_NUM_DAYS, BACKTESTING_END_OFFSET_DAYS, ENABLE_DISABLE_TRADING,
+)
 from lambdatrader.evaluation.utils import statistics_over_periods, period_statistics
 from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.history.store import CandlestickStore
@@ -27,7 +29,8 @@ end_date = market_info.get_max_pair_end_time() \
            - BACKTEST_END_OFFSET_SECONDS
 
 signal_generators = [
-        DynamicRetracementSignalGenerator(market_info=market_info)
+        DynamicRetracementSignalGenerator(market_info=market_info,
+                                          enable_disable=ENABLE_DISABLE_TRADING)
     ]
 signal_executor = SignalExecutor(market_info=market_info, account=account)
 

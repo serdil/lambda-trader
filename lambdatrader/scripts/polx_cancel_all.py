@@ -63,3 +63,11 @@ while True:
                     print('sold')
             except Exception as e:
                 print(e)
+
+complete_balances = polo.returnCompleteBalances()
+
+estimated_balance = 0.0
+for info in complete_balances.values():
+    estimated_balance += float(info['btcValue'])
+
+print('estimated_balance:', estimated_balance)

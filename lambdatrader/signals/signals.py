@@ -1,6 +1,13 @@
 from logging import ERROR
+from operator import itemgetter
 from typing import Iterable, Optional
 
+from lambdatrader.backtesting import backtest
+from lambdatrader.backtesting.account import BacktestingAccount
+from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
+from lambdatrader.evaluation.utils import period_statistics
+from lambdatrader.executors.executors import SignalExecutor
+from lambdatrader.history.store import CandlestickStore
 from lambdatrader.config import (
     RETRACEMENT_SIGNALS__ORDER_TIMEOUT, RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT,
     RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR, RETRACEMENT_SIGNALS__RETRACEMENT_RATIO,
@@ -13,6 +20,7 @@ from lambdatrader.loghandlers import (
 from lambdatrader.models.tradesignal import (
     PriceEntry, PriceTakeProfitSuccessExit, TimeoutStopLossFailureExit, TradeSignal,
 )
+from lambdatrader.utils import seconds
 
 
 class BaseSignalGenerator:
@@ -36,10 +44,12 @@ class BaseSignalGenerator:
         return trade_signals
 
     def __analyze_market(self, tracked_signals):
+        self.pre_analyze_market(tracked_signals)
         self.debug('__analyze_market')
         allowed_pairs = self.get_allowed_pairs()
         self.market_info.fetch_ticker()
         trade_signals = list(self.__analyze_pairs(pairs=allowed_pairs, tracked_signals=tracked_signals))
+        self.post_analyze_market(tracked_signals)
         return trade_signals
 
     def __analyze_pairs(self, pairs, tracked_signals) -> Iterable[TradeSignal]:
@@ -64,6 +74,12 @@ class BaseSignalGenerator:
     def backtest_print(self, *args):
         if not self.LIVE and not self.SILENT:
             print(args)
+
+    def pre_analyze_market(self, tracked_signals):
+        pass
+
+    def post_analyze_market(self, tracked_signals):
+        pass
 
 
 class RetracementSignalGenerator(BaseSignalGenerator):
@@ -136,7 +152,21 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
     LOOKBACK_DRAWDOWN_RATIO = DYNAMIC_RETRACEMENT_SIGNALS__LOOKBACK_DRAWDOWN_RATIO
     LOOKBACK_DAYS = DYNAMIC_RETRACEMENT_SIGNALS__LOOKBACK_DAYS
 
-    PAIRS_RETRACEMENT_RATIOS = {}
+    DISABLING_BACKTESTING_TIME = seconds(hours=4)
+    DISABLING_BACKTESTING_ROI_THRESHOLD = -0.05
+    DISABLING_BACKTESTING_ROI_THRESHOLD_TIME = seconds(hours=1)
+
+    ENABLING_BACKTESTING_TIME = seconds(hours=3)
+    ENABLING_ROI_THRESHOLD = 0.05
+
+    ENABLING_DISABLING_CHECK_INTERVAL = seconds(hours=1)
+
+    def __init__(self, market_info, live=False, silent=False, enable_disable=True):
+        super().__init__(market_info, live=live, silent=silent)
+        self.pairs_retracement_ratios = {}
+        self.enable_disable = enable_disable
+        self.trading_enabled = True
+        self.last_enable_disable_checked = 10
 
     def get_allowed_pairs(self):
         self.debug('get_allowed_pairs')
@@ -144,10 +174,39 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
                              if pair not in ['BTC_DOGE', 'BTC_BCN']]
         return high_volume_pairs
 
+    def pre_analyze_market(self, tracked_signals):
+        if self.enable_disable:
+            market_date = self.market_info.get_market_date()
+            time_since_last_check = market_date - self.last_enable_disable_checked
+            if time_since_last_check >= self.ENABLING_DISABLING_CHECK_INTERVAL:
+                self.update_enabling_disabling_status(tracked_signals)
+
+    def update_enabling_disabling_status(self, tracked_signals):
+        print('updating enabling disabling status')
+        self.last_enable_disable_checked = self.market_info.get_market_date()
+        if self.trading_enabled:
+            should_disable = self.should_stop_trading()
+            if should_disable:
+                print('DISABLING TRADING')
+                self.trading_enabled = False
+                self.cancel_all_trades(tracked_signals)
+        else:
+            should_enable = self.should_enable_trading()
+            if should_enable:
+                print('ENABLING TRADING')
+                self.trading_enabled = True
+
+    def cancel_all_trades(self, tracked_signals):
+        for signal in tracked_signals:
+            signal.cancel()
+
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
 
+        if not self.trading_enabled:
+            return
+
         try:
-            self.PAIRS_RETRACEMENT_RATIOS[pair] = self.__calc_pair_retracement_ratio(pair)
+            self.pairs_retracement_ratios[pair] = self.__calc_pair_retracement_ratio(pair)
         except KeyError:
             self.logger.warning('Key error while getting candlestick for pair: %s', pair)
             return
@@ -170,7 +229,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
 
         current_retracement_ratio = (target_price - price) / (period_high_price - price)
         retracement_ratio_satisfied = current_retracement_ratio <= \
-                                      self.PAIRS_RETRACEMENT_RATIOS[pair]
+                                      self.pairs_retracement_ratios[pair]
 
         if retracement_ratio_satisfied:
             self.debug('retracement_ratio_satisfied')
@@ -239,6 +298,60 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
                 high = candle.high
 
         return high
+
+    def should_stop_trading(self):
+        trading_info = self.get_backtesting_trading_info(
+            backtesting_time=self.DISABLING_BACKTESTING_TIME)
+        estimated_balances_dict = trading_info.estimated_balances
+
+        estimated_balances_list = sorted(estimated_balances_dict.items(), key=itemgetter(0))
+        start_date = (self.market_info.get_market_date() -
+                      self.DISABLING_BACKTESTING_ROI_THRESHOLD_TIME)
+
+        start_ind = self.find_smaller_equal_date_index(estimated_balances_list, start_date)
+
+        max_balance = max([balance for date, balance in estimated_balances_list[:start_ind]])
+
+        for date, balance in estimated_balances_list[start_ind:]:
+            if (balance - max_balance) / max_balance > self.DISABLING_BACKTESTING_ROI_THRESHOLD:
+                return False
+
+        return True
+
+    @staticmethod
+    def find_smaller_equal_date_index(estimated_balances_list, start_date):
+        last_ind = 0
+        for i, (date, balance) in enumerate(estimated_balances_list):
+            if date > start_date:
+                break
+            last_ind = i
+        return last_ind
+
+    def should_enable_trading(self):
+        trading_info = self.get_backtesting_trading_info(
+            backtesting_time=self.ENABLING_BACKTESTING_TIME)
+        stats = period_statistics(trading_info=trading_info)
+        return stats['roi_live'] >= self.ENABLING_ROI_THRESHOLD
+
+    def get_backtesting_trading_info(self, backtesting_time):
+        market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
+
+        account = BacktestingAccount(market_info=market_info, balances={'BTC': 100})
+
+        start_date = self.market_info.get_market_date() - backtesting_time
+        end_date = self.market_info.get_market_date()
+
+        signal_generators = [
+            DynamicRetracementSignalGenerator(market_info=market_info,
+                                              enable_disable=False, silent=True)
+        ]
+        signal_executor = SignalExecutor(market_info=market_info, account=account, silent=True)
+
+        backtest.backtest(account=account, market_info=market_info,
+                          signal_generators=signal_generators, signal_executor=signal_executor,
+                          start=start_date, end=end_date, silent=True)
+
+        return signal_executor.get_trading_info()
 
     @staticmethod
     def days_to_seconds(days):

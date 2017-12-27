@@ -101,11 +101,18 @@ class TradeSignal:
         self.success_exit = success_exit
         self.failure_exit = failure_exit
         self.good_for = good_for
+        self.is_cancelled = False
 
         if _id:
             self.id = _id
         else:
             self.id = uuid1()
+
+    def cancel(self):
+        self.is_cancelled = True
+
+    def should_be_cancelled(self):
+        return self.is_cancelled
 
     def __repr__(self):
         return 'TradeSignal(date={},pair={})'.format(self.date, self.pair)

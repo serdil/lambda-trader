@@ -341,6 +341,9 @@ class SignalExecutor(BaseSignalExecutor):
             else:
                 raise Exception('Unknown or unimplemented failure_exit type.')
 
+            if signal.should_be_cancelled():
+                stop_loss_reached = True
+
             if stop_loss_reached:
                 self.logger.info('sl_hit_for_signal:%s', signal)
                 self.logger.info('cancelling_order:%s;', sell_order)
