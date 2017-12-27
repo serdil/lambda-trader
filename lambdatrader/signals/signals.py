@@ -153,11 +153,11 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
     LOOKBACK_DAYS = DYNAMIC_RETRACEMENT_SIGNALS__LOOKBACK_DAYS
 
     DISABLING_BACKTESTING_TIME = seconds(hours=4)
-    DISABLING_BACKTESTING_ROI_THRESHOLD = -0.05
-    DISABLING_BACKTESTING_ROI_THRESHOLD_TIME = seconds(hours=1)
+    DISABLING_ROI_THRESHOLD = -0.03
+    DISABLING_ROI_THRESHOLD_TIME = seconds(hours=1)
 
-    ENABLING_BACKTESTING_TIME = seconds(hours=3)
-    ENABLING_ROI_THRESHOLD = 0.05
+    ENABLING_BACKTESTING_TIME = seconds(hours=4)
+    ENABLING_ROI_THRESHOLD = 0.03
 
     ENABLING_DISABLING_CHECK_INTERVAL = seconds(hours=1)
 
@@ -300,23 +300,33 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         return high
 
     def should_stop_trading(self):
+        return self.should_stop_trading_base_on_roi()
+
+    def should_stop_trading_based_on_constant_drawdown(self):
         trading_info = self.get_backtesting_trading_info(
             backtesting_time=self.DISABLING_BACKTESTING_TIME)
         estimated_balances_dict = trading_info.estimated_balances
 
         estimated_balances_list = sorted(estimated_balances_dict.items(), key=itemgetter(0))
-        start_date = (self.market_info.get_market_date() -
-                      self.DISABLING_BACKTESTING_ROI_THRESHOLD_TIME)
+        start_date = (
+        self.market_info.get_market_date() - self.DISABLING_ROI_THRESHOLD_TIME)
 
         start_ind = self.find_smaller_equal_date_index(estimated_balances_list, start_date)
 
         max_balance = max([balance for date, balance in estimated_balances_list[:start_ind]])
 
         for date, balance in estimated_balances_list[start_ind:]:
-            if (balance - max_balance) / max_balance > self.DISABLING_BACKTESTING_ROI_THRESHOLD:
+            if (balance - max_balance) / max_balance > self.DISABLING_ROI_THRESHOLD:
                 return False
 
         return True
+
+    def should_stop_trading_base_on_roi(self):
+        trading_info = self.get_backtesting_trading_info(
+            backtesting_time=self.DISABLING_BACKTESTING_TIME)
+        stats = period_statistics(trading_info=trading_info)
+        return stats['roi_live'] <= self.DISABLING_ROI_THRESHOLD
+
 
     @staticmethod
     def find_smaller_equal_date_index(estimated_balances_list, start_date):
