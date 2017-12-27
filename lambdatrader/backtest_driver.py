@@ -37,6 +37,10 @@ signal_executor = SignalExecutor(market_info=market_info, account=account)
 backtest.backtest(account=account, market_info=market_info, signal_generators=signal_generators,
                   signal_executor=signal_executor, start=start_date, end=end_date)
 
+print('Signal Generator Used:')
+pprint(DynamicRetracementSignalGenerator.__dict__)
+pprint(signal_generators[0].__dict__)
+
 print()
 print('Backtest Complete!')
 

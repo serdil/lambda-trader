@@ -152,12 +152,13 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
     LOOKBACK_DRAWDOWN_RATIO = DYNAMIC_RETRACEMENT_SIGNALS__LOOKBACK_DRAWDOWN_RATIO
     LOOKBACK_DAYS = DYNAMIC_RETRACEMENT_SIGNALS__LOOKBACK_DAYS
 
-    DISABLING_BACKTESTING_TIME = seconds(hours=6)
-    DISABLING_ROI_THRESHOLD = -0.03
-    DISABLING_ROI_THRESHOLD_TIME = seconds(hours=1)
+    DISABLING_BACKTESTING_TIME = seconds(hours=24)
+    DISABLING_ROI_THRESHOLD = -0.05
+    DISABLING_ROI_THRESHOLD_TIME = seconds(hours=2)
 
-    ENABLING_BACKTESTING_TIME = seconds(hours=2)
-    ENABLING_ROI_THRESHOLD = 0.03
+    ENABLING_BACKTESTING_TIME = seconds(hours=24)
+    ENABLING_ROI_THRESHOLD = 0.05
+    ENABLING_ROI_THRESHOLD_TIME = seconds(hours=2)
 
     ENABLING_DISABLING_CHECK_INTERVAL = seconds(hours=1)
 
@@ -187,13 +188,13 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         if self.trading_enabled:
             should_disable = self.should_stop_trading()
             if should_disable:
-                print('DISABLING TRADING')
+                print('====================DISABLING TRADING==========================')
                 self.trading_enabled = False
                 self.cancel_all_trades(tracked_signals)
         else:
             should_enable = self.should_enable_trading()
             if should_enable:
-                print('ENABLING TRADING')
+                print('++++++++++++++++++++ENABLING TRADING+++++++++++++++++++++++++++')
                 self.trading_enabled = True
 
     def cancel_all_trades(self, tracked_signals):
@@ -300,32 +301,51 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         return high
 
     def should_stop_trading(self):
-        return self.should_stop_trading_base_on_roi()
+        return self.should_stop_trading_based_on_recent_roi()
 
-    def should_stop_trading_based_on_constant_drawdown(self):
+    def should_stop_trading_based_on_recent_constant_drawdown(self):
         trading_info = self.get_backtesting_trading_info(
             backtesting_time=self.DISABLING_BACKTESTING_TIME)
-        estimated_balances_dict = trading_info.estimated_balances
 
-        estimated_balances_list = sorted(estimated_balances_dict.items(), key=itemgetter(0))
-        start_date = (
-        self.market_info.get_market_date() - self.DISABLING_ROI_THRESHOLD_TIME)
+        estimated_balances_list = self.get_estimated_balances_list(trading_info)
+        start_date = self.market_info.get_market_date() - self.DISABLING_ROI_THRESHOLD_TIME
 
         start_ind = self.find_smaller_equal_date_index(estimated_balances_list, start_date)
 
         max_balance = max([balance for date, balance in estimated_balances_list[:start_ind]])
 
         for date, balance in estimated_balances_list[start_ind:]:
-            if (balance - max_balance) / max_balance > self.DISABLING_ROI_THRESHOLD:
+            drawdown = (balance - max_balance) / max_balance
+            if drawdown > self.DISABLING_ROI_THRESHOLD:
                 return False
 
         return True
 
-    def should_stop_trading_base_on_roi(self):
+    def should_stop_trading_based_on_roi(self):
         trading_info = self.get_backtesting_trading_info(
             backtesting_time=self.DISABLING_BACKTESTING_TIME)
         stats = period_statistics(trading_info=trading_info)
         return stats['roi_live'] <= self.DISABLING_ROI_THRESHOLD
+
+    def should_stop_trading_based_on_recent_roi(self):
+        trading_info = self.get_backtesting_trading_info(
+            backtesting_time=self.DISABLING_BACKTESTING_TIME)
+
+        estimated_balances_list = self.get_estimated_balances_list(trading_info)
+        start_date = self.market_info.get_market_date() - self.DISABLING_ROI_THRESHOLD_TIME
+
+        start_ind = self.find_smaller_equal_date_index(estimated_balances_list, start_date)
+
+        start_balance = estimated_balances_list[start_ind][1]
+        end_balance = estimated_balances_list[len(estimated_balances_list)-1][1]
+
+        recent_roi = (end_balance - start_balance) / start_balance
+        return recent_roi <= self.DISABLING_ROI_THRESHOLD
+
+    def get_estimated_balances_list(self, trading_info):
+        estimated_balances_dict = trading_info.estimated_balances
+        estimated_balances_list = sorted(estimated_balances_dict.items(), key=itemgetter(0))
+        return estimated_balances_list
 
 
     @staticmethod
@@ -338,10 +358,31 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         return last_ind
 
     def should_enable_trading(self):
+        return self.should_start_trading_based_on_recent_roi()
+
+    def should_start_trading_based_on_roi(self):
         trading_info = self.get_backtesting_trading_info(
             backtesting_time=self.ENABLING_BACKTESTING_TIME)
         stats = period_statistics(trading_info=trading_info)
         return stats['roi_live'] >= self.ENABLING_ROI_THRESHOLD
+
+    def should_start_trading_based_on_recent_roi(self):
+        trading_info = self.get_backtesting_trading_info(
+            backtesting_time=self.DISABLING_BACKTESTING_TIME)
+
+        estimated_balances_list = self.get_estimated_balances_list(trading_info)
+        start_date = self.market_info.get_market_date() - self.ENABLING_ROI_THRESHOLD_TIME
+
+        start_ind = self.find_smaller_equal_date_index(estimated_balances_list, start_date)
+
+        start_balance = estimated_balances_list[start_ind][1]
+        end_balance = estimated_balances_list[len(estimated_balances_list) - 1][1]
+
+        recent_roi = (end_balance - start_balance) / start_balance
+        return recent_roi >= self.ENABLING_ROI_THRESHOLD
+
+    def should_start_trading_unconditionally(self):
+        return True
 
     def get_backtesting_trading_info(self, backtesting_time):
         market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
