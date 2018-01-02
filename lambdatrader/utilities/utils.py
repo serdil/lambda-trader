@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
 
+from lambdatrader.constants import M5
+
 
 def pair_from(first_currency, second_currency):
     return first_currency + '_' + second_currency
@@ -18,14 +20,18 @@ def get_now_timestamp():
     return datetime.utcnow().timestamp()
 
 
-def date_floor(date):
+def date_floor(date, period=M5):
+    if period is not M5:
+        raise NotImplementedError
     date = int(date)
-    return date - (date % 300)
+    return date - (date % period.value)
 
 
-def date_ceil(date):
+def date_ceil(date, period=M5):
+    if period is not M5:
+        raise NotImplementedError
     date = int(date)
-    return date - (date % 300) + 300
+    return date - (date % period.value) + period.value
 
 
 def get_one_day_seconds():

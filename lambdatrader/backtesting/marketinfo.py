@@ -1,3 +1,4 @@
+from lambdatrader.constants import M5_SECONDS, M5
 from lambdatrader.marketinfo import BaseMarketInfo
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.models.ticker import Ticker
@@ -23,14 +24,19 @@ class BacktestingMarketInfo(BaseMarketInfo):
         return self.market_time
 
     def inc_market_time(self):
-        self.market_time += 300
+        self.market_time += M5_SECONDS
 
-    def get_pair_candlestick(self, pair, ind=0):
-        return self.candlestick_store.get_candlestick(pair=pair, 
-                                                      date=self.market_time - ind * 300)
+    def get_pair_candlestick(self, pair, ind=0, period=M5):
+        if period is not M5:
+            raise NotImplementedError
+        return self.candlestick_store.get_candlestick(pair=pair,
+                                                      date=self.market_time -
+                                                           ind * period.seconds())
 
-    def get_pair_latest_candlestick(self, pair):
-        return self.get_pair_candlestick(pair=pair, ind=0)
+    def get_pair_latest_candlestick(self, pair, period=M5):
+        if period is not M5:
+            raise NotImplementedError
+        return self.get_pair_candlestick(pair=pair, ind=0, period=period)
 
     #  return fake ticker
     def get_pair_ticker(self, pair):
@@ -52,7 +58,7 @@ class BacktestingMarketInfo(BaseMarketInfo):
         if pair in self.__last_volume_calc_date:
             if self.__last_volume_calc_date[pair] == self.get_market_date():
                 return self.__last_volume_calc_volume[pair]
-            elif self.__last_volume_calc_date[pair] == self.get_market_date() - 300:
+            elif self.__last_volume_calc_date[pair] == self.get_market_date() - M5_SECONDS:
                 total_volume = self.__last_volume_calc_volume[pair]
                 try:
                     total_volume -= self.get_pair_candlestick(pair=pair, ind=24 * 12).base_volume
@@ -80,7 +86,7 @@ class BacktestingMarketInfo(BaseMarketInfo):
         if pair in self.__last_high_calc_date:
             if self.__last_high_calc_date[pair] == self.get_market_date():
                 return self.__last_high_calc_high[pair]
-            elif self.__last_high_calc_date[pair] == self.get_market_date() - 300:
+            elif self.__last_high_calc_date[pair] == self.get_market_date() - M5_SECONDS:
                 high = self.__last_high_calc_high[pair]
                 try:
                     high_omitted = self.get_pair_candlestick(pair=pair, ind=24 * 12).high
