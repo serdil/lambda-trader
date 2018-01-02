@@ -381,7 +381,8 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         recent_roi = (end_balance - start_balance) / start_balance
         return recent_roi >= self.ENABLING_ROI_THRESHOLD
 
-    def should_start_trading_unconditionally(self):
+    @staticmethod
+    def should_start_trading_unconditionally():
         return True
 
     def get_backtesting_trading_info(self, backtesting_time):
