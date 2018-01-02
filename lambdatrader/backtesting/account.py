@@ -16,10 +16,9 @@ class BacktestingAccount(BaseAccount):
     def __init__(self, market_info: BaseMarketInfo, balances=None):
         self.market_info = market_info
 
-
         self.__balances = defaultdict(int)
 
-        if balances == None:
+        if balances is None:
             balances = {'BTC': 100.0}
 
         for currency, balance in balances.items():
