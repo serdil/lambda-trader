@@ -384,11 +384,11 @@ class SignalExecutor(BaseSignalExecutor):
         )
 
     def __print_tp_hit_for_backtesting(self, market_date, currency, profit_amount):
-        self.__conditional_print(datetime.fromtimestamp(market_date),
+        self.__conditional_print(datetime.utcfromtimestamp(market_date),
                                  currency, 'tp:', profit_amount)
 
     def __print_sl_hit_for_backtesting(self, market_date, currency, profit_amount):
-        self.__conditional_print(datetime.fromtimestamp(market_date),
+        self.__conditional_print(datetime.utcfromtimestamp(market_date),
                                  currency, 'sl:', profit_amount)
 
     def __calc_profit_amount(self, amount, buy_rate, sell_rate, sell_is_fill_or_kill=True):
@@ -523,7 +523,7 @@ class SignalExecutor(BaseSignalExecutor):
             frozen_balance = self.get_frozen_balance()
 
             self.__conditional_print()
-            self.__conditional_print(datetime.fromtimestamp(self.__get_market_date()),
+            self.__conditional_print(datetime.utcfromtimestamp(self.__get_market_date()),
                                      'TRADE:', pair)
             self.__conditional_print('estimated_balance:', estimated_balance)
             self.__conditional_print('frozen_balance:', frozen_balance)

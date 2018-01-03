@@ -14,8 +14,8 @@ def backtest(account: BacktestingAccount, market_info: BacktestingMarketInfo,
     end_date = min(market_info.get_max_pair_end_time(), normalized_end)
 
     if not silent:
-        print('start:', datetime.fromtimestamp(start_date))
-        print('end:', datetime.fromtimestamp(end_date))
+        print('start:', datetime.utcfromtimestamp(start_date))
+        print('end:', datetime.utcfromtimestamp(end_date))
 
     market_info.set_market_date(start_date)
 
