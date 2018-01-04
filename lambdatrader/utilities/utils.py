@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import time
 
 
 def pair_from(first_currency, second_currency):
@@ -15,7 +15,7 @@ def pair_second(pair):
 
 
 def get_now_timestamp():
-    return datetime.utcnow().timestamp()
+    return time.time()
 
 
 def date_floor(date):
