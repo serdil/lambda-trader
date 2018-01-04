@@ -21,17 +21,13 @@ def get_now_timestamp():
 
 
 def date_floor(date, period=M5):
-    if period is not M5:
-        raise NotImplementedError
     date = int(date)
-    return date - (date % period.value)
+    return date - (date % period.seconds())
 
 
 def date_ceil(date, period=M5):
-    if period is not M5:
-        raise NotImplementedError
     date = int(date)
-    return date - (date % period.value) + period.value
+    return date - (date % period.seconds()) + period.seconds()
 
 
 def get_one_day_seconds():

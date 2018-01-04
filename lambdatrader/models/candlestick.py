@@ -7,9 +7,6 @@ class Candlestick:
                  quote_volume, weighted_average, period=M5, start_date=None):
         self.period = period
 
-        if start_date is None:
-            self.start_date = self.date - self.period.seconds()
-
         self.date = date
         self.high = high
         self.low = low
@@ -18,6 +15,10 @@ class Candlestick:
         self.base_volume = base_volume
         self.quote_volume = quote_volume
         self.weighted_average = weighted_average
+
+        self.start_date = start_date
+        if self.start_date is None:
+            self.start_date = self.date - self.period.seconds()
 
     def batch_with_candlesticks(self, candlesticks):
         batched_candlestick = Candlestick(self.date, self.high, self.low, self.open,
