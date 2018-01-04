@@ -1,5 +1,5 @@
 import os
-from datetime import time
+import time
 
 
 def pair_from(first_currency, second_currency):
