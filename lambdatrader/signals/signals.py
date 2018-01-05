@@ -5,9 +5,9 @@ from typing import Iterable, Optional
 from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
+from lambdatrader.candlestickstore import CandlestickStore
 from lambdatrader.evaluation.utils import period_statistics
 from lambdatrader.executors.executors import SignalExecutor
-from lambdatrader.history.store import CandlestickStore
 from lambdatrader.config import (
     RETRACEMENT_SIGNALS__ORDER_TIMEOUT, RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT,
     RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR, RETRACEMENT_SIGNALS__RETRACEMENT_RATIO,
@@ -21,7 +21,7 @@ from lambdatrader.loghandlers import (
 from lambdatrader.models.tradesignal import (
     PriceEntry, PriceTakeProfitSuccessExit, TimeoutStopLossFailureExit, TradeSignal,
 )
-from lambdatrader.utils import seconds
+from lambdatrader.utilities.utils import seconds
 
 
 class BaseSignalGenerator:
@@ -157,9 +157,9 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
     DISABLING_ROI_THRESHOLD = -0.05
     DISABLING_ROI_THRESHOLD_TIME = seconds(hours=2)
 
-    ENABLING_BACKTESTING_TIME = seconds(hours=24)
-    ENABLING_ROI_THRESHOLD = 0.05
-    ENABLING_ROI_THRESHOLD_TIME = seconds(hours=2)
+    ENABLING_BACKTESTING_TIME = seconds(hours=2)
+    ENABLING_ROI_THRESHOLD = 0.03
+    ENABLING_ROI_THRESHOLD_TIME = seconds(hours=3)
 
     ENABLING_DISABLING_CHECK_INTERVAL = seconds(hours=1)
 
@@ -302,7 +302,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         return high
 
     def should_stop_trading(self):
-        return self.should_stop_trading_based_on_recent_roi()
+        return self.should_stop_trading_based_on_unseen_btc_price()
 
     def should_stop_trading_based_on_recent_constant_drawdown(self):
         trading_info = self.get_backtesting_trading_info(
@@ -343,11 +343,26 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         recent_roi = (end_balance - start_balance) / start_balance
         return recent_roi <= self.DISABLING_ROI_THRESHOLD
 
-    def get_estimated_balances_list(self, trading_info):
+    def should_stop_trading_based_on_adx_di(self):
+        raise NotImplementedError
+
+    def should_stop_trading_based_on_unseen_btc_price(self):
+        lookback_num_candles = self.days_to_candlesticks(7)
+        lowest = float('inf')
+        highest = float('-inf')
+        for i in range(lookback_num_candles+1, 0, -1):
+            candle = self.market_info.get_pair_candlestick('USDT_BTC', ind=i)
+            lowest = min(candle.low, lowest)
+            highest = max(candle.high, highest)
+
+        cur_candle = self.market_info.get_pair_candlestick('USDT_BTC', ind=0)
+        return cur_candle.low < lowest or cur_candle.high > highest
+
+    @staticmethod
+    def get_estimated_balances_list(trading_info):
         estimated_balances_dict = trading_info.estimated_balances
         estimated_balances_list = sorted(estimated_balances_dict.items(), key=itemgetter(0))
         return estimated_balances_list
-
 
     @staticmethod
     def find_smaller_equal_date_index(estimated_balances_list, start_date):
@@ -359,7 +374,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         return last_ind
 
     def should_enable_trading(self):
-        return self.should_start_trading_based_on_recent_roi()
+        return self.should_start_trading_based_on_roi()
 
     def should_start_trading_based_on_roi(self):
         trading_info = self.get_backtesting_trading_info(
@@ -412,9 +427,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
 
     @staticmethod
     def days_to_candlesticks(days, period=M5):
-        if period is not M5:
-            raise NotImplementedError
-        return int(days * 24 * 3600 // period.value)
+        return int(days * 24 * 3600 // period.seconds())
 
     def __get_high_volume_pairs(self):
         self.debug('__get_high_volume_pairs')
