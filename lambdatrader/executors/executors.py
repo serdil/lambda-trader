@@ -384,11 +384,11 @@ class SignalExecutor(BaseSignalExecutor):
         )
 
     def __print_tp_hit_for_backtesting(self, market_date, currency, profit_amount):
-        self.__conditional_print(datetime.fromtimestamp(market_date),
+        self.__conditional_print(datetime.utcfromtimestamp(market_date),
                                  currency, 'tp:', profit_amount)
 
     def __print_sl_hit_for_backtesting(self, market_date, currency, profit_amount):
-        self.__conditional_print(datetime.fromtimestamp(market_date),
+        self.__conditional_print(datetime.utcfromtimestamp(market_date),
                                  currency, 'sl:', profit_amount)
 
     def __calc_profit_amount(self, amount, buy_rate, sell_rate, sell_is_fill_or_kill=True):
@@ -482,7 +482,6 @@ class SignalExecutor(BaseSignalExecutor):
 
         sell_order = self.__new_order_with_retry(order_request=sell_request)
 
-
         self.__save_signal_to_tracked_signals_with_tp_sell_order(signal=signal,
                                                                  tp_sell_order=sell_order)
 
@@ -524,7 +523,7 @@ class SignalExecutor(BaseSignalExecutor):
             frozen_balance = self.get_frozen_balance()
 
             self.__conditional_print()
-            self.__conditional_print(datetime.fromtimestamp(self.__get_market_date()),
+            self.__conditional_print(datetime.utcfromtimestamp(self.__get_market_date()),
                                      'TRADE:', pair)
             self.__conditional_print('estimated_balance:', estimated_balance)
             self.__conditional_print('frozen_balance:', frozen_balance)
@@ -583,7 +582,8 @@ class SignalExecutor(BaseSignalExecutor):
                              ' p/l summary: %s',
                              frozen_balance, estimated_balance, num_open_orders, p_l_summary)
 
-    def __get_p_l_summary_string(self, trades_p_l):
+    @staticmethod
+    def __get_p_l_summary_string(trades_p_l):
         return ','.join(['{}:{:.6f}'.format(item[0], item[1]) for item in trades_p_l.items()])
 
     def __copy_internal_trades(self):
@@ -598,8 +598,9 @@ class SignalExecutor(BaseSignalExecutor):
         statistics = period_statistics(trading_info=trading_info, end=self.__get_market_date())
         self.logger.info('overall_statistics:%s', statistics)
 
-    def __compute_object_size(self, object):
-        return len(pickle.dumps(object, protocol=4)) / 1024 / 1024
+    @staticmethod
+    def __compute_object_size(obj):
+        return len(pickle.dumps(obj, protocol=4)) / 1024 / 1024
 
     @staticmethod
     def __run_in_separate_thread(task):

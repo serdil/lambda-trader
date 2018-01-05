@@ -1,13 +1,18 @@
+from lambdatrader.constants import M5_SECONDS, M5, IndicatorEnum
+from lambdatrader.indicators import Indicators
 from lambdatrader.marketinfo import BaseMarketInfo
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.models.ticker import Ticker
+from lambdatrader.utilities.utils import date_floor
 
 
 class BacktestingMarketInfo(BaseMarketInfo):
 
     def __init__(self, candlestick_store):
-        self.market_time = 0
+        self.market_date = 0
         self.candlestick_store = candlestick_store
+        self.indicators = Indicators(self)
+
         self.__last_volume_calc_date = {}
         self.__last_volume_calc_volume = {}
         self.__last_high_calc_date = {}
@@ -17,20 +22,31 @@ class BacktestingMarketInfo(BaseMarketInfo):
         return ExchangeEnum.BACKTESTING
 
     def set_market_date(self, timestamp):
-        self.market_time = timestamp
+        self.market_date = timestamp
 
     def get_market_date(self):
-        return self.market_time
+        return self.market_date
 
     def inc_market_time(self):
-        self.market_time += 300
+        self.market_date += M5_SECONDS
 
-    def get_pair_candlestick(self, pair, ind=0):
-        return self.candlestick_store.get_candlestick(pair=pair, 
-                                                      date=self.market_time - ind * 300)
+    def get_pair_candlestick(self, pair, ind=0, period=M5):
+        return self.get_pair_period_candlestick(pair, ind=ind, period=period)
 
-    def get_pair_latest_candlestick(self, pair):
-        return self.get_pair_candlestick(pair=pair, ind=0)
+    def get_pair_period_candlestick(self, pair, ind, period=M5):
+        end_date = date_floor(self.market_date, period=period) - ind * period.seconds()
+        start_date = (date_floor(self.market_date, period=period)
+                      - (ind+1) * period.seconds() + M5_SECONDS)
+        candlestick = self.candlestick_store.get_candlestick(pair=pair, date=start_date)
+        for date in range(start_date+M5_SECONDS, end_date+M5_SECONDS, M5_SECONDS):
+            next_candlestick = self.candlestick_store.get_candlestick(pair=pair,
+                                                                      date=end_date)
+            candlestick = candlestick.batch_with(next_candlestick)
+        candlestick.period = period
+        return candlestick
+
+    def get_pair_latest_candlestick(self, pair, period=M5):
+        return self.get_pair_candlestick(pair=pair, ind=0, period=period)
 
     #  return fake ticker
     def get_pair_ticker(self, pair):
@@ -52,7 +68,7 @@ class BacktestingMarketInfo(BaseMarketInfo):
         if pair in self.__last_volume_calc_date:
             if self.__last_volume_calc_date[pair] == self.get_market_date():
                 return self.__last_volume_calc_volume[pair]
-            elif self.__last_volume_calc_date[pair] == self.get_market_date() - 300:
+            elif self.__last_volume_calc_date[pair] == self.get_market_date() - M5_SECONDS:
                 total_volume = self.__last_volume_calc_volume[pair]
                 try:
                     total_volume -= self.get_pair_candlestick(pair=pair, ind=24 * 12).base_volume
@@ -80,7 +96,7 @@ class BacktestingMarketInfo(BaseMarketInfo):
         if pair in self.__last_high_calc_date:
             if self.__last_high_calc_date[pair] == self.get_market_date():
                 return self.__last_high_calc_high[pair]
-            elif self.__last_high_calc_date[pair] == self.get_market_date() - 300:
+            elif self.__last_high_calc_date[pair] == self.get_market_date() - M5_SECONDS:
                 high = self.__last_high_calc_high[pair]
                 try:
                     high_omitted = self.get_pair_candlestick(pair=pair, ind=24 * 12).high
@@ -165,3 +181,6 @@ class BacktestingMarketInfo(BaseMarketInfo):
 
     def fetch_ticker(self):
         pass
+
+    def get_indicator(self, pair, indicator: IndicatorEnum, args, ind=0, period=M5):
+        return self.indicators.compute(pair, indicator, args, ind=ind, period=period)

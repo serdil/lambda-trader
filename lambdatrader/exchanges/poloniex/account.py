@@ -80,7 +80,7 @@ class PolxAccount(BaseAccount):
         return open_orders
 
     @staticmethod
-    def __order_from_polx_info(key, value):
+    def __order_from_polx_info(key, value):  # TODO check validity of date calculation
         currency = pair_second(key)
         _type = OrderType.BUY if value['type'] == 'buy' else OrderType.SELL
         date = datetime.strptime(value['date'], '%Y-%m-%d %H:%M:%S').timestamp()

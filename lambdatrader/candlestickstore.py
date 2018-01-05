@@ -4,6 +4,7 @@ from collections import defaultdict
 from blist import sorteddict
 
 from lambdatrader.config import HISTORY_DB_PATH
+from lambdatrader.constants import M5_SECONDS
 from lambdatrader.models.candlestick import Candlestick
 from lambdatrader.utilities.utils import date_floor, date_ceil
 
@@ -35,7 +36,7 @@ class CandlestickStore:  # TODO make thread safe
             self.__sync_pair_if_not_synced(pair)
             newest_date = self.get_pair_newest_date(pair)
 
-            if newest_date is not None and candlestick.date > newest_date + 300:
+            if newest_date is not None and candlestick.date > newest_date + M5_SECONDS:
                 error_message = 'Candlestick date {} is not an increment of latest date {}'
                 raise ValueError(error_message.format(candlestick.date, newest_date))
 
@@ -147,7 +148,7 @@ class CandlestickStore:  # TODO make thread safe
         def __persist_chunk(self, pair, chunk_no, start_offset=0):
             rows_to_insert = []
             start_date = chunk_no * self.ONE_CHUNK_SECONDS + start_offset
-            for i in range(start_date, start_date + self.ONE_CHUNK_SECONDS, 300):
+            for i in range(start_date, start_date + self.ONE_CHUNK_SECONDS, M5_SECONDS):
                 try:
                     candlestick = self.__history[pair][i]
                     rows_to_insert.append(self.__make_row_from_candlestick(candlestick))

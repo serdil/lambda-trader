@@ -1,3 +1,4 @@
+from lambdatrader.constants import M5, IndicatorEnum
 from lambdatrader.exchanges.enums import ExchangeEnum
 
 
@@ -21,10 +22,10 @@ class BaseMarketInfo:
     def get_pair_last_24h_high(self, pair):
         raise NotImplementedError
 
-    def get_pair_latest_candlestick(self, pair):
+    def get_pair_latest_candlestick(self, pair, period=M5):
         raise NotImplementedError
 
-    def get_pair_candlestick(self, pair, ind):
+    def get_pair_candlestick(self, pair, ind, period=M5):
         raise NotImplementedError
 
     def is_candlesticks_supported(self):
@@ -43,4 +44,7 @@ class BaseMarketInfo:
         raise NotImplementedError
 
     def fetch_ticker(self):
+        raise NotImplementedError
+
+    def get_indicator(self, pair, indicator: IndicatorEnum, args, ind=0, period=M5):
         raise NotImplementedError
