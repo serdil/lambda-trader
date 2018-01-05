@@ -1,5 +1,6 @@
 from lambdatrader.constants import M5
 from lambdatrader.exchanges.enums import ExchangeEnum
+from lambdatrader.indicators import IndicatorEnum
 
 
 class BaseMarketInfo:
@@ -44,4 +45,7 @@ class BaseMarketInfo:
         raise NotImplementedError
 
     def fetch_ticker(self):
+        raise NotImplementedError
+
+    def get_indicator(self, pair, indicator: IndicatorEnum, args, ind=0, period=M5):
         raise NotImplementedError

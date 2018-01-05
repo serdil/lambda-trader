@@ -1,4 +1,5 @@
 from lambdatrader.constants import M5_SECONDS, M5
+from lambdatrader.indicators import Indicators, IndicatorEnum
 from lambdatrader.marketinfo import BaseMarketInfo
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.models.ticker import Ticker
@@ -10,6 +11,8 @@ class BacktestingMarketInfo(BaseMarketInfo):
     def __init__(self, candlestick_store):
         self.market_date = 0
         self.candlestick_store = candlestick_store
+        self.indicators = Indicators(self)
+
         self.__last_volume_calc_date = {}
         self.__last_volume_calc_volume = {}
         self.__last_high_calc_date = {}
@@ -178,3 +181,6 @@ class BacktestingMarketInfo(BaseMarketInfo):
 
     def fetch_ticker(self):
         pass
+
+    def get_indicator(self, pair, indicator: IndicatorEnum, args, ind=0, period=M5):
+        return self.indicators.compute(pair, indicator, args, ind=ind, period=period)

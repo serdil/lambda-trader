@@ -9,6 +9,7 @@ from lambdatrader.exchanges.poloniex.constants import OLDEST_DATE
 from lambdatrader.exchanges.poloniex.polxclient import polo
 from lambdatrader.exchanges.poloniex.utils import APICallExecutor, map_exception
 from lambdatrader.executors.utils import retry_on_exception
+from lambdatrader.indicators import Indicators, IndicatorEnum
 from lambdatrader.loghandlers import get_logger_with_all_handlers
 from lambdatrader.marketinfo import BaseMarketInfo
 from lambdatrader.models.candlestick import Candlestick
@@ -17,6 +18,21 @@ from lambdatrader.utilities.utils import get_now_timestamp
 
 
 class PolxMarketInfo(BaseMarketInfo):
+
+    def __init__(self, candlestick_store, async_fetch_ticker=True, async_fetch_candlesticks=True):
+        self.logger = get_logger_with_all_handlers(__name__)
+
+        self.candlestick_store = candlestick_store
+        self.indicators = Indicators(self)
+
+        self.__ticker = {}
+        self.__ticker_lock = RLock()
+
+        if async_fetch_ticker:
+            self.__start_ticker_fetcher_thread()
+
+        if async_fetch_candlesticks:
+            self.__start_candlestick_fetcher_thread()
 
     def on_pair_candlestick(self, handler):
         raise NotImplementedError
@@ -30,26 +46,12 @@ class PolxMarketInfo(BaseMarketInfo):
     def on_all_pairs_tick(self, handler):
         raise NotImplementedError
 
-    def __init__(self, candlestick_store, async_fetch_ticker=True, async_fetch_candlesticks=True):
-        self.logger = get_logger_with_all_handlers(__name__)
-
-        self.candlestick_store = candlestick_store
-
-        self.__ticker = {}
-        self.__ticker_lock = RLock()
-
-        if async_fetch_ticker:
-            self.__start_ticker_fetcher_thread()
-
-        if async_fetch_candlesticks:
-            self.__start_candlestick_fetcher_thread()
-
     def get_exchange(self) -> ExchangeEnum:
         return ExchangeEnum.POLONIEX
 
     def __start_ticker_fetcher_thread(self):
         self.fetch_ticker()
-        t = Thread(target=self.ticker_fetcher)
+        t = Thread(target=self.__ticker_fetcher)
         t.start()
 
     def __start_candlestick_fetcher_thread(self):
@@ -58,7 +60,7 @@ class PolxMarketInfo(BaseMarketInfo):
         self.logger.info('synchronizing candlesticks...')
 
         self.fetch_candlesticks()
-        t = Thread(target=self.candlestick_fetcher)
+        t = Thread(target=self.__candlestick_fetcher)
         t.start()
 
     def get_market_date(self):
@@ -92,7 +94,7 @@ class PolxMarketInfo(BaseMarketInfo):
     def is_candlesticks_supported(self):
         return True
 
-    def ticker_fetcher(self):
+    def __ticker_fetcher(self):
         self.logger.info('starting to fetch ticker...')
         while True:
             try:
@@ -107,7 +109,7 @@ class PolxMarketInfo(BaseMarketInfo):
             except Exception as e:
                 self.logger.exception('unhandled exception')
 
-    def candlestick_fetcher(self):
+    def __candlestick_fetcher(self):
         self.logger.info('starting to fetch candlesticks...')
         while True:
             try:
@@ -140,9 +142,12 @@ class PolxMarketInfo(BaseMarketInfo):
         pairs = self.get_active_pairs()
 
         for pair in pairs:
-            self.fetch_pair_candlesticks(pair)
+            self.__fetch_pair_candlesticks(pair)
 
-    def fetch_pair_candlesticks(self, pair):
+    def get_indicator(self, pair, indicator: IndicatorEnum, args, ind=0, period=M5):
+        return self.indicators.compute(pair, indicator, args, ind=ind, period=period)
+
+    def __fetch_pair_candlesticks(self, pair):
         self.logger.debug('fetching_pair_candlesticks: %s', pair)
         start_date = self.candlestick_store.get_pair_newest_date(pair)
         if start_date is None:
