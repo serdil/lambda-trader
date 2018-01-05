@@ -1,3 +1,5 @@
+import numpy as np
+
 from lambdatrader.constants import M5, IndicatorEnum
 from lambdatrader.marketinfo import BaseMarketInfo
 
@@ -22,11 +24,11 @@ class Indicators:
             candle = self.market_info.get_pair_candlestick(pair, ind=ind, period=period)
             input_candles.append(candle)
         return {
-            'open': self.candlesticks_open(input_candles),
-            'high': self.candlesticks_high(input_candles),
-            'low': self.candlesticks_low(input_candles),
-            'close': self.candlesticks_close(input_candles),
-            'volume': self.candlesticks_volume(input_candles)
+            'open': np.array(self.candlesticks_open(input_candles)),
+            'high': np.array(self.candlesticks_high(input_candles)),
+            'low': np.array(self.candlesticks_low(input_candles)),
+            'close': np.array(self.candlesticks_close(input_candles)),
+            'volume': np.array(self.candlesticks_volume(input_candles))
         }
 
     @classmethod
