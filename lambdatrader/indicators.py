@@ -20,8 +20,8 @@ class Indicators:
 
     def get_input(self, pair, ind=0, period=M5, num_candles=100):
         input_candles = []
-        for i in range(num_candles-1, -1, -1):
-            candle = self.market_info.get_pair_candlestick(pair, ind=ind, period=period)
+        for i in range(ind+num_candles-1, ind-1, -1):
+            candle = self.market_info.get_pair_candlestick(pair, ind=i, period=period)
             input_candles.append(candle)
         return {
             'open': np.array(self.candlesticks_open(input_candles)),
