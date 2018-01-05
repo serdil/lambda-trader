@@ -87,9 +87,10 @@ class PolxMarketInfo(BaseMarketInfo):
         with self.__ticker_lock:
             return self.__ticker[pair].high24h
 
-    def get_active_pairs(self):
+    def get_active_pairs(self, return_usdt_btc=False):
         with self.__ticker_lock:
-            return [pair for pair in self.__ticker if pair[:3] == 'BTC']
+            return [pair for pair in self.__ticker
+                    if pair[:3] == 'BTC' or (return_usdt_btc and pair == 'USDT_BTC')]
 
     def is_candlesticks_supported(self):
         return True
@@ -139,7 +140,7 @@ class PolxMarketInfo(BaseMarketInfo):
             if self.__ticker == {}:
                 self.fetch_ticker()
 
-        pairs = self.get_active_pairs()
+        pairs = self.get_active_pairs(return_usdt_btc=True)
 
         for pair in pairs:
             self.__fetch_pair_candlesticks(pair)
@@ -149,6 +150,7 @@ class PolxMarketInfo(BaseMarketInfo):
 
     def __fetch_pair_candlesticks(self, pair):
         self.logger.debug('fetching_pair_candlesticks: %s', pair)
+        print(pair)
         start_date = self.candlestick_store.get_pair_newest_date(pair)
         if start_date is None:
             start_date = OLDEST_DATE

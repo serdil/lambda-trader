@@ -157,13 +157,16 @@ class BacktestingMarketInfo(BaseMarketInfo):
     def __get_pair_end_time_from_store(self, pair):
         return self.candlestick_store.get_pair_newest_date(pair=pair)
 
-    def get_active_pairs(self):
-        return list(
+    def get_active_pairs(self, return_usdt_btc=False):
+        pairs_set = set(
             filter(
                 self.__pair_exists_in_current_market_time,
                 self.__get_pairs_from_store()
             )
         )
+        if not return_usdt_btc and 'USDT_BTC' in pairs_set:
+            pairs_set.remove('USDT_BTC')
+        return list(pairs_set)
 
     def is_candlesticks_supported(self):
         return True
