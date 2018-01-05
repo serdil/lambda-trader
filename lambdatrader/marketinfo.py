@@ -1,6 +1,5 @@
-from lambdatrader.constants import M5
+from lambdatrader.constants import M5, IndicatorEnum
 from lambdatrader.exchanges.enums import ExchangeEnum
-from lambdatrader.indicators import IndicatorEnum
 
 
 class BaseMarketInfo:

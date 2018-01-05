@@ -47,6 +47,20 @@ class Candlestick:
         return Candlestick(date, high, low, _open, close, base_volume,
                            quote_volume, weighted_average, period=IRREGULAR, start_date=start_date)
 
+    def __repr__(self):
+        return 'Candlestick(' \
+               'period={},' \
+               'date={},' \
+               'high={},' \
+               'low={},' \
+               'open={},' \
+               'close={},' \
+               'base_volume={},' \
+               'quote_volume={},' \
+               'weighted_average={})'.format(self.period, self.date, self.high, self.low,
+                                             self.open, self.close, self.base_volume,
+                                             self.quote_volume, self.weighted_average)
+
     @staticmethod
     def normalize(a, b):
         return a / max(a, b), b / max(a, b)
@@ -55,4 +69,3 @@ class Candlestick:
     def batch_candlesticks(candlesticks):
         if candlesticks:
             return candlesticks[0].batch_with_candlesticks(candlesticks[1:])
-

@@ -3,13 +3,13 @@ from time import sleep
 
 from poloniex import PoloniexError
 
-from lambdatrader.constants import M5_SECONDS, M5
+from lambdatrader.constants import M5_SECONDS, M5, IndicatorEnum
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.exchanges.poloniex.constants import OLDEST_DATE
 from lambdatrader.exchanges.poloniex.polxclient import polo
 from lambdatrader.exchanges.poloniex.utils import APICallExecutor, map_exception
 from lambdatrader.executors.utils import retry_on_exception
-from lambdatrader.indicators import Indicators, IndicatorEnum
+from lambdatrader.indicators import Indicators
 from lambdatrader.loghandlers import get_logger_with_all_handlers
 from lambdatrader.marketinfo import BaseMarketInfo
 from lambdatrader.models.candlestick import Candlestick
@@ -157,6 +157,7 @@ class PolxMarketInfo(BaseMarketInfo):
 
         if end_date - start_date > M5_SECONDS:
             candlesticks = self.__get_pair_candlesticks_with_retry(pair, start_date, end_date)
+
             self.logger.debug('fetched_pair_candlesticks: %s %s', pair, len(candlesticks))
             for candlestick in candlesticks:
                 self.candlestick_store.append_candlestick(pair, candlestick)
