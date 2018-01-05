@@ -1,18 +1,18 @@
 from datetime import datetime
 
+from lambdatrader.exchanges.poloniex.polxclient import polo
 from poloniex import PoloniexError
 
-from lambdatrader.config import POLONIEX_TAKER_FEE, POLONIEX_MAKER_FEE
-from lambdatrader.account.account import (
+from lambdatrader.account import (
     BaseAccount,
 )
+from lambdatrader.config import POLONIEX_TAKER_FEE, POLONIEX_MAKER_FEE
+from lambdatrader.exchanges.poloniex.utils import APICallExecutor, map_exception
 from lambdatrader.loghandlers import get_logger_with_all_handlers
+from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.models.order import Order
-from lambdatrader.polx.polxclient import polo
-from lambdatrader.polx.utils import APICallExecutor, map_exception
-from lambdatrader.utils import pair_second, pair_from, get_now_timestamp
-from lambdatrader.models.enums.exchange import ExchangeEnum
 from lambdatrader.models.ordertype import OrderType
+from lambdatrader.utilities.utils import pair_second, pair_from, get_now_timestamp
 
 
 class PolxAccount(BaseAccount):
@@ -80,7 +80,7 @@ class PolxAccount(BaseAccount):
         return open_orders
 
     @staticmethod
-    def __order_from_polx_info(key, value):
+    def __order_from_polx_info(key, value):  # TODO check validity of date calculation
         currency = pair_second(key)
         _type = OrderType.BUY if value['type'] == 'buy' else OrderType.SELL
         date = datetime.strptime(value['date'], '%Y-%m-%d %H:%M:%S').timestamp()

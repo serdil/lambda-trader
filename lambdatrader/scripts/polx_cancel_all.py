@@ -2,9 +2,8 @@ from time import sleep
 
 from poloniex import PoloniexError
 
-from lambdatrader.polx.polxclient import polo
-
-from lambdatrader.utils import pair_from
+from lambdatrader.exchanges.poloniex.polxclient import polo
+from lambdatrader.utilities.utils import pair_from
 
 DELTA = 0.00001
 

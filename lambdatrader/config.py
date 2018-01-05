@@ -1,6 +1,6 @@
 import os
 
-from lambdatrader.utils import get_project_directory, running_in_docker
+from lambdatrader.utilities.utils import get_project_directory, running_in_docker
 
 
 def env(env_var, default, cast_to=None):

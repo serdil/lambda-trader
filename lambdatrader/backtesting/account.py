@@ -1,14 +1,14 @@
 from collections import defaultdict
 
+from lambdatrader.account import BaseAccount
+from lambdatrader.account import NotEnoughBalance, UnableToFillImmediately
 from lambdatrader.config import BACKTESTING_TAKER_FEE, BACKTESTING_MAKER_FEE
-from lambdatrader.account.account import NotEnoughBalance, UnableToFillImmediately
-from lambdatrader.account.account import BaseAccount
-from lambdatrader.models.enums.exchange import ExchangeEnum
+from lambdatrader.marketinfo import BaseMarketInfo
+from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.models.order import Order
-from lambdatrader.models.ordertype import OrderType
-from lambdatrader.utils import pair_from
-from lambdatrader.marketinfo.marketinfo import BaseMarketInfo
 from lambdatrader.models.orderrequest import OrderRequest
+from lambdatrader.models.ordertype import OrderType
+from lambdatrader.utilities.utils import pair_from
 
 
 class BacktestingAccount(BaseAccount):
@@ -16,10 +16,9 @@ class BacktestingAccount(BaseAccount):
     def __init__(self, market_info: BaseMarketInfo, balances=None):
         self.market_info = market_info
 
-
         self.__balances = defaultdict(int)
 
-        if balances == None:
+        if balances is None:
             balances = {'BTC': 100.0}
 
         for currency, balance in balances.items():

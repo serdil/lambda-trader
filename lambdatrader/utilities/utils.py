@@ -1,5 +1,7 @@
 import os
-from datetime import datetime
+import time
+
+from lambdatrader.constants import M5
 
 MINUTE_SECONDS = 60
 HOUR_SECONDS = 60 * MINUTE_SECONDS
@@ -23,17 +25,17 @@ def pair_second(pair):
 
 
 def get_now_timestamp():
-    return datetime.utcnow().timestamp()
+    return time.time()
 
 
-def date_floor(date):
+def date_floor(date, period=M5):
     date = int(date)
-    return date - (date % 300)
+    return date - (date % period.seconds())
 
 
-def date_ceil(date):
+def date_ceil(date, period=M5):
     date = int(date)
-    return date - (date % 300) + 300
+    return date - (date % period.seconds()) + period.seconds()
 
 
 def get_one_day_seconds():
@@ -50,7 +52,7 @@ def get_n_day_seconds(n):
 
 
 def get_project_directory():
-    return os.path.dirname(os.path.dirname(__file__))
+    return os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 
 def running_in_docker():

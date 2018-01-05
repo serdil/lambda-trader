@@ -1,5 +1,7 @@
 from pprint import pprint
 
+from lambdatrader.candlestickstore import CandlestickStore
+
 from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
@@ -8,11 +10,10 @@ from lambdatrader.config import (
 )
 from lambdatrader.evaluation.utils import statistics_over_periods, period_statistics
 from lambdatrader.executors.executors import SignalExecutor
-from lambdatrader.history.store import CandlestickStore
 from lambdatrader.signals.signals import (
     DynamicRetracementSignalGenerator,
 )
-from lambdatrader.utils import date_floor
+from lambdatrader.utilities.utils import date_floor
 
 ONE_DAY = 24 * 3600
 

@@ -14,6 +14,7 @@ from lambdatrader.config import (
     DYNAMIC_RETRACEMENT_SIGNALS__LOOKBACK_DRAWDOWN_RATIO,
     DYNAMIC_RETRACEMENT_SIGNALS__LOOKBACK_DAYS,
 )
+from lambdatrader.constants import M5
 from lambdatrader.loghandlers import (
     get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger,
 )
@@ -410,8 +411,10 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         return int(days * 24 * 3600)
 
     @staticmethod
-    def days_to_candlesticks(days):
-        return int(days * 24 * 3600 // 300)
+    def days_to_candlesticks(days, period=M5):
+        if period is not M5:
+            raise NotImplementedError
+        return int(days * 24 * 3600 // period.value)
 
     def __get_high_volume_pairs(self):
         self.debug('__get_high_volume_pairs')

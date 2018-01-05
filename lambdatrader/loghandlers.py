@@ -4,9 +4,9 @@ import os
 from telegram_handler import TelegramHandler
 
 from lambdatrader.config import (
-    TELEGRAM_TOKEN, BOT_NAME, TELEGRAM_CHAT_IDS, TELEGRAM_ENABLED,
-    DEBUG_TO_CONSOLE)
-from lambdatrader.utils import get_project_directory
+    TELEGRAM_TOKEN, BOT_NAME, TELEGRAM_CHAT_IDS, TELEGRAM_ENABLED, DEBUG_TO_CONSOLE,
+)
+from lambdatrader.utilities.utils import get_project_directory
 
 _1MB = 1024 * 1024
 _5MB = 5 * _1MB
