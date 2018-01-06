@@ -11,6 +11,10 @@ class BaseMarketInfo:
     def get_market_date(self):
         raise NotImplementedError
 
+    @property
+    def market_date(self):
+        raise NotImplementedError
+
     def get_active_pairs(self, return_usdt_btc=False):
         raise NotImplementedError
 

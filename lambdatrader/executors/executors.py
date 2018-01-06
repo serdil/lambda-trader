@@ -64,10 +64,10 @@ class BaseSignalExecutor:
             self._memory_memory['trades'] = []
 
         if 'history_start' not in self._memory_memory:
-            self._memory_memory['history_start'] = self.market_info.get_market_date()
+            self._memory_memory['history_start'] = self.market_info.market_date
 
         if 'history_end' not in self._memory_memory:
-            self._memory_memory['history_end'] = self.market_info.get_market_date()
+            self._memory_memory['history_end'] = self.market_info.market_date
 
         if 'estimated_balances' not in self._memory_memory:
             self._memory_memory['estimated_balances'] = {}
@@ -144,7 +144,7 @@ class BaseSignalExecutor:
         self._memory_memory['history_end'] = date
 
     def update_history_end_with_current_date(self):
-        self.set_history_end(self.market_info.get_market_date())
+        self.set_history_end(self.market_info.market_date)
 
     def _declare_trade_end(self, trade):
         self.__trades.append(trade)
@@ -176,6 +176,13 @@ class BaseSignalExecutor:
 
     def act(self, signals):
         raise NotImplementedError
+
+    def get_market_date(self):
+        return self.market_date
+
+    @property
+    def market_date(self):
+        return self.market_info.market_date
 
 
 #  Assuming PriceTakeProfitSuccessExit and TimeoutStopLossFailureExit and PriceStopLossFailureExit
@@ -214,13 +221,13 @@ class SignalExecutor(BaseSignalExecutor):
             self.__schedule_task(task=self.__compute_statistics, time_offset=0, period=21600)
 
     def __schedule_task(self, task, time_offset, period=None):
-        scheduled_time = self.__get_market_date() + time_offset
+        scheduled_time = self.market_date + time_offset
         self.__scheduled_tasks[scheduled_time].append((task, period))
 
     def __run_scheduled_tasks(self):
         self.debug('__run_scheduled_tasks')
 
-        market_date = self.__get_market_date()
+        market_date = self.market_date
 
         times_to_delete = []
         tasks_to_readd = []
@@ -277,7 +284,7 @@ class SignalExecutor(BaseSignalExecutor):
             return tracked_signals_list
 
     def __report_estimated_balance(self):
-        market_date = self.__get_market_date()
+        market_date = self.market_date
         estimated_balance = self.__get_estimated_balance_with_retry()
         self.declare_estimated_balance(date=market_date, balance=estimated_balance)
 
@@ -301,7 +308,7 @@ class SignalExecutor(BaseSignalExecutor):
         sell_order_number = sell_order.get_order_number()
         internal_trade_id = signal.id
         internal_trade = self.__internal_trades[internal_trade_id]
-        market_date = self.__get_market_date()
+        market_date = self.market_date
 
         in_stop_loss_stage = 'in_stop_loss_stage' in signal_info and\
                              signal_info['in_stop_loss_stage']
@@ -420,7 +427,7 @@ class SignalExecutor(BaseSignalExecutor):
                 self.__execute_signal(signal=trade_signal, position_size=position_size)
 
     def __can_execute_signal(self, trade_signal, estimated_balance):
-        market_date = self.__get_market_date()
+        market_date = self.market_date
 
         trade_signal_is_valid = self.__trade_signal_is_valid(trade_signal=trade_signal,
                                                              market_date=market_date)
@@ -436,9 +443,6 @@ class SignalExecutor(BaseSignalExecutor):
             return False
 
         return True
-
-    def __get_market_date(self):
-        return self.market_info.get_market_date()
 
     @staticmethod
     def __trade_signal_is_valid(trade_signal, market_date):
@@ -464,7 +468,7 @@ class SignalExecutor(BaseSignalExecutor):
         currency = pair_second(pair)
         amount_to_buy = position_size / entry_price
 
-        market_date = self.__get_market_date()
+        market_date = self.market_date
 
         buy_request = OrderRequest(currency=currency, _type=OrderType.BUY,
                                    price=entry_price, amount=amount_to_buy, date=market_date)
@@ -523,7 +527,7 @@ class SignalExecutor(BaseSignalExecutor):
             frozen_balance = self.get_frozen_balance()
 
             self.__conditional_print()
-            self.__conditional_print(datetime.utcfromtimestamp(self.__get_market_date()),
+            self.__conditional_print(datetime.utcfromtimestamp(self.market_date),
                                      'TRADE:', pair)
             self.__conditional_print('estimated_balance:', estimated_balance)
             self.__conditional_print('frozen_balance:', frozen_balance)
@@ -595,7 +599,7 @@ class SignalExecutor(BaseSignalExecutor):
     def __compute_statistics(self):
         trading_info = self.get_trading_info()
         self.logger.info('trading_info size:%f MB', self.__compute_object_size(trading_info))
-        statistics = period_statistics(trading_info=trading_info, end=self.__get_market_date())
+        statistics = period_statistics(trading_info=trading_info, end=self.market_date)
         self.logger.info('overall_statistics:%s', statistics)
 
     @staticmethod

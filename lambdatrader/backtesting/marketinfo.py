@@ -10,7 +10,7 @@ from lambdatrader.utilities.utils import date_floor
 class BacktestingMarketInfo(BaseMarketInfo):
 
     def __init__(self, candlestick_store):
-        self.market_date = 0
+        self.__market_date = 0
         self.candlestick_store = candlestick_store
         self.indicators = Indicators(self)
 
@@ -23,13 +23,17 @@ class BacktestingMarketInfo(BaseMarketInfo):
         return ExchangeEnum.BACKTESTING
 
     def set_market_date(self, timestamp):
-        self.market_date = timestamp
+        self.__market_date = timestamp
 
     def get_market_date(self):
         return self.market_date
 
-    def inc_market_time(self):
-        self.market_date += M5_SECONDS
+    @property
+    def market_date(self):
+        return self.__market_date
+
+    def inc_market_date(self):
+        self.__market_date += M5_SECONDS
 
     def get_pair_candlestick(self, pair, ind=0, period=M5):
         return self.get_pair_period_candlestick(pair, ind=ind, period=period)
@@ -67,16 +71,16 @@ class BacktestingMarketInfo(BaseMarketInfo):
 
     def get_pair_last_24h_btc_volume(self, pair):
         if pair in self.__last_volume_calc_date:
-            if self.__last_volume_calc_date[pair] == self.get_market_date():
+            if self.__last_volume_calc_date[pair] == self.market_date:
                 return self.__last_volume_calc_volume[pair]
-            elif self.__last_volume_calc_date[pair] == self.get_market_date() - M5_SECONDS:
+            elif self.__last_volume_calc_date[pair] == self.market_date - M5_SECONDS:
                 total_volume = self.__last_volume_calc_volume[pair]
                 try:
                     total_volume -= self.get_pair_candlestick(pair=pair, ind=24 * 12).base_volume
                 except KeyError:
                     pass
                 total_volume += self.get_pair_latest_candlestick(pair=pair).base_volume
-                self.__last_volume_calc_date[pair] = self.get_market_date()
+                self.__last_volume_calc_date[pair] = self.market_date
                 self.__last_volume_calc_volume[pair] = total_volume
                 return total_volume
 
@@ -86,7 +90,7 @@ class BacktestingMarketInfo(BaseMarketInfo):
                 total_volume += self.get_pair_candlestick(pair=pair, ind=i).base_volume
             except KeyError:
                 pass
-        self.__last_volume_calc_date[pair] = self.get_market_date()
+        self.__last_volume_calc_date[pair] = self.market_date
         self.__last_volume_calc_volume[pair] = total_volume
         return total_volume
 
@@ -95,9 +99,9 @@ class BacktestingMarketInfo(BaseMarketInfo):
 
     def get_pair_last_24h_high_cached(self, pair):
         if pair in self.__last_high_calc_date:
-            if self.__last_high_calc_date[pair] == self.get_market_date():
+            if self.__last_high_calc_date[pair] == self.market_date:
                 return self.__last_high_calc_high[pair]
-            elif self.__last_high_calc_date[pair] == self.get_market_date() - M5_SECONDS:
+            elif self.__last_high_calc_date[pair] == self.market_date - M5_SECONDS:
                 high = self.__last_high_calc_high[pair]
                 try:
                     high_omitted = self.get_pair_candlestick(pair=pair, ind=24 * 12).high
@@ -109,12 +113,12 @@ class BacktestingMarketInfo(BaseMarketInfo):
                     pass
                 added_high = self.get_pair_latest_candlestick(pair=pair).high
                 high = max(high, added_high)
-                self.__last_high_calc_date[pair] = self.get_market_date()
+                self.__last_high_calc_date[pair] = self.market_date
                 self.__last_high_calc_high[pair] = high
                 return high
 
         high = self.get_pair_last_24h_high_uncached(pair=pair)
-        self.__last_high_calc_date[pair] = self.get_market_date()
+        self.__last_high_calc_date[pair] = self.market_date
         self.__last_high_calc_high[pair] = high
         return high
 
@@ -168,7 +172,7 @@ class BacktestingMarketInfo(BaseMarketInfo):
 
     def __pair_exists_in_current_market_time(self, pair):
         return self.__get_pair_start_time_from_store(pair=pair) < \
-               self.get_market_date() < \
+               self.market_date < \
                self.__get_pair_end_time_from_store(pair=pair)
 
     def on_pair_candlestick(self, handler):

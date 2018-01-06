@@ -99,7 +99,7 @@ class BacktestingAccount(BaseAccount):
         price = order_request.get_price()
         amount = order_request.get_amount()
 
-        market_date = self.market_info.get_market_date()
+        market_date = self.market_info.market_date
 
         order = Order(currency=currency, _type=order_type,
                       price=price, amount=amount, date=market_date, is_filled=False)

@@ -57,7 +57,11 @@ class BaseSignalGenerator:
         raise NotImplementedError
 
     def get_market_date(self):
-        return self.market_info.get_market_date()
+        return self.market_date
+
+    @property
+    def market_date(self):
+        return self.market_info.market_date
 
     def debug(self, msg, *args, **kwargs):
         self.logger.debug(msg, *args, **kwargs)
@@ -87,7 +91,7 @@ class RetracementSignalGenerator(BaseSignalGenerator):
 
         latest_ticker = self.market_info.get_pair_ticker(pair=pair)
         price = latest_ticker.lowest_ask
-        market_date = self.get_market_date()
+        market_date = self.market_date
 
         target_price = price * self.BUY_PROFIT_FACTOR
         day_high_price = latest_ticker.high24h
@@ -158,7 +162,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
 
         latest_ticker = self.market_info.get_pair_ticker(pair=pair)
         price = latest_ticker.lowest_ask
-        market_date = self.get_market_date()
+        market_date = self.market_date
 
         target_price = price * self.BUY_PROFIT_FACTOR
         period_high_price = self.__calc_n_days_high(pair=pair, num_days=self.LOOKBACK_DAYS)
