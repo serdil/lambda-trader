@@ -49,7 +49,8 @@ class BaseSignalGenerator:
         self.debug('__analyze_market')
         allowed_pairs = self.get_allowed_pairs()
         self.market_info.fetch_ticker()
-        trade_signals = list(self.__analyze_pairs(pairs=allowed_pairs, tracked_signals=tracked_signals))
+        trade_signals = list(self.__analyze_pairs(pairs=allowed_pairs,
+                                                  tracked_signals=tracked_signals))
         self.post_analyze_market(tracked_signals)
         return trade_signals
 
@@ -183,6 +184,21 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         self.enable_disable = enable_disable
         self.trading_enabled = True
         self.last_enable_disable_checked = 10
+
+    def get_algo_descriptor(self):
+        return {
+            'BUY_PROFIT_FACTOR': self.BUY_PROFIT_FACTOR,
+
+            'RED_GREEN_MARKET_NUM_PAIRS': self.RED_GREEN_MARKET_NUM_PAIRS,
+
+            'RED_MARKET_MAJORITY_NUM': self.RED_MARKET_MAJORITY_NUM,
+            'RED_MARKET_NUM_CANDLES': self.RED_MARKET_NUM_CANDLES,
+            'RED_MARKET_DIP_THRESHOLD': self.RED_MARKET_DIP_THRESHOLD,
+
+            'GREEN_MARKET_MAJORITY_NUM': self.GREEN_MARKET_MAJORITY_NUM,
+            'GREEN_MARKET_NUM_CANDLES': self.GREEN_MARKET_NUM_CANDLES,
+            'GREEN_MARKET_UP_THRESHOLD': self.GREEN_MARKET_UP_THRESHOLD,
+        }
 
     def get_allowed_pairs(self):
         self.debug('get_allowed_pairs')

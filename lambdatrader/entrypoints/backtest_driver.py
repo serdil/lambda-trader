@@ -46,6 +46,10 @@ print()
 print('Backtest Complete!')
 
 print()
+print('Descriptor:')
+pprint(signal_generators[0].get_algo_descriptor())
+
+print()
 print('Estimated Balance:', account.get_estimated_balance())
 print('Open Orders:', list(account.get_open_orders()))
 
