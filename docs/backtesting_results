@@ -1,0 +1,365 @@
+month -1,0
++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+{'BUY_PROFIT_FACTOR': 1.07,
+              'DISABLING_BACKTESTING_TIME': 86400,
+              'DISABLING_ROI_THRESHOLD': -0.05,
+              'DISABLING_ROI_THRESHOLD_TIME': 7200,
+              'ENABLING_BACKTESTING_TIME': 3600,
+              'ENABLING_DISABLING_CHECK_INTERVAL': 0,
+              'ENABLING_ROI_THRESHOLD': 0.03,
+              'ENABLING_ROI_THRESHOLD_TIME': 10800,
+              'GREEN_MARKET_MAJORITY_NUM': 25,
+              'GREEN_MARKET_NUM_CANDLES': 6,
+              'GREEN_MARKET_UP_THRESHOLD': 0.0,
+              'HIGH_VOLUME_LIMIT': 20.0,
+              'LOOKBACK_DAYS': 0.3333333,
+              'LOOKBACK_DRAWDOWN_RATIO': 1.0,
+              'ORDER_TIMEOUT': 86400,
+              'RED_GREEN_MARKET_NUM_PAIRS': 50,
+              'RED_MARKET_DIP_THRESHOLD': 0.01,
+              'RED_MARKET_MAJORITY_NUM': 19,
+              'RED_MARKET_NUM_CANDLES': 2,
+PRO_FACTR 1.07
+
+RED_MAJOR 19
+RED_CANDL 2
+RED_THRES 0.01
+
+GRE_MAJOR 25
+GRE_CANDL 6
+GRE_THRES 0.0
+
+{'longest_drawdown_period_frozen': 344400,
+ 'longest_drawdown_period_live': 348900,
+ 'maximum_drawdown_frozen': 0.10313971931409918,
+ 'maximum_drawdown_live': 0.09927374625052779,
+ 'num_of_trades': 1568,
+ 'roi_frozen': 6.539991726022147,
+ 'roi_live': 6.770340369649857,
+ 'success_rate': 0.5567602040816326}
+====================================================
+????????????????????
+{'longest_drawdown_period_frozen': 318300,
+ 'longest_drawdown_period_live': 320700,
+ 'maximum_drawdown_frozen': 0.12639029167769508,
+ 'maximum_drawdown_live': 0.12134177293686471,
+ 'num_of_trades': 2130,
+ 'roi_frozen': 3.5394501139094037,
+ 'roi_live': 3.9325399036783097,
+ 'success_rate': 0.7450704225352113}
+
+====================================================
+{'BUY_PROFIT_FACTOR': 1.05,
+          'DISABLING_BACKTESTING_TIME': 86400,
+          'DISABLING_ROI_THRESHOLD': -0.05,
+          'DISABLING_ROI_THRESHOLD_TIME': 7200,
+          'ENABLING_BACKTESTING_TIME': 3600,
+          'ENABLING_DISABLING_CHECK_INTERVAL': 0,
+          'ENABLING_ROI_THRESHOLD': 0.03,
+          'ENABLING_ROI_THRESHOLD_TIME': 10800,
+          'GREEN_MARKET_MAJORITY_NUM': 25,
+          'GREEN_MARKET_NUM_CANDLES': 6,
+          'GREEN_MARKET_UP_THRESHOLD': 0.0,
+          'HIGH_VOLUME_LIMIT': 20.0,
+          'LOOKBACK_DAYS': 0.3333333,
+          'LOOKBACK_DRAWDOWN_RATIO': 1.0,
+          'ORDER_TIMEOUT': 86400,
+          'RED_GREEN_MARKET_NUM_PAIRS': 50,
+          'RED_MARKET_DIP_THRESHOLD': 0.01,
+          'RED_MARKET_MAJORITY_NUM': 19,
+          'RED_MARKET_NUM_CANDLES': 2,
+PRO_FACTR 1.05
+
+RED_MAJOR 19
+RED_CANDL 2
+RED_THRES 0.01
+
+GRE_MAJOR 25
+GRE_CANDL 6
+GRE_THRES 0.0
+
+{'longest_drawdown_period_frozen': 347700,
+ 'longest_drawdown_period_live': 365700,
+ 'maximum_drawdown_frozen': 0.12363393561943471,
+ 'maximum_drawdown_live': 0.11868759023883294,
+ 'num_of_trades': 1825,
+ 'roi_frozen': 5.141929393661968,
+ 'roi_live': 5.445011539783186,
+ 'success_rate': 0.5994520547945206}
+
+====================================================
+{'BUY_PROFIT_FACTOR': 1.04,
+      'DISABLING_BACKTESTING_TIME': 86400,
+      'DISABLING_ROI_THRESHOLD': -0.05,
+      'DISABLING_ROI_THRESHOLD_TIME': 7200,
+      'ENABLING_BACKTESTING_TIME': 3600,
+      'ENABLING_DISABLING_CHECK_INTERVAL': 0,
+      'ENABLING_ROI_THRESHOLD': 0.03,
+      'ENABLING_ROI_THRESHOLD_TIME': 10800,
+      'GREEN_MARKET_MAJORITY_NUM': 25,
+      'GREEN_MARKET_NUM_CANDLES': 6,
+      'GREEN_MARKET_UP_THRESHOLD': 0.0,
+      'HIGH_VOLUME_LIMIT': 20.0,
+      'LOOKBACK_DAYS': 0.3333333,
+      'LOOKBACK_DRAWDOWN_RATIO': 1.0,
+      'ORDER_TIMEOUT': 86400,
+      'RED_GREEN_MARKET_NUM_PAIRS': 50,
+      'RED_MARKET_DIP_THRESHOLD': 0.01,
+      'RED_MARKET_MAJORITY_NUM': 19,
+      'RED_MARKET_NUM_CANDLES': 2,
+PRO_FACTR 1.04
+
+RED_MAJOR 19
+RED_CANDL 2
+RED_THRES 0.01
+
+GRE_MAJOR 25
+GRE_CANDL 6
+GRE_THRES 0.0
+
+{'longest_drawdown_period_frozen': 322200,
+ 'longest_drawdown_period_live': 323100,
+ 'maximum_drawdown_frozen': 0.12165116871999802,
+ 'maximum_drawdown_live': 0.10215058294336148,
+ 'num_of_trades': 1986,
+ 'roi_frozen': 4.9555624622348775,
+ 'roi_live': 5.318181824802542,
+ 'success_rate': 0.6520644511581067}
+===================================================
+{'BUY_PROFIT_FACTOR': 1.03,
+              'DISABLING_BACKTESTING_TIME': 86400,
+              'DISABLING_ROI_THRESHOLD': -0.05,
+              'DISABLING_ROI_THRESHOLD_TIME': 7200,
+              'ENABLING_BACKTESTING_TIME': 3600,
+              'ENABLING_DISABLING_CHECK_INTERVAL': 0,
+              'ENABLING_ROI_THRESHOLD': 0.03,
+              'ENABLING_ROI_THRESHOLD_TIME': 10800,
+              'GREEN_MARKET_MAJORITY_NUM': 25,
+              'GREEN_MARKET_NUM_CANDLES': 6,
+              'GREEN_MARKET_UP_THRESHOLD': 0.0,
+              'HIGH_VOLUME_LIMIT': 20.0,
+              'LOOKBACK_DAYS': 0.3333333,
+              'LOOKBACK_DRAWDOWN_RATIO': 1.0,
+              'ORDER_TIMEOUT': 86400,
+              'RED_GREEN_MARKET_NUM_PAIRS': 50,
+              'RED_MARKET_DIP_THRESHOLD': 0.015,
+              'RED_MARKET_MAJORITY_NUM': 25,
+              'RED_MARKET_NUM_CANDLES': 3,
+PRO_FACTR 1.03
+
+RED_MAJOR 25
+RED_CANDL 3
+RED_THRES 0.015
+
+GRE_MAJOR 25
+GRE_CANDL 6
+GRE_THRES 0.0
+
+{'longest_drawdown_period_frozen': 354900,
+ 'longest_drawdown_period_live': 426000,
+ 'maximum_drawdown_frozen': 0.1379606276372189,
+ 'maximum_drawdown_live': 0.1456396124945512,
+ 'num_of_trades': 2061,
+ 'roi_frozen': 3.2560741860883073,
+ 'roi_live': 3.6163349851437347,
+ 'success_rate': 0.7632217370208637}
+=====================================================
+mappingproxy({'BUY_PROFIT_FACTOR': 1.05,
+              'DISABLING_BACKTESTING_TIME': 86400,
+              'DISABLING_ROI_THRESHOLD': -0.05,
+              'DISABLING_ROI_THRESHOLD_TIME': 7200,
+              'ENABLING_BACKTESTING_TIME': 3600,
+              'ENABLING_DISABLING_CHECK_INTERVAL': 0,
+              'ENABLING_ROI_THRESHOLD': 0.03,
+              'ENABLING_ROI_THRESHOLD_TIME': 10800,
+              'GREEN_MARKET_MAJORITY_NUM': 25,
+              'GREEN_MARKET_NUM_CANDLES': 6,
+              'GREEN_MARKET_UP_THRESHOLD': 0.0,
+              'HIGH_VOLUME_LIMIT': 20.0,
+              'LOOKBACK_DAYS': 0.3333333,
+              'LOOKBACK_DRAWDOWN_RATIO': 1.0,
+              'ORDER_TIMEOUT': 86400,
+              'RED_GREEN_MARKET_NUM_PAIRS': 50,
+              'RED_MARKET_DIP_THRESHOLD': 0.015,
+              'RED_MARKET_MAJORITY_NUM': 15,
+              'RED_MARKET_NUM_CANDLES': 3,
+PRO_FACTR 1.05
+
+RED_MAJOR 15
+RED_CANDL 3
+RED_THRES 0.015
+
+GRE_MAJOR 25
+GRE_CANDL 6
+GRE_THRES 0.0
+
+{'longest_drawdown_period_frozen': 355200,
+ 'longest_drawdown_period_live': 368400,
+ 'maximum_drawdown_frozen': 0.12060002237822554,
+ 'maximum_drawdown_live': 0.11407792142263251,
+ 'num_of_trades': 1869,
+ 'roi_frozen': 4.595756995939012,
+ 'roi_live': 4.872427279088054,
+ 'success_rate': 0.579454253611557}
+
+======================================================
+
+{'BUY_PROFIT_FACTOR': 1.05,
+              'DISABLING_BACKTESTING_TIME': 86400,
+              'DISABLING_ROI_THRESHOLD': -0.05,
+              'DISABLING_ROI_THRESHOLD_TIME': 7200,
+              'ENABLING_BACKTESTING_TIME': 3600,
+              'ENABLING_DISABLING_CHECK_INTERVAL': 0,
+              'ENABLING_ROI_THRESHOLD': 0.03,
+              'ENABLING_ROI_THRESHOLD_TIME': 10800,
+              'GREEN_MARKET_MAJORITY_NUM': 25,
+              'GREEN_MARKET_NUM_CANDLES': 6,
+              'GREEN_MARKET_UP_THRESHOLD': 0.0,
+              'HIGH_VOLUME_LIMIT': 20.0,
+              'LOOKBACK_DAYS': 0.3333333,
+              'LOOKBACK_DRAWDOWN_RATIO': 1.0,
+              'ORDER_TIMEOUT': 86400,
+              'RED_GREEN_MARKET_NUM_PAIRS': 50,
+              'RED_MARKET_DIP_THRESHOLD': 0.015,
+              'RED_MARKET_MAJORITY_NUM': 15,
+              'RED_MARKET_NUM_CANDLES': 6,
+
+PRO_FACTR 1.05
+
+RED_MAJOR 15
+RED_CANDL 6
+RED_THRES 0.015
+
+GRE_MAJOR 25
+GRE_CANDL 6
+GRE_THRES 0.0
+
+{'longest_drawdown_period_frozen': 242700,
+ 'longest_drawdown_period_live': 239700,
+ 'maximum_drawdown_frozen': 0.11804698025365343,
+ 'maximum_drawdown_live': 0.10848500484026223,
+ 'num_of_trades': 2064,
+ 'roi_frozen': 3.0314535623184735,
+ 'roi_live': 3.2364244503634403,
+ 'success_rate': 0.5266472868217055}
+====================================================
+{'BUY_PROFIT_FACTOR': 1.03,
+              'DISABLING_BACKTESTING_TIME': 86400,
+              'DISABLING_ROI_THRESHOLD': -0.05,
+              'DISABLING_ROI_THRESHOLD_TIME': 7200,
+              'ENABLING_BACKTESTING_TIME': 3600,
+              'ENABLING_DISABLING_CHECK_INTERVAL': 0,
+              'ENABLING_ROI_THRESHOLD': 0.03,
+              'ENABLING_ROI_THRESHOLD_TIME': 10800,
+              'GREEN_MARKET_MAJORITY_NUM': 25,
+              'GREEN_MARKET_NUM_CANDLES': 6,
+              'GREEN_MARKET_UP_THRESHOLD': 0.0,
+              'HIGH_VOLUME_LIMIT': 20.0,
+              'LOOKBACK_DAYS': 0.3333333,
+              'LOOKBACK_DRAWDOWN_RATIO': 1.0,
+              'ORDER_TIMEOUT': 86400,
+              'RED_GREEN_MARKET_NUM_PAIRS': 50,
+              'RED_MARKET_DIP_THRESHOLD': 0.01,
+              'RED_MARKET_MAJORITY_NUM': 19,
+              'RED_MARKET_NUM_CANDLES': 2,
+PRO_FACTR 1.05
+
+RED_MAJOR 119
+RED_CANDL 2
+RED_THRES 0.01
+
+GRE_MAJOR 25
+GRE_CANDL 6
+GRE_THRES 0.0
+
+{'longest_drawdown_period_frozen': 365100,
+ 'longest_drawdown_period_live': 292800,
+ 'maximum_drawdown_frozen': 0.1264115291451864,
+ 'maximum_drawdown_live': 0.10656934105864552,
+ 'num_of_trades': 2248,
+ 'roi_frozen': 3.883625730769819,
+ 'roi_live': 4.332464091845135,
+ 'success_rate': 0.7148576512455516}
+
+
+month -3,-2
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+{'BUY_PROFIT_FACTOR': 1.07,
+              'DISABLING_BACKTESTING_TIME': 86400,
+              'DISABLING_ROI_THRESHOLD': -0.05,
+              'DISABLING_ROI_THRESHOLD_TIME': 7200,
+              'ENABLING_BACKTESTING_TIME': 3600,
+              'ENABLING_DISABLING_CHECK_INTERVAL': 0,
+              'ENABLING_ROI_THRESHOLD': 0.03,
+              'ENABLING_ROI_THRESHOLD_TIME': 10800,
+              'GREEN_MARKET_MAJORITY_NUM': 25,
+              'GREEN_MARKET_NUM_CANDLES': 6,
+              'GREEN_MARKET_UP_THRESHOLD': 0.0,
+              'HIGH_VOLUME_LIMIT': 20.0,
+              'LOOKBACK_DAYS': 0.3333333,
+              'LOOKBACK_DRAWDOWN_RATIO': 1.0,
+              'ORDER_TIMEOUT': 86400,
+              'RED_GREEN_MARKET_NUM_PAIRS': 50,
+              'RED_MARKET_DIP_THRESHOLD': 0.01,
+              'RED_MARKET_MAJORITY_NUM': 19,
+              'RED_MARKET_NUM_CANDLES': 2,
+PRO_FACTR 1.07
+
+RED_MAJOR 19
+RED_CANDL 2
+RED_THRES 0.01
+
+GRE_MAJOR 25
+GRE_CANDL 6
+GRE_THRES 0.0
+
+{'longest_drawdown_period_frozen': 2590500,
+ 'longest_drawdown_period_live': 2591400,
+ 'maximum_drawdown_frozen': 0.2582420503680327,
+ 'maximum_drawdown_live': 0.2514050167328033,
+ 'num_of_trades': 924,
+ 'roi_frozen': -0.10005179958151615,
+ 'roi_live': -0.07520977892757572,
+ 'success_rate': 0.48268398268398266}
+
+======================================================
+{'BUY_PROFIT_FACTOR': 1.05,
+              'DISABLING_BACKTESTING_TIME': 86400,
+              'DISABLING_ROI_THRESHOLD': -0.05,
+              'DISABLING_ROI_THRESHOLD_TIME': 7200,
+              'ENABLING_BACKTESTING_TIME': 3600,
+              'ENABLING_DISABLING_CHECK_INTERVAL': 0,
+              'ENABLING_ROI_THRESHOLD': 0.03,
+              'ENABLING_ROI_THRESHOLD_TIME': 10800,
+              'GREEN_MARKET_MAJORITY_NUM': 25,
+              'GREEN_MARKET_NUM_CANDLES': 6,
+              'GREEN_MARKET_UP_THRESHOLD': 0.0,
+              'HIGH_VOLUME_LIMIT': 20.0,
+              'LOOKBACK_DAYS': 0.3333333,
+              'LOOKBACK_DRAWDOWN_RATIO': 1.0,
+              'ORDER_TIMEOUT': 86400,
+              'RED_GREEN_MARKET_NUM_PAIRS': 50,
+              'RED_MARKET_DIP_THRESHOLD': 0.015,
+              'RED_MARKET_MAJORITY_NUM': 15,
+              'RED_MARKET_NUM_CANDLES': 6,
+
+PRO_FACTR 1.05
+
+RED_MAJOR 15
+RED_CANDL 6
+RED_THRES 0.015
+
+GRE_MAJOR 25
+GRE_CANDL 6
+GRE_THRES 0.0
+
+{'longest_drawdown_period_frozen': 2274300,
+ 'longest_drawdown_period_live': 1956000,
+ 'maximum_drawdown_frozen': 0.22230517032857525,
+ 'maximum_drawdown_live': 0.20192100830518966,
+ 'num_of_trades': 1189,
+ 'roi_frozen': 0.12740949829233827,
+ 'roi_live': 0.1739888686761182,
+ 'success_rate': 0.4987384356602187}
+=======================================================
