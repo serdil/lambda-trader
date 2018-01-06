@@ -151,6 +151,7 @@ class RetracementSignalGenerator(BaseSignalGenerator):
 
 class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicate logic
 
+    NUM_TRADING_PAIRS = 50
     HIGH_VOLUME_LIMIT = RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT
     ORDER_TIMEOUT = RETRACEMENT_SIGNALS__ORDER_TIMEOUT
     BUY_PROFIT_FACTOR = 1.03
@@ -187,6 +188,8 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
 
     def get_algo_descriptor(self):
         return {
+            'NUM_TRADING_PAIRS': self.NUM_TRADING_PAIRS,
+
             'BUY_PROFIT_FACTOR': self.BUY_PROFIT_FACTOR,
 
             'RED_GREEN_MARKET_NUM_PAIRS': self.RED_GREEN_MARKET_NUM_PAIRS,
@@ -204,6 +207,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         self.debug('get_allowed_pairs')
         high_volume_pairs = [pair for pair in self.__get_high_volume_pairs()
                              if pair not in ['BTC_DOGE', 'BTC_BCN']]
+        high_volume_pairs = high_volume_pairs[:self.NUM_TRADING_PAIRS]
         return high_volume_pairs
 
     def pre_analyze_market(self, tracked_signals):
