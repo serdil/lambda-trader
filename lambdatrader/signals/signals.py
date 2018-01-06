@@ -420,7 +420,6 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
                                   num_candles=self.RED_MARKET_NUM_CANDLES,
                                   dip_threshold=self.RED_MARKET_DIP_THRESHOLD)
 
-    #  50 tanenin yarisi son 15 dakikada en az %2 dusmus
     def market_is_red(self, num_pairs=50, majority_num=20, num_candles=3, dip_threshold=0.015):
         pairs = self.market_info.get_active_pairs()[:num_pairs]
 
