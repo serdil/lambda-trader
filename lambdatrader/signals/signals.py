@@ -152,7 +152,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
 
     HIGH_VOLUME_LIMIT = RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT
     ORDER_TIMEOUT = RETRACEMENT_SIGNALS__ORDER_TIMEOUT
-    BUY_PROFIT_FACTOR = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
+    BUY_PROFIT_FACTOR = 1.03
 
     LOOKBACK_DRAWDOWN_RATIO = DYNAMIC_RETRACEMENT_SIGNALS__LOOKBACK_DRAWDOWN_RATIO
     LOOKBACK_DAYS = DYNAMIC_RETRACEMENT_SIGNALS__LOOKBACK_DAYS
@@ -161,11 +161,21 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
     DISABLING_ROI_THRESHOLD = -0.05
     DISABLING_ROI_THRESHOLD_TIME = seconds(hours=2)
 
-    ENABLING_BACKTESTING_TIME = seconds(hours=2)
+    ENABLING_BACKTESTING_TIME = seconds(hours=1)
     ENABLING_ROI_THRESHOLD = 0.03
     ENABLING_ROI_THRESHOLD_TIME = seconds(hours=3)
 
-    ENABLING_DISABLING_CHECK_INTERVAL = seconds(hours=1)
+    RED_GREEN_MARKET_NUM_PAIRS = 50
+
+    RED_MARKET_MAJORITY_NUM = 19
+    RED_MARKET_NUM_CANDLES = 2
+    RED_MARKET_DIP_THRESHOLD = 0.01
+
+    GREEN_MARKET_MAJORITY_NUM = 25
+    GREEN_MARKET_NUM_CANDLES = 6
+    GREEN_MARKET_UP_THRESHOLD = 0.00
+
+    ENABLING_DISABLING_CHECK_INTERVAL = seconds(minutes=0)
 
     def __init__(self, market_info, live=False, silent=False, enable_disable=True):
         super().__init__(market_info, live=live, silent=silent)
@@ -188,10 +198,10 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
                 self.update_enabling_disabling_status(tracked_signals)
 
     def update_enabling_disabling_status(self, tracked_signals):
-        print('updating enabling disabling status')
+        # print('updating enabling disabling status')
         self.last_enable_disable_checked = self.market_info.get_market_date()
         if self.trading_enabled:
-            should_disable = self.should_stop_trading()
+            should_disable = self.should_disable_trading(tracked_signals)
             if should_disable:
                 print('====================DISABLING TRADING==========================')
                 self.trading_enabled = False
@@ -305,8 +315,8 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
 
         return high
 
-    def should_stop_trading(self):
-        return self.should_stop_trading_based_on_unseen_btc_price()
+    def should_disable_trading(self, tracked_signals):
+        return self.should_stop_trading_based_on_market_red()
 
     def should_stop_trading_based_on_recent_constant_drawdown(self):
         trading_info = self.get_backtesting_trading_info(
@@ -362,6 +372,75 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         cur_candle = self.market_info.get_pair_candlestick('USDT_BTC', ind=0)
         return cur_candle.low < lowest or cur_candle.high > highest
 
+    def should_stop_trading_based_on_majority_dip(self, tracked_signals):
+        return self.majority_change(tracked_signals, -0.0075)
+
+    def majority_change(self, tracked_signals, down_up_limit):
+        dip_mode = down_up_limit < 0
+
+        majority = 0.6
+        candle_period = M5
+        num_candles = 2
+
+        total = 0
+        num_dipped_upped = 0
+
+        market_date = self.market_date
+
+        for signal in tracked_signals:
+            if market_date - signal.date > num_candles * candle_period.seconds():
+                total += 1
+                this_candle = self.market_info.get_pair_candlestick(signal.pair, ind=0,
+                                                                    period=candle_period)
+                old_candle = self.market_info.get_pair_candlestick(signal.pair, ind=num_candles,
+                                                                   period=candle_period)
+                old_price = old_candle.close
+                this_price = this_candle.close
+
+                if dip_mode:
+                    if this_price < old_price:
+                        this_dip = (this_price - old_price) / old_price
+                        print(signal.pair, 'change:', this_dip)
+                        if this_dip <= down_up_limit:
+                            num_dipped_upped += 1
+                else:
+                    if this_price > old_price:
+                        this_up = (this_price - old_price) / old_price
+                        if this_up >= down_up_limit:
+                            num_dipped_upped += 1
+
+        if total > 0:
+            print('num_dipped:', num_dipped_upped, 'total:', total)
+
+        return total >= 5 and num_dipped_upped / total >= majority
+
+    def should_stop_trading_based_on_market_red(self):
+        return self.market_is_red(num_pairs=self.RED_GREEN_MARKET_NUM_PAIRS,
+                                  majority_num=self.RED_MARKET_MAJORITY_NUM,
+                                  num_candles=self.RED_MARKET_NUM_CANDLES,
+                                  dip_threshold=self.RED_MARKET_DIP_THRESHOLD)
+
+    #  50 tanenin yarisi son 15 dakikada en az %2 dusmus
+    def market_is_red(self, num_pairs=50, majority_num=20, num_candles=3, dip_threshold=0.015):
+        pairs = self.market_info.get_active_pairs()[:num_pairs]
+
+        num_dipped = 0
+
+        for pair in pairs:
+            old_candle = self.market_info.get_pair_candlestick(pair, ind=num_candles)
+            this_candle = self.market_info.get_pair_candlestick(pair, ind=0)
+
+            old_price = old_candle.close
+            this_price = this_candle.close
+
+            if this_price < old_price:
+                dip_amount = (old_price - this_price) / old_price
+                if dip_amount >= dip_threshold:
+                    num_dipped += 1
+
+        print('num_dipped:', num_dipped)
+        return num_dipped >= majority_num
+
     @staticmethod
     def get_estimated_balances_list(trading_info):
         estimated_balances_dict = trading_info.estimated_balances
@@ -378,7 +457,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         return last_ind
 
     def should_enable_trading(self):
-        return self.should_start_trading_based_on_roi()
+        return self.should_start_trading_based_on_market_green()
 
     def should_start_trading_based_on_roi(self):
         trading_info = self.get_backtesting_trading_info(
@@ -404,6 +483,32 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
     @staticmethod
     def should_start_trading_unconditionally():
         return True
+
+    def should_start_trading_based_on_market_green(self):
+        return self.market_is_green(num_pairs=self.RED_GREEN_MARKET_NUM_PAIRS,
+                                    majority_num=self.GREEN_MARKET_MAJORITY_NUM,
+                                    num_candles=self.GREEN_MARKET_NUM_CANDLES,
+                                    up_threshold=self.GREEN_MARKET_UP_THRESHOLD)
+
+    def market_is_green(self, num_pairs=50, majority_num=25, num_candles=6, up_threshold=0.00):
+        pairs = self.market_info.get_active_pairs()[:num_pairs]
+
+        num_upped = 0
+
+        for pair in pairs:
+            old_candle = self.market_info.get_pair_candlestick(pair, ind=num_candles)
+            this_candle = self.market_info.get_pair_candlestick(pair, ind=0)
+
+            old_price = old_candle.close
+            this_price = this_candle.close
+
+            if this_price > old_price:
+                up_amount = (this_price - old_price) / old_price
+                if up_amount >= up_threshold:
+                    num_upped += 1
+
+        print('num_upped:', num_upped)
+        return num_upped >= majority_num
 
     def get_backtesting_trading_info(self, backtesting_time):
         market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
