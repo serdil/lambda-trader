@@ -1,6 +1,7 @@
 import numpy as np
+from lambdatrader.indicator_functions import IndicatorEnum
 
-from lambdatrader.constants import M5, IndicatorEnum
+from lambdatrader.constants import M5
 from lambdatrader.marketinfo import BaseMarketInfo
 
 
@@ -17,6 +18,7 @@ class Indicators:
         for range_result in range_results:
             results_list.append(range_result[-1])
         return tuple(results_list)
+
 
     def get_input(self, pair, ind=0, period=M5, num_candles=100):
         input_candles = []

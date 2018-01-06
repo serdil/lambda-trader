@@ -3,7 +3,8 @@ from time import sleep
 
 from poloniex import PoloniexError
 
-from lambdatrader.constants import M5_SECONDS, M5, IndicatorEnum
+from lambdatrader.constants import M5_SECONDS, M5
+from lambdatrader.indicator_functions import IndicatorEnum
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.exchanges.poloniex.constants import OLDEST_DATE
 from lambdatrader.exchanges.poloniex.polxclient import polo
