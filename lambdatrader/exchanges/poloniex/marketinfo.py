@@ -65,6 +65,10 @@ class PolxMarketInfo(BaseMarketInfo):
         t.start()
 
     def get_market_date(self):
+        return self.market_date
+
+    @property
+    def market_date(self):
         return get_now_timestamp()
 
     def get_pair_candlestick(self, pair, ind=0, period=M5):
@@ -156,7 +160,7 @@ class PolxMarketInfo(BaseMarketInfo):
         if start_date is None:
             start_date = OLDEST_DATE
 
-        end_date = self.get_market_date()
+        end_date = self.market_date
 
         if end_date - start_date > M5_SECONDS:
             candlesticks = self.__get_pair_candlesticks_with_retry(pair, start_date, end_date)
