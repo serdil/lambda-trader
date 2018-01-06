@@ -1,4 +1,5 @@
-from lambdatrader.constants import M5_SECONDS, M5, IndicatorEnum
+from lambdatrader.constants import M5_SECONDS, M5
+from lambdatrader.indicator_functions import IndicatorEnum
 from lambdatrader.indicators import Indicators
 from lambdatrader.marketinfo import BaseMarketInfo
 from lambdatrader.exchanges.enums import ExchangeEnum
