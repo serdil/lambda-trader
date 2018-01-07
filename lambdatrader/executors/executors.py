@@ -335,13 +335,18 @@ class SignalExecutor(BaseSignalExecutor):
 
         else:
             failure_exit = signal.failure_exit
+            highest_bid = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
             if failure_exit.type == FailureExitType.TIMEOUT_STOP_LOSS:
                 stop_loss_reached = market_date - sell_order.get_date() >= failure_exit.timeout
             elif failure_exit.type == FailureExitType.PRICE_STOP_LOSS:
-                highest_bid = self.market_info.get_pair_ticker(pair=signal.pair).highest_bid
                 stop_loss_reached = highest_bid <= failure_exit.price
+            elif failure_exit.type == FailureExitType.FUNCTION:
+                stop_loss_reached = failure_exit.failure_func(self.market_info)
             else:
                 raise Exception('Unknown or unimplemented failure_exit type.')
+
+            if signal.should_be_cancelled():
+                stop_loss_reached = True
 
             if stop_loss_reached:
                 self.logger.info('sl_hit_for_signal:%s', signal)

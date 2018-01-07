@@ -4,7 +4,7 @@ from lambdatrader.candlestickstore import CandlestickStore
 from lambdatrader.exchanges.poloniex.marketinfo import PolxMarketInfo
 from poloniex import PoloniexError
 
-from lambdatrader.config import ASYNC_FETCH_POLX_CANDLESTICKS
+from lambdatrader.config import ASYNC_FETCH_POLX_CANDLESTICKS, ENABLE_DISABLE_TRADING
 from lambdatrader.exchanges.poloniex.account import PolxAccount
 from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.loghandlers import get_logger_with_all_handlers
@@ -22,7 +22,9 @@ account = PolxAccount()
 sleep(3)
 
 signal_generator = DynamicRetracementSignalGenerator(market_info=market_info,
-                                                     live=True, silent=False)
+                                                     live=True,
+                                                     silent=False,
+                                                     enable_disable=ENABLE_DISABLE_TRADING)
 signal_executor = SignalExecutor(market_info=market_info, account=account, live=True, silent=False)
 
 

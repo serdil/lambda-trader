@@ -21,6 +21,14 @@ from talib.abstract import (
 )
 
 
+def CSTHMA(inputs, period):
+    wma_func = IndicatorEnum.WMA.function()
+    wma = wma_func(inputs, period)
+    wma_half_period = wma_func(inputs, period // 2)
+    hma = wma_func(2 * wma_half_period - wma, sqrt(period))
+    return hma
+
+
 class IndicatorEnum(Enum):
     BBANDS = BBANDS                            #  Bollinger Bands
     DEMA = DEMA                                #  Double Exponential Moving Average
@@ -152,15 +160,7 @@ class IndicatorEnum(Enum):
     CDLUPSIDEGAP2CROWS = CDLUPSIDEGAP2CROWS    #  Upside Gap Two Crows
     CDLXSIDEGAP3METHODS = CDLXSIDEGAP3METHODS  #  Upside/Downside Gap Three Methods
 
-    CSTHMA = HMA
+    CSTHMA = CSTHMA
 
     def function(self):
         return self.value
-
-
-def HMA(inputs, period):
-    wma_func = IndicatorEnum.WMA.function()
-    wma = wma_func(inputs, period)
-    wma_half_period = wma_func(inputs, period // 2)
-    hma = wma_func(2 * wma_half_period - wma, sqrt(period))
-    return hma
