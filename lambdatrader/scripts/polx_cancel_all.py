@@ -2,9 +2,8 @@ from time import sleep
 
 from poloniex import PoloniexError
 
-from lambdatrader.polx.polxclient import polo
-
-from lambdatrader.utils import pair_from
+from lambdatrader.exchanges.poloniex.polxclient import polo
+from lambdatrader.utilities.utils import pair_from
 
 DELTA = 0.00001
 
@@ -63,3 +62,11 @@ while True:
                     print('sold')
             except Exception as e:
                 print(e)
+
+complete_balances = polo.returnCompleteBalances()
+
+estimated_balance = 0.0
+for info in complete_balances.values():
+    estimated_balance += float(info['btcValue'])
+
+print('estimated_balance:', estimated_balance)

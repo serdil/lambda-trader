@@ -1,47 +1,61 @@
 from pprint import pprint
 
+from lambdatrader.candlestickstore import CandlestickStore
+
 from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.config import BACKTESTING_NUM_DAYS, BACKTESTING_END_OFFSET_DAYS
+from lambdatrader.config import (
+    BACKTESTING_NUM_DAYS, BACKTESTING_END_OFFSET_DAYS, ENABLE_DISABLE_TRADING,
+)
 from lambdatrader.evaluation.utils import statistics_over_periods, period_statistics
 from lambdatrader.executors.executors import SignalExecutor
-from lambdatrader.history.store import CandlestickStore
 from lambdatrader.signals.signals import (
     DynamicRetracementSignalGenerator,
 )
+from lambdatrader.utilities.utils import date_floor
 
 ONE_DAY = 24 * 3600
 
-BACKTEST_NUM_DAYS = ONE_DAY * BACKTESTING_NUM_DAYS
-BACKTEST_END_OFFSET_DAYS = ONE_DAY * BACKTESTING_END_OFFSET_DAYS
+BACKTEST_NUM_SECONDS = date_floor(ONE_DAY * BACKTESTING_NUM_DAYS)
+BACKTEST_END_OFFSET_SECONDS = date_floor(ONE_DAY * BACKTESTING_END_OFFSET_DAYS)
 
 market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
 
 account = BacktestingAccount(market_info=market_info, balances={'BTC': 100})
 
-start_date = market_info.get_max_pair_end_time() - 1 * BACKTEST_NUM_DAYS - BACKTEST_END_OFFSET_DAYS
-end_date = market_info.get_max_pair_end_time() - 0 * BACKTEST_NUM_DAYS - BACKTEST_END_OFFSET_DAYS
+start_date = market_info.get_max_pair_end_time() \
+             - BACKTEST_NUM_SECONDS - BACKTEST_END_OFFSET_SECONDS
+end_date = market_info.get_max_pair_end_time() \
+           - BACKTEST_END_OFFSET_SECONDS
 
 signal_generators = [
-        DynamicRetracementSignalGenerator(market_info=market_info)
+        DynamicRetracementSignalGenerator(market_info=market_info,
+                                          enable_disable=ENABLE_DISABLE_TRADING)
     ]
 signal_executor = SignalExecutor(market_info=market_info, account=account)
 
+print('Descriptor:')
+pprint(signal_generators[0].get_algo_descriptor())
+
 backtest.backtest(account=account, market_info=market_info, signal_generators=signal_generators,
                   signal_executor=signal_executor, start=start_date, end=end_date)
+
+print('Signal Generator Used:')
+pprint(DynamicRetracementSignalGenerator.__dict__)
+pprint(signal_generators[0].__dict__)
 
 print()
 print('Backtest Complete!')
 
 print()
-print('Estimated Balance:', account.get_estimated_balance())
-print('Open Orders:', list(account.get_open_orders()))
-
-trading_info = signal_executor.get_trading_info()
+print('Descriptor:')
+pprint(signal_generators[0].get_algo_descriptor())
 
 print()
-print(trading_info)
+print('Estimated Balance:', account.get_estimated_balance())
+
+trading_info = signal_executor.get_trading_info()
 
 stats = period_statistics(trading_info=trading_info)
 
