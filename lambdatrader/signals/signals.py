@@ -215,7 +215,6 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         return high_volume_pairs
 
     def pre_analyze_market(self, tracked_signals):
-        print(self.get_algo_descriptor())
         if self.enable_disable:
             market_date = self.market_info.get_market_date()
             time_since_last_check = market_date - self.last_enable_disable_checked
