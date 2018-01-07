@@ -215,6 +215,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         return high_volume_pairs
 
     def pre_analyze_market(self, tracked_signals):
+        print(self.get_algo_descriptor())
         if self.enable_disable:
             market_date = self.market_info.get_market_date()
             time_since_last_check = market_date - self.last_enable_disable_checked
@@ -222,20 +223,17 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
                 self.update_enabling_disabling_status(tracked_signals)
 
     def update_enabling_disabling_status(self, tracked_signals):
-        # print('updating enabling disabling status')
         self.last_enable_disable_checked = self.market_info.get_market_date()
         if self.trading_enabled:
             should_disable = self.should_disable_trading(tracked_signals)
             if should_disable:
                 self.logger.info('disabling_trading')
-                # print('====================DISABLING TRADING==========================')
                 self.trading_enabled = False
                 self.cancel_all_trades(tracked_signals)
         else:
             should_enable = self.should_enable_trading()
             if should_enable:
                 self.logger.info('enabling_trading')
-                # print('++++++++++++++++++++ENABLING TRADING+++++++++++++++++++++++++++')
                 self.trading_enabled = True
 
     def cancel_all_trades(self, tracked_signals):
@@ -426,7 +424,6 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
                 if dip_mode:
                     if this_price < old_price:
                         this_dip = (this_price - old_price) / old_price
-                        # print(signal.pair, 'change:', this_dip)
                         if this_dip <= down_up_limit:
                             num_dipped_upped += 1
                 else:
@@ -434,9 +431,6 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
                         this_up = (this_price - old_price) / old_price
                         if this_up >= down_up_limit:
                             num_dipped_upped += 1
-
-        # if total > 0:
-        #     print('num_dipped:', num_dipped_upped, 'total:', total)
 
         return total >= 5 and num_dipped_upped / total >= majority
 
@@ -464,7 +458,6 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
                     num_dipped += 1
 
         self.debug('market_red_check_num_dipped_pairs: %d', num_dipped)
-        # print('num_dipped:', num_dipped)
         return num_dipped >= majority_num
 
     @staticmethod
@@ -534,7 +527,6 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
                     num_upped += 1
 
         self.debug('market_green_check_num_upped_pairs: %d', num_upped)
-        # print('num_upped:', num_upped)
         return num_upped >= majority_num
 
     def get_backtesting_trading_info(self, backtesting_time):
