@@ -6,15 +6,19 @@ from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.candlestickstore import CandlestickStore
-from lambdatrader.evaluation.utils import period_statistics
-from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.config import (
     RETRACEMENT_SIGNALS__ORDER_TIMEOUT, RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT,
     RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR, RETRACEMENT_SIGNALS__RETRACEMENT_RATIO,
     DYNAMIC_RETRACEMENT_SIGNALS__LOOKBACK_DRAWDOWN_RATIO,
-    DYNAMIC_RETRACEMENT_SIGNALS__LOOKBACK_DAYS,
+    DYNAMIC_RETRACEMENT_SIGNALS__LOOKBACK_DAYS, RED_GREEN_MARKET_NUM_PAIRS, RED_MARKET_MAJORITY_NUM,
+    RED_MARKET_NUM_CANDLES, RED_MARKET_DIP_THRESHOLD,
+
+    GREEN_MARKET_MAJORITY_NUM, GREEN_MARKET_NUM_CANDLES, GREEN_MARKET_UP_THRESHOLD,
+    ENABLING_DISABLING_CHECK_INTERVAL,
 )
 from lambdatrader.constants import M5
+from lambdatrader.evaluation.utils import period_statistics
+from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.loghandlers import (
     get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger,
 )
@@ -154,7 +158,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
     NUM_TRADING_PAIRS = 50
     HIGH_VOLUME_LIMIT = RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT
     ORDER_TIMEOUT = RETRACEMENT_SIGNALS__ORDER_TIMEOUT
-    BUY_PROFIT_FACTOR = 1.07
+    BUY_PROFIT_FACTOR = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
 
     LOOKBACK_DRAWDOWN_RATIO = DYNAMIC_RETRACEMENT_SIGNALS__LOOKBACK_DRAWDOWN_RATIO
     LOOKBACK_DAYS = DYNAMIC_RETRACEMENT_SIGNALS__LOOKBACK_DAYS
@@ -167,17 +171,17 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
     ENABLING_ROI_THRESHOLD = 0.03
     ENABLING_ROI_THRESHOLD_TIME = seconds(hours=3)
 
-    RED_GREEN_MARKET_NUM_PAIRS = 50
+    RED_GREEN_MARKET_NUM_PAIRS = RED_GREEN_MARKET_NUM_PAIRS
 
-    RED_MARKET_MAJORITY_NUM = 19
-    RED_MARKET_NUM_CANDLES = 2
-    RED_MARKET_DIP_THRESHOLD = 0.01
+    RED_MARKET_MAJORITY_NUM = RED_MARKET_MAJORITY_NUM
+    RED_MARKET_NUM_CANDLES = RED_MARKET_NUM_CANDLES
+    RED_MARKET_DIP_THRESHOLD = RED_MARKET_DIP_THRESHOLD
 
-    GREEN_MARKET_MAJORITY_NUM = 25
-    GREEN_MARKET_NUM_CANDLES = 6
-    GREEN_MARKET_UP_THRESHOLD = 0.00
+    GREEN_MARKET_MAJORITY_NUM = GREEN_MARKET_MAJORITY_NUM
+    GREEN_MARKET_NUM_CANDLES = GREEN_MARKET_NUM_CANDLES
+    GREEN_MARKET_UP_THRESHOLD = GREEN_MARKET_UP_THRESHOLD
 
-    ENABLING_DISABLING_CHECK_INTERVAL = seconds(minutes=0)
+    ENABLING_DISABLING_CHECK_INTERVAL = ENABLING_DISABLING_CHECK_INTERVAL
 
     def __init__(self, market_info, live=False, silent=False, enable_disable=True):
         super().__init__(market_info, live=live, silent=silent)
