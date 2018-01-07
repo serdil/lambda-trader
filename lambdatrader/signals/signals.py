@@ -188,7 +188,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         self.pairs_retracement_ratios = {}
         self.enable_disable = enable_disable
         self.trading_enabled = True
-        self.last_enable_disable_checked = 10
+        self.last_enable_disable_checked = 0
 
     def get_algo_descriptor(self):
         return {
