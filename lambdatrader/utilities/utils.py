@@ -47,6 +47,12 @@ def seconds(years=0, months=0, weeks=0, days=0, hours=0, minutes=0, seconds=0):
            days * DAY_SECONDS + weeks * WEEK_SECONDS + months * MONTH_SECONDS + years * YEAR_SECONDS
 
 
+def candlesticks(years=0, months=0, weeks=0, days=0, hours=0, minutes=0, _seconds=0, period=M5):
+    num_seconds = seconds(years=years, months=months, weeks=weeks,
+                          days=days, hours=hours, minutes=minutes, seconds=_seconds)
+    return num_seconds // period.seconds()
+
+
 def get_n_day_seconds(n):
     return get_one_day_seconds() * n
 
