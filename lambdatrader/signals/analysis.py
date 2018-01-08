@@ -194,8 +194,13 @@ class Analysis:
         num_dipped = 0
 
         for pair in pairs:
-            old_candle = self.market_info.get_pair_candlestick(pair, ind=num_candles)
-            this_candle = self.market_info.get_pair_candlestick(pair, ind=0)
+            try:
+                old_candle = self.market_info.get_pair_candlestick(pair, ind=num_candles)
+                this_candle = self.market_info.get_pair_candlestick(pair, ind=0)
+            except KeyError as e:
+                # TODO log this
+                print('KeyError while getting candlestick for {}:{}'.format(pair, e))
+                return False
 
             old_price = old_candle.close
             this_price = this_candle.close
@@ -253,8 +258,13 @@ class Analysis:
         num_upped = 0
 
         for pair in pairs:
-            old_candle = self.market_info.get_pair_candlestick(pair, ind=num_candles)
-            this_candle = self.market_info.get_pair_candlestick(pair, ind=0)
+            try:
+                old_candle = self.market_info.get_pair_candlestick(pair, ind=num_candles)
+                this_candle = self.market_info.get_pair_candlestick(pair, ind=0)
+            except KeyError as e:
+                # TODO log this
+                print('KeyError while getting candlestick for {}:{}'.format(pair, e))
+                return False
 
             old_price = old_candle.close
             this_price = this_candle.close
