@@ -79,7 +79,7 @@ class BaseSignalGenerator:
 
     def backtest_print(self, *args):
         if not self.LIVE and not self.SILENT:
-            print(args)
+            print(*args)
 
     def pre_analyze_market(self, tracked_signals):
         pass
@@ -211,12 +211,18 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
             should_disable = self.should_disable_trading(tracked_signals=tracked_signals)
             if should_disable:
                 self.logger.info('disabling_trading')
+                self.backtest_print('++++++++++++++++++++++++'
+                                    'DISABLING_TRADING'
+                                    '++++++++++++++++++++++++')
                 self.trading_enabled = False
                 self.cancel_all_trades(tracked_signals)
         else:
             should_enable = self.should_enable_trading(tracked_signals=tracked_signals)
             if should_enable:
                 self.logger.info('enabling_trading')
+                self.backtest_print('========================'
+                                    'ENABLING_TRADING'
+                                    '========================')
                 self.trading_enabled = True
 
     @staticmethod
