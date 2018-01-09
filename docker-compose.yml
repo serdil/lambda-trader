@@ -2,11 +2,41 @@ version: '3'
 services:
   lambdatrader:
     build: .
-    command: python3 -m lambdatrader.livetrade
+    command: python3 -m lambdatrader.entrypoints.livetrade
     volumes:
       - "${HISTORY_DB_HOST_PATH}:${HISTORY_DB_DOCKER_PATH}"
     env_file:
       - .env
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: "mongo:3.4"
+    volumes:
+      - "mongodata:/data/db"
+
+  lambdatrader1:
+    build: .
+    command: python3 -m lambdatrader.entrypoints.livetrade
+    volumes:
+      - "${HISTORY_DB_HOST_PATH}:${HISTORY_DB_DOCKER_PATH}"
+    env_file:
+      - exclude/configs/lambdatrader1.env
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: "mongo:3.4"
+    volumes:
+      - "mongodata:/data/db"
+
+  lambdatrader2:
+    build: .
+    command: python3 -m lambdatrader.entrypoints.livetrade
+    volumes:
+      - "${HISTORY_DB_HOST_PATH}:${HISTORY_DB_DOCKER_PATH}"
+    env_file:
+      - exclude/configs/lambdatrader2.env
     depends_on:
       - mongodb
 
