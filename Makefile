@@ -37,10 +37,6 @@ run-livetrade: docker-compose-build
 run-sync-polx-candlesticks: docker-compose-build
 	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} ${SERVICE} python3 -m lambdatrader.entrypoints.sync_polx_candlesticks
 
-.PHONY: run-mongo-shell
-run-mongo-shell: docker-compose-build
-	docker-compose exec mongodb mongo
-
 .PHONY: run-apitest
 run-apitest: docker-compose-build
 	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} ${SERVICE} python3 -m lambdatrader.apitest
@@ -48,6 +44,22 @@ run-apitest: docker-compose-build
 .PHONY: run-polx-cancel-all
 run-polx-cancel-all: docker-compose-build
 	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} ${SERVICE} python3 -m lambdatrader.scripts.polx_cancel_all
+
+.PHONY: up-bot1-2-detached
+up-bot1-bot2-detached: docker-compose-build
+	docker-compose up -d lambdatrader1 lambdatrader2
+
+.PHONY: up-bot1-2
+up-bot1-bot2: docker-compose-build
+	docker-compose up lambdatrader1 lambdatrader2
+
+.PHONY: up-services
+up-services:
+	docker-compose up ${SERVICE}
+
+.PHONY: up-services-detached
+up-services-detached:
+	docker-compose up -d ${SERVICE}
 
 .PHONY: tail-info-log
 tail-info-log:
@@ -65,10 +77,18 @@ info-log:
 debug-log:
 	docker-compose exec ${SERVICE} cat log/debug.log
 
-.PHONY: docker-compose-down
-docker-compose-down:
+.PHONY: down
+down:
+	docker-compose down
+
+.PHONY: down-volumes
+down-volumes:
 	docker-compose down
 
 .PHONY: reset-mongo-volume
 reset-mongo-volume:
 	docker volume rm lambdatrader_mongodata
+
+.PHONY: run-mongo-shell
+run-mongo-shell: docker-compose-build
+	docker-compose exec mongodb mongo

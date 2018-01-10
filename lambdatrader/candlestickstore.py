@@ -1,14 +1,15 @@
+import os
 import sqlite3
 from collections import defaultdict
 
 from blist import sorteddict
 
-from lambdatrader.config import HISTORY_DB_PATH
+from lambdatrader.config import HISTORY_DB_DIR
 from lambdatrader.constants import M5_SECONDS
 from lambdatrader.models.candlestick import Candlestick
 from lambdatrader.utilities.utils import date_floor, date_ceil
 
-DATABASE_PATH = HISTORY_DB_PATH
+DATABASE_PATH = os.path.join(HISTORY_DB_DIR, 'history.db')
 
 class CandlestickStore:  # TODO make thread safe
 
