@@ -28,3 +28,4 @@ venv-fabric/*
 .env
 
 trash/*
+dockermount/*
