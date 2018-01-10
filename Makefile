@@ -50,7 +50,7 @@ up-bot1-bot2-detached: docker-compose-build
 	docker-compose up -d lambdatrader1 lambdatrader2
 
 .PHONY: up-bot1-2
-up-bot1-bot2-detached: docker-compose-build
+up-bot1-bot2: docker-compose-build
 	docker-compose up lambdatrader1 lambdatrader2
 
 .PHONY: up-services
