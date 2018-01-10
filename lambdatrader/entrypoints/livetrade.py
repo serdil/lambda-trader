@@ -27,6 +27,7 @@ signal_generator = DynamicRetracementSignalGenerator(market_info=market_info,
                                                      enable_disable=ENABLE_DISABLE_TRADING)
 signal_executor = SignalExecutor(market_info=market_info, account=account, live=True, silent=False)
 
+logger.info('strategy descriptor: %s', signal_generator.get_algo_descriptor())
 
 logger.info('bot running...')
 
