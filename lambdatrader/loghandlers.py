@@ -59,17 +59,17 @@ def add_all_handlers(logger):
             logger.addHandler(handler)
 
 
-def get_logger_with_all_handlers(name):
+def get_logger_with_all_handlers(name, level=logging.DEBUG):
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(level)
     if not len(logger.handlers):
         add_all_handlers(logger)
     return logger
 
 
-def get_logger_with_console_handler(name):
+def get_logger_with_console_handler(name, level=logging.DEBUG):
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(level)
     logger.addHandler(console_handler)
     return logger
 
@@ -78,3 +78,12 @@ def get_silent_logger(name):
     logger = logging.getLogger(name)
     logger.handlers = []
     return logger
+
+
+def get_trading_logger(name, live=False, silent=False):
+    if live:
+        return get_logger_with_all_handlers(name)
+    elif silent:
+        return get_silent_logger(name)
+    else:
+        return get_logger_with_console_handler(name, level=logging.ERROR)

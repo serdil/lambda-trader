@@ -2,7 +2,6 @@ import pickle
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime
-from logging import ERROR
 from threading import Thread, RLock
 from typing import Iterable
 
@@ -15,7 +14,7 @@ from lambdatrader.config import (
 from lambdatrader.evaluation.utils import period_statistics
 from lambdatrader.executors.utils import retry_on_exception
 from lambdatrader.loghandlers import (
-    get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger,
+    get_trading_logger,
 )
 from lambdatrader.models.orderrequest import OrderRequest
 from lambdatrader.models.ordertype import OrderType
@@ -36,19 +35,9 @@ class BaseSignalExecutor:
         self.LIVE = live
         self.SILENT = silent
 
-        self.__set_up_logger()
+        self.logger = get_trading_logger(__name__, live=self.LIVE, silent=self.SILENT)
         self.__set_up_memory()
         self.__set_up_memory_fields()
-
-    def __set_up_logger(self):
-        if self.LIVE:
-            self.logger = get_logger_with_all_handlers(__name__)
-        else:
-            if self.SILENT:
-                self.logger = get_silent_logger(__name__)
-            else:
-                self.logger = get_logger_with_console_handler(__name__)
-                self.logger.setLevel(ERROR)
 
     def __set_up_memory(self):
         self._memory_lock = RLock()
@@ -183,6 +172,10 @@ class BaseSignalExecutor:
     @property
     def market_date(self):
         return self.market_info.market_date
+    
+    def backtest_print(self, *args):
+        if not self.LIVE and not self.SILENT:
+            print(*args)
 
 
 #  Assuming PriceTakeProfitSuccessExit and TimeoutStopLossFailureExit and PriceStopLossFailureExit
@@ -401,12 +394,12 @@ class SignalExecutor(BaseSignalExecutor):
         )
 
     def __print_tp_hit_for_backtesting(self, market_date, currency, profit_amount):
-        self.__conditional_print(datetime.utcfromtimestamp(market_date),
-                                 currency, 'tp:', profit_amount)
+        self.backtest_print(datetime.utcfromtimestamp(market_date),
+                            currency, 'tp:', profit_amount)
 
     def __print_sl_hit_for_backtesting(self, market_date, currency, profit_amount):
-        self.__conditional_print(datetime.utcfromtimestamp(market_date),
-                                 currency, 'sl:', profit_amount)
+        self.backtest_print(datetime.utcfromtimestamp(market_date),
+                            currency, 'sl:', profit_amount)
 
     def __calc_profit_amount(self, amount, buy_rate, sell_rate, sell_is_fill_or_kill=True):
         bought_amount = amount - self.__get_taker_fee(amount=amount)
@@ -536,18 +529,12 @@ class SignalExecutor(BaseSignalExecutor):
             estimated_balance = self.account.get_estimated_balance()
             frozen_balance = self.get_frozen_balance()
 
-            self.__conditional_print()
-            self.__conditional_print(datetime.utcfromtimestamp(self.market_date),
-                                     'TRADE:', pair)
-            self.__conditional_print('estimated_balance:', estimated_balance)
-            self.__conditional_print('frozen_balance:', frozen_balance)
-            self.__conditional_print('num_open_orders:',
-                                     len(list(self.account.get_open_sell_orders())))
-            self.__conditional_print()
-
-    def __conditional_print(self, *args):
-        if self.__in_non_silent_backtesting():
-            print(*args)
+            self.backtest_print()
+            self.backtest_print(datetime.utcfromtimestamp(self.market_date), 'TRADE:', pair)
+            self.backtest_print('estimated_balance:', estimated_balance)
+            self.backtest_print('frozen_balance:', frozen_balance)
+            self.backtest_print('num_open_orders:', len(list(self.account.get_open_sell_orders())))
+            self.backtest_print()
 
     def __in_non_silent_backtesting(self):
         return not self.LIVE and not self.SILENT

@@ -1,4 +1,3 @@
-from logging import ERROR
 from typing import Iterable, Optional
 
 from lambdatrader.config import (
@@ -12,7 +11,7 @@ from lambdatrader.config import (
     ENABLING_DISABLING_CHECK_INTERVAL,
 )
 from lambdatrader.loghandlers import (
-    get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger,
+    get_trading_logger,
 )
 from lambdatrader.models.tradesignal import (
     PriceEntry, PriceTakeProfitSuccessExit, TimeoutStopLossFailureExit, TradeSignal,
@@ -29,15 +28,9 @@ class BaseSignalGenerator:
         self.LIVE = live
         self.SILENT = silent
 
-        self.analysis = Analysis(market_info=market_info)
+        self.logger = get_trading_logger(__name__, live=live, silent=silent)
 
-        if self.LIVE:
-            self.logger = get_logger_with_all_handlers(__name__)
-        elif self.SILENT:
-            self.logger = get_silent_logger(__name__)
-        else:
-            self.logger = get_logger_with_console_handler(__name__)
-            self.logger.setLevel(ERROR)
+        self.analysis = Analysis(market_info=market_info, live=live, silent=silent)
 
     def generate_signals(self, tracked_signals):
         self.debug('generate_signals')
@@ -264,8 +257,8 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
             return
 
         current_retracement_ratio = (target_price - price) / (period_high_price - price)
-        retracement_ratio_satisfied = current_retracement_ratio <= \
-                                      self.pairs_retracement_ratios[pair]
+        retracement_ratio_satisfied = (current_retracement_ratio <=
+                                       self.pairs_retracement_ratios[pair])
 
         if retracement_ratio_satisfied:
             self.debug('retracement_ratio_satisfied')
