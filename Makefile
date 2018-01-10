@@ -46,11 +46,11 @@ run-polx-cancel-all: docker-compose-build
 	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} ${SERVICE} python3 -m lambdatrader.scripts.polx_cancel_all
 
 .PHONY: up-bot1-2-detached
-up-bot1-bot2-detached: docker-compose-build
+up-bot1-2-detached: docker-compose-build
 	docker-compose up -d lambdatrader1 lambdatrader2
 
 .PHONY: up-bot1-2
-up-bot1-bot2: docker-compose-build
+up-bot1-2: docker-compose-build
 	docker-compose up lambdatrader1 lambdatrader2
 
 .PHONY: up-services
