@@ -215,6 +215,7 @@ class SignalExecutor(BaseSignalExecutor):
 
         self.__schedule_task(task=self.__process_signals, time_offset=0, period=5)
         self.__schedule_task(task=self.__report_estimated_balance, time_offset=0, period=60)
+        self.__schedule_task(task=self.__log_estimated_balance, time_offset=0, period=300)
 
         if self.LIVE:
             self.__schedule_task(task=lambda: self.__heartbeat(count=0), time_offset=0)
@@ -287,6 +288,10 @@ class SignalExecutor(BaseSignalExecutor):
         market_date = self.market_date
         estimated_balance = self.__get_estimated_balance_with_retry()
         self.declare_estimated_balance(date=market_date, balance=estimated_balance)
+
+    def __log_estimated_balance(self):
+        estimated_balance = self.__get_estimated_balance_with_retry()
+        self.logger.info('estimated_balance: %f', estimated_balance)
 
     def __get_estimated_balance_with_retry(self):
         return self.retry_on_exception(
