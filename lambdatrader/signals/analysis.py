@@ -212,6 +212,7 @@ class Analysis:
                 if dip_amount >= dip_threshold:
                     num_dipped += 1
 
+        self.logger.debug('market_red_check_num_dipped_pairs: %d', num_dipped)
         return num_dipped >= majority_num
 
     def should_start_trading_based_on_roi(self,
@@ -276,6 +277,7 @@ class Analysis:
                 if up_amount >= up_threshold:
                     num_upped += 1
 
+        self.logger.debug('market_green_check_num_upped_pairs: %d', num_upped)
         return num_upped >= majority_num
 
     def get_backtesting_trading_info(self, backtesting_time, signal_generator_class):
