@@ -5,6 +5,7 @@ from lambdatrader.candlestickstore import CandlestickStore
 from lambdatrader.constants import M5
 from lambdatrader.evaluation.utils import period_statistics
 from lambdatrader.executors.executors import SignalExecutor
+from lambdatrader.loghandlers import get_logger_with_all_handlers
 from lambdatrader.signals.analysis_utils import (
     get_estimated_balances_list, find_smaller_equal_date_index,
 )
@@ -15,6 +16,7 @@ class Analysis:
 
     def __init__(self, market_info):
         self.market_info = market_info
+        self.logger = get_logger_with_all_handlers(__name__)
 
     @property
     def market_date(self):
@@ -198,7 +200,7 @@ class Analysis:
                 old_candle = self.market_info.get_pair_candlestick(pair, ind=num_candles)
                 this_candle = self.market_info.get_pair_candlestick(pair, ind=0)
             except KeyError as e:
-                # TODO log this
+                self.logger.error('KeyError while getting candlestick for {}:{}'.format(pair, e))
                 print('KeyError while getting candlestick for {}:{}'.format(pair, e))
                 return False
 
@@ -262,7 +264,7 @@ class Analysis:
                 old_candle = self.market_info.get_pair_candlestick(pair, ind=num_candles)
                 this_candle = self.market_info.get_pair_candlestick(pair, ind=0)
             except KeyError as e:
-                # TODO log this
+                self.logger.error('KeyError while getting candlestick for {}:{}'.format(pair, e))
                 print('KeyError while getting candlestick for {}:{}'.format(pair, e))
                 return False
 
