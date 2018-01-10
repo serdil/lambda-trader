@@ -27,6 +27,7 @@ def clone_repo():
 
 
 def init_machine():
+    install_docker()
     put_ssh_key()
     clone_repo()
 
