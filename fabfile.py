@@ -26,10 +26,16 @@ def clone_repo():
         run('git checkout stable')
 
 
+def init_history_db_dir():
+    run('sudo mkdir -p /data/lambdatrader/sqlite/')
+    run('sudo chmod 777 /data/lambdatrader/sqlite/')
+
+
 def init_machine():
     install_docker()
     put_ssh_key()
     clone_repo()
+    init_history_db_dir()
 
 
 def rsync_remote_dev():
