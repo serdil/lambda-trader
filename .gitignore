@@ -26,3 +26,5 @@ venv-fabric/*
 .DS_Store
 
 .env
+
+trash/*

@@ -21,6 +21,7 @@ services:
     volumes:
       - "${HISTORY_DB_HOST_PATH}:${HISTORY_DB_DOCKER_PATH}"
     env_file:
+      - .env
       - exclude/configs/lambdatrader1.env
     depends_on:
       - mongodb
@@ -36,6 +37,7 @@ services:
     volumes:
       - "${HISTORY_DB_HOST_PATH}:${HISTORY_DB_DOCKER_PATH}"
     env_file:
+      - .env
       - exclude/configs/lambdatrader2.env
     depends_on:
       - mongodb
