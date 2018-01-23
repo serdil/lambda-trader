@@ -157,10 +157,10 @@ class BacktestingMarketInfo(BaseMarketInfo):
         return self.candlestick_store.get_pairs()
 
     def __get_pair_start_time_from_store(self, pair):
-        return self.candlestick_store.get_pair_oldest_date(pair=pair)
+        return self.candlestick_store.get_pair_period_oldest_date(pair=pair)
 
     def __get_pair_end_time_from_store(self, pair):
-        return self.candlestick_store.get_pair_newest_date(pair=pair)
+        return self.candlestick_store.get_pair_period_newest_date(pair=pair)
 
     def get_active_pairs(self, return_usdt_btc=False):
         pairs_set = set(
