@@ -4,7 +4,7 @@ services:
     build: .
     command: python3 -m lambdatrader.entrypoints.livetrade
     volumes:
-      - "${HISTORY_DB_HOST_DIR}:${HISTORY_DB_DOCKER_DIR}"
+      - "~/.lambdatrader:/root/.lambdatrader"
     env_file:
       - .env
     depends_on:
