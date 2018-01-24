@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="history.db" uuid="55fec1e9-601e-4afa-bf8b-d236a6b4d253">
+    <data-source source="LOCAL" name="POLONIEX.db" uuid="3e99544a-7cfa-44a8-a7fe-4e57a0238282">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
-      <jdbc-url>jdbc:sqlite:/data/lambdatrader/sqlite/history.db</jdbc-url>
+      <jdbc-url>jdbc:sqlite:$USER_HOME$/.lambdatrader/data/candlesticks/POLONIEX.db</jdbc-url>
       <driver-properties>
         <property name="enable_load_extension" value="true" />
       </driver-properties>
