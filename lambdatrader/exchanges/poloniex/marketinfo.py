@@ -155,7 +155,7 @@ class PolxMarketInfo(BaseMarketInfo):
 
     def __fetch_pair_candlesticks(self, pair, period):
         self.logger.debug('fetching_pair_candlesticks: %s', pair)
-        start_date = self.candlestick_store.get_pair_period_newest_date(pair)
+        start_date = self.candlestick_store.get_pair_period_newest_date(pair, period=period)
         if start_date is None:
             start_date = OLDEST_DATE
 
