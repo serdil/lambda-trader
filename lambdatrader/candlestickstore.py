@@ -4,12 +4,16 @@ from collections import defaultdict
 
 from blist import sorteddict
 
-from lambdatrader.config import HISTORY_DB_DIR
+from lambdatrader.config import CANDLESTICK_DB_DIRECTORY
 from lambdatrader.constants import PeriodEnum, M5
+from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.models.candlestick import Candlestick
 from lambdatrader.utilities.utils import date_floor, date_ceil, seconds
 
-DATABASE_PATH = os.path.join(HISTORY_DB_DIR, 'history.db')
+DATABASE_DIR = CANDLESTICK_DB_DIRECTORY
+
+if not os.path.isdir(DATABASE_DIR):
+    os.makedirs(DATABASE_DIR, exist_ok=True)
 
 
 class CandlestickStore:  # TODO make thread safe
@@ -18,8 +22,8 @@ class CandlestickStore:  # TODO make thread safe
 
         ONE_CHUNK_SECONDS = seconds(days=2)
 
-        def __init__(self):
-            self.__conn = self.__get_db_connection()
+        def __init__(self, exchange: ExchangeEnum):
+            self.__conn = self.__get_db_connection(exchange=exchange)
             self.__cursor = self.__conn.cursor()
 
             self.__history = defaultdict(sorteddict)
@@ -203,8 +207,9 @@ class CandlestickStore:  # TODO make thread safe
             return date_ceil(date)
 
         @staticmethod
-        def __get_db_connection():
-            return sqlite3.connect(DATABASE_PATH)
+        def __get_db_connection(exchange: ExchangeEnum):
+            db_path = os.path.join(DATABASE_DIR, '{}.db'.join(exchange.name))
+            return sqlite3.connect(db_path)
 
         def __create_pair_period_table_if_not_exists(self, pair_period):
             self.__cursor.execute('''CREATE TABLE IF NOT EXISTS {}
@@ -226,11 +231,10 @@ class CandlestickStore:  # TODO make thread safe
         def period_from_pair_period(pair_period):
             return PeriodEnum.from_name(pair_period[pair_period.index(':')+1:])
 
-    __instance = None
+    __instances = {}
 
     @classmethod
-    def get_instance(cls):
-        if cls.__instance is None:
-            cls.__instance = cls.__CandlestickStore()
-        return cls.__instance
-
+    def get_for_exchange(cls, exchange: ExchangeEnum=ExchangeEnum.POLONIEX):
+        if exchange not in cls.__instances:
+            cls.__instances[exchange] = cls.__CandlestickStore(exchange=exchange)
+        return cls.__instances[exchange]

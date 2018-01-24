@@ -4,6 +4,7 @@ from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.candlestickstore import CandlestickStore
 from lambdatrader.constants import M5
 from lambdatrader.evaluation.utils import period_statistics
+from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.loghandlers import get_trading_logger
 from lambdatrader.signals.analysis_utils import (
@@ -285,7 +286,8 @@ class Analysis:
         return num_upped >= majority_num
 
     def get_backtesting_trading_info(self, backtesting_time, signal_generator_class):
-        market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
+        market_info = BacktestingMarketInfo(candlestick_store=
+                                            CandlestickStore.get_for_exchange(exchange=POLONIEX))
 
         account = BacktestingAccount(market_info=market_info, balances={'BTC': 100})
 

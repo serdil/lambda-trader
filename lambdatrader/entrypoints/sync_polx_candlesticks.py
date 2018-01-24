@@ -4,6 +4,7 @@ import sys
 
 from lambdatrader.candlestickstore import CandlestickStore
 from lambdatrader.constants import M5, PeriodEnum
+from lambdatrader.exchanges.enums import POLONIEX
 
 from lambdatrader.exchanges.poloniex.marketinfo import PolxMarketInfo
 from lambdatrader.loghandlers import get_logger_with_all_handlers
@@ -16,7 +17,7 @@ if len(sys.argv) == 2:
 
 logger = get_logger_with_all_handlers('sync_polx_candlesticks')
 
-market_info = PolxMarketInfo(candlestick_store=CandlestickStore.get_instance(),
+market_info = PolxMarketInfo(candlestick_store=CandlestickStore.get_for_exchange(POLONIEX),
                              async_fetch_ticker=False, async_fetch_candlesticks=False)
 
 first_fetch = True

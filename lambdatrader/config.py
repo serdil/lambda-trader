@@ -1,5 +1,7 @@
 import os
 
+from pathlib import Path
+
 from lambdatrader.utilities.utils import get_project_directory, running_in_docker, seconds
 
 
@@ -147,3 +149,12 @@ DEBUG_TO_CONSOLE = env('DEBUG_TO_CONSOLE', DEFAULT_DEBUG_TO_CONSOLE, to_bool)
 
 BACKTESTING_NUM_DAYS = env('BACKTESTING_NUM_DAYS', DEFAULT_BACKTESTING_NUM_DAYS, float)
 BACKTESTING_END_OFFSET_DAYS = env('BACKTESTING_END_OFFSET_DAYS', DEFAULT_BACKTESTING_END_OFFSET_DAYS, float)
+
+HOME_DIRECTORY = str(Path.home())
+LAMBDATRADER_HOME = os.path.join(HOME_DIRECTORY, '.lambdatrader')
+
+DATA_DIRECTORY = os.path.join(LAMBDATRADER_HOME, 'data')
+CANDLESTICK_DB_DIRECTORY = os.path.join(DATA_DIRECTORY, 'candlesticks')
+
+BOT_DIRECTORY = os.path.join(LAMBDATRADER_HOME, BOT_IDENTIFIER)
+BOT_LOG_DIRECTORY = os.path.join(BOT_DIRECTORY, 'log')
