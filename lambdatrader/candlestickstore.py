@@ -74,7 +74,7 @@ class CandlestickStore:  # TODO make thread safe
         def get_pair_period_newest_date(self, pair, period=M5):
             pair_period = self.pair_period_name(pair, period)
             self.__sync_pair_period_if_not_synced(pair_period=pair_period)
-            pair_period_history = self.__history[pair]
+            pair_period_history = self.__history[pair_period]
 
             if len(pair_period_history.keys()) == 0:
                 return None
@@ -125,15 +125,15 @@ class CandlestickStore:  # TODO make thread safe
                               mark_as_chunk_in_db=False)
 
         def __pair_period_table_is_empty(self, pair_period):
-            query = 'SELECT * FROM {} LIMIT 1'.format(pair_period)
+            query = "SELECT * FROM '{}' LIMIT 1".format(pair_period)
             return len(self.__cursor.execute(query).fetchall()) == 0
 
         def __get_pair_period_oldest_date_from_db(self, pair_period):
-            query = 'SELECT date FROM {} ORDER BY date ASC LIMIT 1'.format(pair_period)
+            query = "SELECT date FROM '{}' ORDER BY date ASC LIMIT 1".format(pair_period)
             return self.__cursor.execute(query).fetchone()[0]
 
         def __get_pair_period_newest_date_from_db(self, pair_period):
-            query = 'SELECT date FROM {} ORDER BY date DESC LIMIT 1'.format(pair_period)
+            query = "SELECT date FROM '{}' ORDER BY date DESC LIMIT 1".format(pair_period)
             return self.__cursor.execute(query).fetchone()[0]
 
         def __load_chunk(self, pair_period, chunk_no, mark_as_chunk_in_db=True):
@@ -141,7 +141,7 @@ class CandlestickStore:  # TODO make thread safe
             chunk_start_date = chunk_no * self.ONE_CHUNK_SECONDS
             chunk_end_date = chunk_start_date + self.ONE_CHUNK_SECONDS
 
-            query = 'SELECT * FROM {} WHERE date >= ? AND date < ? ORDER BY date ASC'\
+            query = "SELECT * FROM '{}' WHERE date >= ? AND date < ? ORDER BY date ASC"\
                 .format(pair_period)
             self.__cursor.execute(query, (chunk_start_date, chunk_end_date,))
 
@@ -181,7 +181,7 @@ class CandlestickStore:  # TODO make thread safe
                     break
 
             self.__cursor.executemany(
-                'INSERT OR REPLACE INTO {} VALUES (?, ?, ?, ?, ?, ?, ?, ?)'.format(pair_period),
+                "INSERT OR REPLACE INTO '{}' VALUES (?, ?, ?, ?, ?, ?, ?, ?)".format(pair_period),
                 rows_to_insert
             )
             self.__conn.commit()
@@ -208,11 +208,11 @@ class CandlestickStore:  # TODO make thread safe
 
         @staticmethod
         def __get_db_connection(exchange: ExchangeEnum):
-            db_path = os.path.join(DATABASE_DIR, '{}.db'.join(exchange.name))
+            db_path = os.path.join(DATABASE_DIR, '{}.db'.format(exchange.name))
             return sqlite3.connect(db_path)
 
         def __create_pair_period_table_if_not_exists(self, pair_period):
-            self.__cursor.execute('''CREATE TABLE IF NOT EXISTS {}
+            self.__cursor.execute('''CREATE TABLE IF NOT EXISTS '{}'
                                     (date INTEGER PRIMARY KEY ASC, high REAL, low REAL, 
                                     open REAL, close REAL, base_volume REAL,
                                     quote_volume REAL, weighted_average REAL)'''
