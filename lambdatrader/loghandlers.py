@@ -5,17 +5,21 @@ from telegram_handler import TelegramHandler
 
 from lambdatrader.config import (
     TELEGRAM_TOKEN, BOT_NAME, TELEGRAM_CHAT_IDS, TELEGRAM_ENABLED, DEBUG_TO_CONSOLE,
+    BOT_LOG_DIRECTORY,
 )
-from lambdatrader.utilities.utils import get_project_directory
 
 _1MB = 1024 * 1024
 _5MB = 5 * _1MB
 _256MB = 256 * _1MB
 _1GB = 1024 * _1MB
 
-LOG_FOLDER_PATH = os.path.join(get_project_directory(), 'log')
-DEBUG_LOG_PATH = os.path.join(LOG_FOLDER_PATH, 'debug.log')
-INFO_LOG_PATH = os.path.join(LOG_FOLDER_PATH, 'info.log')
+LOG_DIRECTORY = BOT_LOG_DIRECTORY
+
+if not os.path.isdir(LOG_DIRECTORY):
+    os.makedirs(LOG_DIRECTORY, exist_ok=True)
+
+DEBUG_LOG_PATH = os.path.join(LOG_DIRECTORY, 'debug.log')
+INFO_LOG_PATH = os.path.join(LOG_DIRECTORY, 'info.log')
 
 formatter = logging.Formatter(
     BOT_NAME + ': ' + '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
