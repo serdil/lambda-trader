@@ -11,7 +11,7 @@ from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.executors.executors import SignalExecutor
-from lambdatrader.history.store import CandlestickStore
+from lambdatrader.candlestickstore import CandlestickStore
 from lambdatrader.signals.constants import ONE_DAY_SECONDS
 
 

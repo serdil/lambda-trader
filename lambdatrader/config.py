@@ -1,8 +1,7 @@
 import os
-
 from pathlib import Path
 
-from lambdatrader.utilities.utils import get_project_directory, running_in_docker, seconds
+from lambdatrader.utilities.utils import seconds
 
 
 def env(env_var, default, cast_to=None):
