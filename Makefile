@@ -20,40 +20,75 @@ docker-compose-build:
 
 DEBUG_TO_CONSOLE?=False
 
-BACKTESTING_NUM_DAYS?=7
+DAYS?=7
+OFFSET?=0
+
+SERVICE?=lambdatrader
 
 .PHONY: run-backtest
 run-backtest: docker-compose-build
-	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} -e BACKTESTING_NUM_DAYS=${BACKTESTING_NUM_DAYS} lambdatrader python3 -m lambdatrader.backtest_driver
+	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} -e BACKTESTING_NUM_DAYS=${DAYS} -e BACKTESTING_END_OFFSET_DAYS=${OFFSET} ${SERVICE} python3 -m lambdatrader.entrypoints.backtest_driver
 
 .PHONY: run-livetrade
 run-livetrade: docker-compose-build
-	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} lambdatrader python3 -m lambdatrader.livetrade
+	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} ${SERVICE} python3 -m lambdatrader.entrypoints.livetrade
 
-.PHONY: run-mongo-shell
-run-mongo-shell: docker-compose-build
-	docker-compose exec mongodb mongo
+.PHONY: run-sync-polx-candlesticks
+run-sync-polx-candlesticks: docker-compose-build
+	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} ${SERVICE} python3 -m lambdatrader.entrypoints.sync_polx_candlesticks
 
 .PHONY: run-apitest
 run-apitest: docker-compose-build
-	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} lambdatrader python3 -m lambdatrader.apitest
+	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} ${SERVICE} python3 -m lambdatrader.apitest
 
 .PHONY: run-polx-cancel-all
 run-polx-cancel-all: docker-compose-build
-	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} lambdatrader python3 -m lambdatrader.scripts.polx_cancel_all
+	docker-compose run -e DEBUG_TO_CONSOLE=${DEBUG_TO_CONSOLE} ${SERVICE} python3 -m lambdatrader.scripts.polx_cancel_all
+
+.PHONY: up-bot1-2-detached
+up-bot1-2-detached: docker-compose-build
+	docker-compose up -d lambdatrader1 lambdatrader2
+
+.PHONY: up-bot1-2
+up-bot1-2: docker-compose-build
+	docker-compose up lambdatrader1 lambdatrader2
+
+.PHONY: up-services
+up-services:
+	docker-compose up ${SERVICE}
+
+.PHONY: up-services-detached
+up-services-detached:
+	docker-compose up -d ${SERVICE}
 
 .PHONY: tail-info-log
 tail-info-log:
-	docker-compose exec lambdatrader tail -f log/info.log
+	docker-compose exec ${SERVICE} tail -f log/info.log
 
 .PHONY: tail-debug-log
 tail-debug-log:
-	docker-compose exec lambdatrader tail -f log/debug.log
+	docker-compose exec ${SERVICE} tail -f log/debug.log
 
-.PHONY: docker-compose-down
-docker-compose-down:
+.PHONY: info-log
+info-log:
+	docker-compose exec ${SERVICE} cat log/info.log
+
+.PHONY: debug-log
+debug-log:
+	docker-compose exec ${SERVICE} cat log/debug.log
+
+.PHONY: down
+down:
+	docker-compose down
+
+.PHONY: down-volumes
+down-volumes:
 	docker-compose down
 
 .PHONY: reset-mongo-volume
 reset-mongo-volume:
 	docker volume rm lambdatrader_mongodata
+
+.PHONY: run-mongo-shell
+run-mongo-shell: docker-compose-build
+	docker-compose exec mongodb mongo

@@ -1,18 +1,35 @@
-version: '3'
+version: '2.2'
 services:
   lambdatrader:
-    build: .
-    command: python3 -m lambdatrader.livetrade
-    volumes:
-      - "${HISTORY_DB_HOST_PATH}:${HISTORY_DB_DOCKER_PATH}"
-    env_file:
-      - .env
+    extends:
+      file: docker-compose.base.yml
+      service: lambdatrader
     depends_on:
       - mongodb
+
+  lambdatrader1:
+    extends:
+      file: docker-compose.base.yml
+      service: lambdatrader
+    depends_on:
+      - mongodb
+    env_file:
+      - exclude/configs/lambdatrader1.env
+
+  lambdatrader2:
+    extends:
+      file: docker-compose.base.yml
+      service: lambdatrader
+    depends_on:
+      - mongodb
+    env_file:
+      - exclude/configs/lambdatrader2.env
+
   mongodb:
     image: "mongo:3.4"
     volumes:
       - "mongodata:/data/db"
+
 
 volumes:
   mongodata:

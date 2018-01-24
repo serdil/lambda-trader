@@ -2,13 +2,15 @@ import csv
 import glob
 import os
 
-from lambdatrader.history.store import CandlestickStore
+from lambdatrader.candlestickstore import CandlestickStore
+from lambdatrader.exchanges.enums import POLONIEX
+
 from lambdatrader.models.candlestick import Candlestick
-from lambdatrader.utils import pair_from, get_project_directory
+from lambdatrader.utilities.utils import pair_from, get_project_directory
 
 files = glob.glob(os.path.join(os.path.abspath(get_project_directory()), 'data/') + '*.csv')
 
-store = CandlestickStore.get_instance()
+store = CandlestickStore.get_for_exchange(POLONIEX)
 
 for file_path in files:
     currency_name = file_path[file_path.index('BTC_') + 4: file_path.index('.csv')]
@@ -40,4 +42,4 @@ for file_path in files:
                 )
             )
 
-store._CandlestickStore__persist_chunks()  # TODO Do this in CandlestickStore.
+store.persist_chunks()  # TODO Do this in CandlestickStore.
