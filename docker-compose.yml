@@ -1,51 +1,23 @@
-version: '3'
+version: '2.2'
 services:
   lambdatrader:
-    build: .
-    command: python3 -m lambdatrader.entrypoints.livetrade
-    volumes:
-      - "~/.lambdatrader:/root/.lambdatrader"
-    env_file:
-      - .env
-    depends_on:
-      - mongodb
-
-  mongodb:
-    image: "mongo:3.4"
-    volumes:
-      - "mongodata:/data/db"
+    extends:
+      file: docker-compose.base.yml
+      service: lambdatrader
 
   lambdatrader1:
-    build: .
-    command: python3 -m lambdatrader.entrypoints.livetrade
-    volumes:
-      - "${HISTORY_DB_HOST_DIR}:${HISTORY_DB_DOCKER_DIR}"
+    extends:
+      file: docker-compose.base.yml
+      service: lambdatrader
     env_file:
-      - .env
       - exclude/configs/lambdatrader1.env
-    depends_on:
-      - mongodb
-
-  mongodb:
-    image: "mongo:3.4"
-    volumes:
-      - "mongodata:/data/db"
 
   lambdatrader2:
-    build: .
-    command: python3 -m lambdatrader.entrypoints.livetrade
-    volumes:
-      - "${HISTORY_DB_HOST_DIR}:${HISTORY_DB_DOCKER_DIR}"
+    extends:
+      file: docker-compose.base.yml
+      service: lambdatrader
     env_file:
-      - .env
       - exclude/configs/lambdatrader2.env
-    depends_on:
-      - mongodb
-
-  mongodb:
-    image: "mongo:3.4"
-    volumes:
-      - "mongodata:/data/db"
 
 volumes:
   mongodata:

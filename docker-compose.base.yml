@@ -1,0 +1,19 @@
+version: '2.2'
+services:
+  lambdatrader:
+    build: .
+    command: python3 -m lambdatrader.entrypoints.livetrade
+    volumes:
+      - "~/.lambdatrader:/root/.lambdatrader"
+    env_file:
+      - .env
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: "mongo:3.4"
+    volumes:
+      - "mongodata:/data/db"
+
+volumes:
+  mongodata:
