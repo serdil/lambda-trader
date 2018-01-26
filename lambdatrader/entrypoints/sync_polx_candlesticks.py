@@ -14,6 +14,7 @@ periods = [M5]
 if len(sys.argv) == 2:
     periods = [PeriodEnum.from_name(period_name) for period_name in sys.argv[1].split(',')]
 
+print('periods:',periods)
 
 logger = get_logger_with_all_handlers('sync_polx_candlesticks')
 
@@ -26,8 +27,8 @@ while True:
     try:
         for period in periods:
             market_info.fetch_candlesticks(period=period)
+            market_info.candlestick_store.persist_chunks()
         logger.debug('fetch completed')
-        market_info.candlestick_store.persist_chunks()
         logger.debug('persisted chunks')
         if first_fetch:
             logger.info('first fetch completed')
