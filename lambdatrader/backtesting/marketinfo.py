@@ -33,7 +33,7 @@ class BacktestingMarketInfo(BaseMarketInfo):
         return self.__market_date
 
     def inc_market_date(self):
-        self.__market_date += M5_SECONDS
+        self.__market_date += self.step
 
     def get_pair_candlestick(self, pair, ind=0, period=M5):
         if ind < 0:
@@ -153,6 +153,12 @@ class BacktestingMarketInfo(BaseMarketInfo):
         return min(map(
             lambda p: self.__get_pair_end_time_from_store(pair=p), self.__get_pairs_from_store()))
 
+    def get_pair_start_time(self, pair):
+        return self.__get_pair_start_time_from_store(pair)
+
+    def get_pair_end_time(self, pair):
+        return self.__get_pair_end_time_from_store(pair)
+
     def __get_pairs_from_store(self):
         return self.candlestick_store.get_pairs()
 
@@ -198,3 +204,7 @@ class BacktestingMarketInfo(BaseMarketInfo):
 
     def get_indicator(self, pair, indicator: IndicatorEnum, args, ind=0, period=M5):
         return self.indicators.compute(pair, indicator, args, ind=ind, period=period)
+
+    @property
+    def step(self):
+        return M5_SECONDS
