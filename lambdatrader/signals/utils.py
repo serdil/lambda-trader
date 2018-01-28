@@ -53,7 +53,7 @@ def get_candle(market_info, pair, ind, period):
 
 def get_indicator(market_info, pair, indicator: IndicatorEnum, args: List, ind, period):
     ind_output = market_info.get_indicator(pair, indicator, args, ind, period=period)
-    try:
-        return list(ind_output)
-    except TypeError:
-        return [ind_output]
+    if isinstance(ind_output, tuple):
+        return ind_output
+    else:
+        return ind_output,

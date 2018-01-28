@@ -1,3 +1,4 @@
+import pprint
 from typing import List
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
@@ -27,16 +28,28 @@ class FeatureSet:
     def __len__(self):
         return self.num_features
 
+    def __repr__(self):
+        dict_with_values = {}
+        for name, ind in self.feature_dict.items():
+            dict_with_values[name] = self.feature_values[ind]
+        return 'Feature(dict={})'.format(pprint.pformat(dict_with_values))
+
 
 class DataPoint:
     def __init__(self, feature_set: FeatureSet, value):
         self.features = feature_set
         self.value = value
 
+    def __repr__(self):
+        return 'DataPoint(value={}, features={})'.format(self.value, pprint.pformat(self.features))
+
 
 class DataSet:
     def __init__(self, data_points: List[DataPoint]):
         self.data_points = data_points
+
+    def __repr__(self):
+        return 'DataSet(data_points={})'.format(pprint.pformat(self.data_points))
 
 
 def create_pair_dataset_from_history(market_info: BacktestingMarketInfo,
@@ -66,7 +79,7 @@ def create_pair_dataset_from_history(market_info: BacktestingMarketInfo,
 
 def compute_feature_set(market_info, pair, feature_functions):
     features = []
-    for func in feature_functions:
+    for i, func in enumerate(feature_functions):
         new_features = func(market_info, pair)
         for feature in new_features:
             features.append(feature)

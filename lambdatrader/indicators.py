@@ -17,6 +17,8 @@ class Indicators:
         indicator_function = indicator.function()
         indicator_input = self.get_input(pair=pair, ind=ind, period=period)
         range_results = indicator_function(indicator_input, *args)
+        if not isinstance(range_results, tuple):
+            range_results = range_results,
         results_list = []
         for range_result in range_results:
             results_list.append(range_result[-1])
