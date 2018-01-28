@@ -1,6 +1,5 @@
 from typing import List
 
-from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.indicator_functions import IndicatorEnum
 
 
@@ -48,7 +47,7 @@ def candlestick_volume(candlestick):
     return candlestick.base_volume
 
 
-def get_candle(market_info: BacktestingMarketInfo, pair, ind, period):
+def get_candle(market_info, pair, ind, period):
     return market_info.get_pair_period_candlestick(pair, ind, period=period)
 
 
