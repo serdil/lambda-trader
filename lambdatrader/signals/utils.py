@@ -53,4 +53,8 @@ def get_candle(market_info: BacktestingMarketInfo, pair, ind, period):
 
 
 def get_indicator(market_info, pair, indicator: IndicatorEnum, args: List, ind, period):
-    return market_info.get_indicator(pair, indicator, args, ind, period=period)
+    ind_output = market_info.get_indicator(pair, indicator, args, ind, period=period)
+    try:
+        return list(ind_output)
+    except TypeError:
+        return [ind_output]
