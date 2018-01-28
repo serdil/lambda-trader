@@ -92,7 +92,7 @@ class RetracementSignalGenerator(BaseSignalGenerator, OptimizationMixin):
     BUY_PROFIT_FACTOR_P2 = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
     RETRACEMENT_RATIO_P3 = RETRACEMENT_SIGNALS__RETRACEMENT_RATIO
 
-    def __init__(self, market_info, live=False, silent=False, optimize=True):
+    def __init__(self, market_info, live=False, silent=False, optimize=False):
         super().__init__(market_info, live, silent)
         self.__optimize = optimize
 
