@@ -10,7 +10,7 @@ class Feature:
 
 
 class FeatureSet:
-    def __init__(self, features: List(Feature)):
+    def __init__(self, features: List[Feature]):
         self.feature_values = []
         self.feature_dict = {}
         for feature in features:
@@ -35,7 +35,7 @@ class DataPoint:
 
 
 class DataSet:
-    def __init__(self, data_points: List(DataPoint)):
+    def __init__(self, data_points: List[DataPoint]):
         self.data_points = data_points
 
 
