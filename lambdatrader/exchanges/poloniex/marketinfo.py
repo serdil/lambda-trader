@@ -71,7 +71,7 @@ class PolxMarketInfo(BaseMarketInfo):
     def market_date(self):
         return get_now_timestamp()
 
-    def get_pair_candlestick(self, pair, ind=0, period=M5):
+    def get_pair_candlestick(self, pair, ind=0, period=M5, allow_lookahead=False):
         if period is not M5:
             raise NotImplementedError
         date = self.candlestick_store.get_pair_period_newest_date(pair) - ind * period.seconds()

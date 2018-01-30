@@ -35,8 +35,8 @@ class BacktestingMarketInfo(BaseMarketInfo):
     def inc_market_date(self):
         self.__market_date += self.step
 
-    def get_pair_candlestick(self, pair, ind=0, period=M5):
-        if ind < 0:
+    def get_pair_candlestick(self, pair, ind=0, period=M5, allow_lookahead=False):
+        if ind < 0 and not allow_lookahead:
             raise Exception('Cannot look ahead.')
         try:
             return self.get_pair_period_candlestick(pair, ind=ind, period=period)

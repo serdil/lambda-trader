@@ -14,8 +14,8 @@ print(market_info)
 now_date = date_floor(get_now_timestamp())
 
 dataset_symbol = 'BTC_ETH'
-dataset_start_date = now_date - seconds(days=1, hours=6)
-dataset_end_date = now_date - seconds(days=1)
+dataset_start_date = now_date - seconds(days=7, hours=1)
+dataset_end_date = now_date - seconds(days=7)
 
 dataset = create_pair_dataset_from_history(market_info=market_info,
                                            pair=dataset_symbol,
