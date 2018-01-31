@@ -25,4 +25,6 @@ dataset = create_pair_dataset_from_history(market_info=market_info,
                                            value_function=make_max_price_in_fifteen_mins())
 
 print(dataset)
+print('number of data points:', len(dataset.data_points))
+print('number of features:', len(dataset.data_points[0].features.feature_values))
 print([data_point.value for data_point in dataset.data_points])
