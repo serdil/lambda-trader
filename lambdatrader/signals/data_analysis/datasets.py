@@ -97,10 +97,10 @@ def create_pair_dataset_from_history(market_info: BacktestingMarketInfo,
                                      end_date,
                                      feature_functions,
                                      value_function,
-                                     get_cached=False,
+                                     cache_and_get_cached=False,
                                      feature_functions_key=None,
                                      value_function_key=None):
-    if get_cached:
+    if cache_and_get_cached:
         if feature_functions_key is None:
             feature_functions_key = len(tuple(feature_functions))
         if value_function_key is None:
