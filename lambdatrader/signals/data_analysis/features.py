@@ -1,13 +1,13 @@
 from typing import List
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.constants import PeriodEnum, M5
+from lambdatrader.constants import PeriodEnum, M5, H, H4, M15, D
 from lambdatrader.indicator_functions import IndicatorEnum
 from lambdatrader.signals.data_analysis.datasets import Feature
 from lambdatrader.signals.utils import get_candle, get_indicator
 
 LOOKBACK_NUM_CANDLES = 15
-CANDLE_PERIODS = [M5]
+CANDLE_PERIODS = [M5, M15, H, H4, D]
 
 
 def get_feature_funcs_iter():
