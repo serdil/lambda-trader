@@ -15,17 +15,6 @@ class Indicators:
         self._indicator_cache = {}
         self.market_info = market_info
 
-    def compute_old(self, pair, indicator: IndicatorEnum, args, ind=0, period=M5):
-        indicator_function = indicator.function()
-        indicator_input = self.get_input(pair=pair, ind=ind, period=period)
-        range_results = indicator_function(indicator_input, *args)
-        if not isinstance(range_results, tuple):
-            range_results = range_results,
-        results_list = []
-        for range_result in range_results:
-            results_list.append(range_result[-1])
-        return tuple(results_list)
-
     def compute(self, pair, indicator: IndicatorEnum, args, ind=0, period=M5):
         cache_key = self.cache_key(self.ind_date(ind, period=period), indicator, args, period)
         if cache_key not in self._indicator_cache:
@@ -56,26 +45,26 @@ class Indicators:
             results = results,
         return results
 
-    # TODO check offset / date validity
-    def get_input_for_range(self, pair, ind, period, pre_offset=100, post_offset=1000):
-        backwards_candles = []
+    def get_input_for_range(self, pair, ind, period, pre_offset=250, post_offset=1000):
+        now_and_backwards_candles = []
         try:
-            for i in range(ind+1, ind+pre_offset+1):
+            for i in range(ind, ind+pre_offset+1):
                 candle = self.market_info.get_pair_candlestick(pair, ind=i,
                                                                period=period, allow_lookahead=True)
-                backwards_candles.append(candle)
+                now_and_backwards_candles.append(candle)
         except KeyError:
             print('Indicators: Error while getting candlestick for pair:', pair)
-        start_ind = ind + len(backwards_candles)
+        start_ind = ind + len(now_and_backwards_candles) - 1
         forward_candles = []
         try:
-            for i in range(ind, ind-post_offset, -1):
+            for i in range(ind-1, ind-post_offset-1, -1):
                 candle = self.market_info.get_pair_candlestick(pair, ind=i,
                                                                period=period, allow_lookahead=True)
                 forward_candles.append(candle)
         except KeyError:
             print('Indicators: Error while getting candlestick for pair:', pair)
-        all_candles = backwards_candles[::-1] + forward_candles
+        end_ind = ind - len(forward_candles) - 1
+        all_candles = now_and_backwards_candles[::-1] + forward_candles
         input_dict = {
             'open': np.array(candlesticks_open(all_candles)),
             'high': np.array(candlesticks_high(all_candles)),
@@ -83,21 +72,7 @@ class Indicators:
             'close': np.array(candlesticks_close(all_candles)),
             'volume': np.array(candlesticks_volume(all_candles))
         }
-        end_ind = ind - (len(forward_candles)-1)
         return start_ind, end_ind, input_dict
-
-    def get_input(self, pair, ind=0, period=M5, num_candles=100):
-        input_candles = []
-        for i in range(ind+num_candles-1, ind-1, -1):
-            candle = self.market_info.get_pair_candlestick(pair, ind=i, period=period)
-            input_candles.append(candle)
-        return {
-            'open': np.array(candlesticks_open(input_candles)),
-            'high': np.array(candlesticks_high(input_candles)),
-            'low': np.array(candlesticks_low(input_candles)),
-            'close': np.array(candlesticks_close(input_candles)),
-            'volume': np.array(candlesticks_volume(input_candles))
-        }
 
     @property
     def market_date(self):
@@ -112,4 +87,4 @@ class Indicators:
 
     @staticmethod
     def cache_key(market_date, indicator, args, period):
-        return market_date, indicator, tuple(args), period
+        return market_date, indicator.name, tuple(args), period.name
