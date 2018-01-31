@@ -19,6 +19,8 @@ class BacktestingMarketInfo(BaseMarketInfo):
         self.__last_high_calc_date = {}
         self.__last_high_calc_high = {}
 
+        self.__candlestick_cache = {}
+
     def get_exchange(self) -> ExchangeEnum:
         return ExchangeEnum.BACKTESTING
 
@@ -45,16 +47,29 @@ class BacktestingMarketInfo(BaseMarketInfo):
             raise e
 
     def get_pair_period_candlestick(self, pair, ind, period=M5):
+        candle_date = date_floor(self.market_date, period=period) - ind * period.seconds()
+        cache_key = self.candlestick_cache_key(candle_date, pair, period)
+        try:
+            return self.__candlestick_cache[cache_key]
+        except KeyError:
+            return self.compute_and_cache_pair_period_candlestick(pair, ind, period)
+
+    def compute_and_cache_pair_period_candlestick(self, pair, ind, period):
         end_date = date_floor(self.market_date, period=period) - ind * period.seconds()
         start_date = (date_floor(self.market_date, period=period)
-                      - (ind+1) * period.seconds() + M5_SECONDS)
+                      - (ind + 1) * period.seconds() + M5_SECONDS)
         candlestick = self.candlestick_store.get_candlestick(pair=pair, date=start_date)
-        for date in range(start_date+M5_SECONDS, end_date+M5_SECONDS, M5_SECONDS):
-            next_candlestick = self.candlestick_store.get_candlestick(pair=pair,
-                                                                      date=end_date)
+        for date in range(start_date + M5_SECONDS, end_date + M5_SECONDS, M5_SECONDS):
+            next_candlestick = self.candlestick_store.get_candlestick(pair=pair, date=end_date)
             candlestick = candlestick.batch_with(next_candlestick)
         candlestick.period = period
+        cache_key = self.candlestick_cache_key(end_date, pair, period)
+        self.__candlestick_cache[cache_key] = candlestick
         return candlestick
+
+    @staticmethod
+    def candlestick_cache_key(date, pair, period):
+        return date, pair, period.name
 
     def get_pair_latest_candlestick(self, pair, period=M5):
         return self.get_pair_candlestick(pair=pair, ind=0, period=period)
