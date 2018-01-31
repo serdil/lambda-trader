@@ -1,6 +1,8 @@
 import pprint
 from typing import List
 
+import numpy as np
+
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 
 
@@ -12,36 +14,63 @@ class Feature:
 
 class FeatureSet:
     def __init__(self, features: List[Feature]):
-        self.feature_values = []
-        self.feature_dict = {}
+        self._feature_values = []
+        self._feature_names = []
+        self._feature_dict = {}
         for feature in features:
-            self.feature_dict[feature.name] = len(self.feature_values)
-            self.feature_values.append(feature.value)
-        self.num_features = len(self.feature_values)
+            self._feature_dict[feature.name] = len(self._feature_values)
+            self.feature_names.append(feature.name)
+            self._feature_values.append(feature.value)
+        self.num_features = len(self._feature_values)
+
+    @property
+    def feature_values(self):
+        return self._feature_values
+
+    @property
+    def feature_names(self):
+        return self._feature_names
+
+    @property
+    def feature_dict(self):
+        return self._feature_dict
 
     def __getitem__(self, item):
         if isinstance(item, str):
-            return self.feature_values[self.feature_dict[item]]
+            return self._feature_values[self._feature_dict[item]]
         elif isinstance(item, int):
-            return self.feature_values[item]
+            return self._feature_values[item]
 
     def __len__(self):
         return self.num_features
 
     def __repr__(self):
         dict_with_values = {}
-        for name, ind in self.feature_dict.items():
-            dict_with_values[name] = self.feature_values[ind]
+        for name, ind in self._feature_dict.items():
+            dict_with_values[name] = self._feature_values[ind]
         return 'Feature(dict={})'.format(pprint.pformat(dict_with_values))
 
 
 class DataPoint:
     def __init__(self, feature_set: FeatureSet, value):
-        self.features = feature_set
+        self.feature_set = feature_set
         self.value = value
 
     def __repr__(self):
-        return 'DataPoint(value={}, features={})'.format(self.value, pprint.pformat(self.features))
+        return 'DataPoint(value={}, features={})'.format(self.value,
+                                                         pprint.pformat(self.feature_set))
+
+    @property
+    def feature_values(self):
+        return self.feature_set.feature_values
+
+    @property
+    def feature_names(self):
+        return self.feature_set.feature_names
+
+    @property
+    def feature_dict(self):
+        return self.feature_set.feature_dict
 
 
 class DataSet:
@@ -50,6 +79,15 @@ class DataSet:
 
     def __repr__(self):
         return 'DataSet(data_points={})'.format(pprint.pformat(self.data_points))
+
+    def get_first_feature_names(self):
+        return self.data_points[0].feature_names
+
+    def get_numpy_feature_matrix(self):
+        return np.array([data_point.feature_values for data_point in self.data_points])
+
+    def get_numpy_value_array(self):
+        return np.array([data_point.value for data_point in self.data_points])
 
 
 def create_pair_dataset_from_history(market_info: BacktestingMarketInfo,
