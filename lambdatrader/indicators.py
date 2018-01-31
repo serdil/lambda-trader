@@ -41,9 +41,9 @@ class Indicators:
     def get_indicator_results(indicator_input, indicator, args):
         indicator_function = indicator.function()
         results = indicator_function(indicator_input, *args)
-        if not isinstance(results, tuple):
+        if not isinstance(results, list):
             results = results,
-        return results
+        return tuple(results)
 
     def get_input_for_range(self, pair, ind, period, pre_offset=250, post_offset=1000):
         now_and_backwards_candles = []
