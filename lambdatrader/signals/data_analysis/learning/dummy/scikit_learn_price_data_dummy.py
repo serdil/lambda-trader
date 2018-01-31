@@ -17,7 +17,7 @@ print(market_info)
 latest_market_date = market_info.get_max_pair_end_time()
 
 dataset_symbol = 'BTC_ETH'
-dataset_start_date = latest_market_date - seconds(days=7, hours=24)
+dataset_start_date = latest_market_date - seconds(days=7, minutes=20)
 dataset_end_date = latest_market_date - seconds(days=7)
 
 dataset = create_pair_dataset_from_history(market_info=market_info,
@@ -25,7 +25,8 @@ dataset = create_pair_dataset_from_history(market_info=market_info,
                                            start_date=dataset_start_date,
                                            end_date=dataset_end_date,
                                            feature_functions=list(get_feature_funcs_iter()),
-                                           value_function=make_cont_max_price_in_fifteen_mins())
+                                           value_function=make_cont_max_price_in_fifteen_mins(),
+                                           get_cached=True)
 
 print('created dataset')
 
