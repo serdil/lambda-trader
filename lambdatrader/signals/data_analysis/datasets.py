@@ -110,7 +110,6 @@ def create_pair_dataset_from_history(market_info: BacktestingMarketInfo,
                                                           end_date,
                                                           feature_functions_key,
                                                           value_function_key)
-        print(cache_key, hash(cache_key))
         try:
             return shelve_cache_get(cache_key)
         except KeyError:

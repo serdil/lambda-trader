@@ -46,4 +46,5 @@ def save_object_with_key(key, object):
     _module_init()
     logger.debug('save_object_with_key:%s', key)
     new_doc = create_binary_object_document(key, object)
-    binary_objects.find_one_and_update({'key': key}, {'$set': {'object': new_doc['object']}}, upsert=True)
+    binary_objects.find_one_and_update({'key': key}, {'$set': {'object': new_doc['object']}},
+                                       upsert=True)
