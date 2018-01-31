@@ -4,6 +4,7 @@ from typing import List
 import numpy as np
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
+from lambdatrader.shelve_cache import shelve_cache_save, shelve_cache_get
 
 
 class Feature:
@@ -95,7 +96,70 @@ def create_pair_dataset_from_history(market_info: BacktestingMarketInfo,
                                      start_date,
                                      end_date,
                                      feature_functions,
-                                     value_function):
+                                     value_function,
+                                     get_cached=False,
+                                     feature_functions_key=None,
+                                     value_function_key=None):
+    if get_cached:
+        if feature_functions_key is None:
+            feature_functions_key = len(tuple(feature_functions))
+        if value_function_key is None:
+            value_function_key = 'v'
+        cache_key = _pair_dataset_cache_key_without_funcs(pair,
+                                                          start_date,
+                                                          end_date,
+                                                          feature_functions_key,
+                                                          value_function_key)
+        print(cache_key, hash(cache_key))
+        try:
+            return shelve_cache_get(cache_key)
+        except KeyError:
+            return _compute_and_cache_pair_dataset(market_info,
+                                                   pair,
+                                                   start_date,
+                                                   end_date,
+                                                   feature_functions,
+                                                   value_function,
+                                                   feature_functions_key,
+                                                   value_function_key)
+    else:
+        return _compute_pair_dataset(market_info,
+                                     pair,
+                                     start_date,
+                                     end_date,
+                                     feature_functions,
+                                     value_function)
+
+
+def _compute_and_cache_pair_dataset(market_info,
+                                    pair,
+                                    start_date,
+                                    end_date,
+                                    feature_functions,
+                                    value_function,
+                                    feature_functions_key,
+                                    value_function_key):
+    data_set = _compute_pair_dataset(market_info,
+                                     pair,
+                                     start_date,
+                                     end_date,
+                                     feature_functions,
+                                     value_function)
+    cache_key = _pair_dataset_cache_key_without_funcs(pair,
+                                                      start_date,
+                                                      end_date,
+                                                      feature_functions_key,
+                                                      value_function_key)
+    shelve_cache_save(cache_key, data_set)
+    return data_set
+
+
+def _compute_pair_dataset(market_info,
+                          pair,
+                          start_date,
+                          end_date,
+                          feature_functions,
+                          value_function):
     pair_start_date = market_info.get_pair_start_time(pair)
     pair_end_date = market_info.get_pair_end_time(pair)
 
@@ -113,6 +177,16 @@ def create_pair_dataset_from_history(market_info: BacktestingMarketInfo,
         market_info.inc_market_date()
 
     return DataSet(data_points=data_points)
+
+
+# TODO doesn't work properly right now
+def _pair_dataset_cache_key(pair, start_date, end_date, feature_functions, value_function):
+    return pair, start_date, end_date, tuple(feature_functions), value_function
+
+
+def _pair_dataset_cache_key_without_funcs(pair, start_date, end_date,
+                                          feature_functions_key, value_function_key):
+    return pair, start_date, end_date, feature_functions_key, value_function_key
 
 
 def compute_feature_set(market_info, pair, feature_functions):
