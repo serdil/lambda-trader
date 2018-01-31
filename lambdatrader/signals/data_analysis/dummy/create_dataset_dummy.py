@@ -4,7 +4,7 @@ from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
 from lambdatrader.signals.data_analysis.features import get_feature_funcs_iter
 from lambdatrader.signals.data_analysis.values import (
-    make_class_max_price_in_fifteen_mins,
+    make_cont_max_price_in_fifteen_mins,
 )
 from lambdatrader.utilities.utils import get_now_timestamp, date_floor, seconds
 
@@ -24,7 +24,7 @@ dataset = create_pair_dataset_from_history(market_info=market_info,
                                            start_date=dataset_start_date,
                                            end_date=dataset_end_date,
                                            feature_functions=list(get_feature_funcs_iter()),
-                                           value_function=make_class_max_price_in_fifteen_mins())
+                                           value_function=make_cont_max_price_in_fifteen_mins())
 
 print(dataset)
 print('number of data points:', len(dataset.data_points))
