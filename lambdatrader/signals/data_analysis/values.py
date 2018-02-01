@@ -58,3 +58,21 @@ def make_cont_max_price_in_future(num_candles, candle_period: PeriodEnum):
         return highest_until_future / last_candle.close - 1.0
 
     return value_cont_max_price_in_future
+
+
+def make_cont_trade_return(num_candles=3, tp_level=1.03, candle_period=M5):
+    def value_cont_trade_return(market_info: BacktestingMarketInfo, pair):
+        max_price_func = make_cont_max_price_in_future(num_candles=num_candles,
+                                                       candle_period=candle_period)
+        future_price_func = make_cont_close_price_in_future(num_candles=num_candles,
+                                                           candle_period=candle_period)
+        max_price = max_price_func(market_info, pair)
+        future_price = future_price_func(market_info, pair)
+        last_candle = market_info.get_pair_period_candlestick(pair, 0, period=candle_period)
+        tp_hit = max_price / last_candle.close >= tp_level
+        if tp_hit:
+            return tp_level - 1.0
+        else:
+            return future_price
+
+    return value_cont_trade_return

@@ -10,7 +10,7 @@ from lambdatrader.signals.data_analysis.learning.dummy.learning_utils_dummy impo
     train_and_test_model, print_model_stats,
 )
 from lambdatrader.signals.data_analysis.values import (
-    make_cont_close_price_in_fifteen_mins,
+    make_cont_trade_return,
 )
 from lambdatrader.utilities.utils import seconds
 
@@ -45,13 +45,13 @@ dataset = create_pair_dataset_from_history(market_info=market_info,
                                            start_date=dataset_start_date,
                                            end_date=dataset_end_date,
                                            feature_functions=list(get_feature_funcs_iter()),
-                                           value_function=make_cont_close_price_in_fifteen_mins(),
+                                           value_function=make_cont_trade_return(),
                                            cache_and_get_cached=True,
-                                           value_function_key='close_delta_15min')
+                                           value_function_key='trade_return_15_min_4')
 
 print('created/loaded dataset\n')
 
-xgbr = XGBRegressor(n_estimators=1000, nthread=8, learning_rate=0.05)
+xgbr = XGBRegressor()
 
 stats = train_and_test_model(dataset, xgbr, train_ratio=0.9)
 print_model_stats(stats)

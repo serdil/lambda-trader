@@ -76,8 +76,8 @@ def print_model_stats(stats):
             print('{:<80} {}'.format(name, importance))
         print()
 
-    real = stats['real'] * 100
-    preds = stats['pred'] * 100
+    real = stats['real']
+    preds = stats['pred']
 
     real_preds = list(zip(real, preds))
     print('real, pred:', pprint.pformat(real_preds))
