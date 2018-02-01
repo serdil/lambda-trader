@@ -7,7 +7,7 @@ from lambdatrader.shelve_cache import shelve_cache_save
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
 from lambdatrader.signals.data_analysis.features import get_feature_funcs_iter
 from lambdatrader.signals.data_analysis.learning.dummy.learning_utils_dummy import (
-    train_and_test_model, print_model_stats,
+    train_and_test_model, print_model_metrics,
 )
 from lambdatrader.signals.data_analysis.values import (
     make_cont_trade_return,
@@ -47,17 +47,17 @@ dataset = create_pair_dataset_from_history(market_info=market_info,
                                            feature_functions=list(get_feature_funcs_iter()),
                                            value_function=make_cont_trade_return(),
                                            cache_and_get_cached=True,
-                                           value_function_key='trade_return_15_min_4')
+                                           value_function_key='trade_return_15_mins')
 
 print('created/loaded dataset\n')
 
 xgbr = XGBRegressor()
 
-stats = train_and_test_model(dataset, xgbr, train_ratio=0.9)
-print_model_stats(stats)
+metrics = train_and_test_model(dataset, xgbr, train_ratio=0.9)
+print_model_metrics(metrics)
 
 
-model_name = 'xgbr_close_delta_15_min_{}'.format(dataset_len)
+model_name = 'xgbr_trade_return_15_mins_{}'.format(dataset_len)
 
 save(model_name, xgbr)
 print('saved model:', model_name)

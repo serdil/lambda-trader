@@ -7,7 +7,7 @@ from lambdatrader.shelve_cache import shelve_cache_save
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
 from lambdatrader.signals.data_analysis.features import get_feature_funcs_iter
 from lambdatrader.signals.data_analysis.learning.dummy.learning_utils_dummy import (
-    train_and_test_model, print_model_stats,
+    train_and_test_model, print_model_metrics,
 )
 from lambdatrader.signals.data_analysis.values import (
     make_cont_close_price_in_one_hour,
@@ -56,7 +56,7 @@ n_estimators = 100
 rfr = RandomForestRegressor(n_estimators=n_estimators)
 
 stats = train_and_test_model(dataset, rfr)
-print_model_stats(stats)
+print_model_metrics(stats)
 
 model_name = 'rfr_close_delta_{}_{}'.format(dataset_len, n_estimators)
 
