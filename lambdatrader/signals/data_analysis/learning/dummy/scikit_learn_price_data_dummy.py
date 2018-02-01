@@ -30,10 +30,15 @@ print(market_info)
 latest_market_date = market_info.get_max_pair_end_time()
 
 dataset_symbol = 'BTC_ETH'
-dataset_start_date = latest_market_date - seconds(days=7, hours=24*7)
+
+dataset_start_date = latest_market_date - seconds(days=7, hours=24*30)
+# dataset_start_date = latest_market_date - seconds(days=7, hours=24*7)
+# dataset_start_date = latest_market_date - seconds(days=7, hours=24)
 # dataset_start_date = latest_market_date - seconds(days=7, minutes=20)
 
 dataset_end_date = latest_market_date - seconds(days=7)
+
+dataset_len = dataset_end_date - dataset_start_date
 
 dataset = create_pair_dataset_from_history(market_info=market_info,
                                            pair=dataset_symbol,
@@ -69,7 +74,7 @@ X_test = X[split_ind:]
 y_test = y[split_ind:]
 
 
-rfr = RandomForestRegressor(n_estimators=50)
+rfr = RandomForestRegressor(n_estimators=10)
 rfr.fit(X_train, y_train)
 
 rfr_pred = rfr.predict(X_test)
@@ -82,8 +87,8 @@ real_sign = y_test > 0
 
 sign_equal = np.equal(real_sign, pred_sign)
 
-# print('predictions:', rfr_pred * 100)
-# print('real:', y_test * 100)
+print('predictions:', rfr_pred * 100)
+print('real:', y_test * 100)
 
 rfr_importance = rfr.feature_importances_
 name_importance = zip(feature_names, rfr_importance)
@@ -97,6 +102,15 @@ for name, importance in name_importance_sorted:
 print('mse:', rfr_mse, 'score:', rfr_score)
 
 unique, counts = np.unique(sign_equal, return_counts=True)
-print(dict(zip(unique, counts)))
+true_false_dict = dict(zip(unique, counts))
+print(true_false_dict)
 
-save('rfr', rfr)
+print('real positive ratio:', np.sum(real_sign) / float(len(real_sign)))
+
+true_ratio = true_false_dict.get(True, 0) / sum(true_false_dict.values())
+print('true ratio:', true_ratio)
+
+model_name = 'rfr_{}'.format(dataset_len)
+
+save(model_name, rfr)
+print('saved model:', model_name)
