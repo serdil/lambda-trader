@@ -34,7 +34,7 @@ dataset_symbol = 'BTC_ETH'
 dataset_start_date = latest_market_date - seconds(days=7, hours=24*30)
 # dataset_start_date = latest_market_date - seconds(days=7, hours=24*7)
 # dataset_start_date = latest_market_date - seconds(days=7, hours=24)
-# dataset_start_date = latest_market_date - seconds(days=7, minutes=20)
+# dataset_start_date = latest_market_date - seconds(days=7, minutes=30)
 
 dataset_end_date = latest_market_date - seconds(days=7)
 

@@ -53,9 +53,21 @@ def test_model(model, x_test, y_test, classification_task=False):
 
         sign_equal = np.equal(real_sign, pred_sign)
 
-        real_positive_ratio = np.sum(real_sign) / float(len(real_sign))
-        sign_equal_ratio = np.sum(sign_equal) / float(len(sign_equal))
+        n_samples = len(y_test)
 
+        real_positive_ratio = np.sum(real_sign) / n_samples
+        sign_equal_ratio = np.sum(sign_equal) / n_samples
+
+        pred_real_sign = list(zip(pred_sign, real_sign))
+        false_positive_count = sum([1 for elem in pred_real_sign if elem == (True, False)])
+        true_positive_count = sum([1 for elem in pred_real_sign if elem == (True, True)])
+        false_negative_count = sum([1 for elem in pred_real_sign if elem == (False, True)])
+        true_negative_count = sum([1 for elem in pred_real_sign if elem == (False, False)])
+
+        false_positive_ratio = false_positive_count / n_samples
+        true_positive_ratio = true_positive_count / n_samples
+        false_negative_ratio = false_negative_count / n_samples
+        true_negative_ratio = true_negative_count / n_samples
 
         return {
             'pred': pred,
@@ -65,7 +77,11 @@ def test_model(model, x_test, y_test, classification_task=False):
             'sign_equal_ratio': sign_equal_ratio,
             'real_positive_ratio': real_positive_ratio,
             'mse': mse,
-            'score': score
+            'score': score,
+            'false_positive_ratio': false_positive_ratio,
+            'true_positive_ratio': true_positive_ratio,
+            'false_negative_ratio': false_negative_ratio,
+            'true_negative_ratio': true_negative_ratio,
         }
 
 
@@ -76,17 +92,17 @@ def print_model_stats(stats):
             print('{:<80} {}'.format(name, importance))
         print()
 
+    pred = stats['pred']
     real = stats['real']
-    preds = stats['pred']
 
-    real_preds = list(zip(real, preds))
-    print('real, pred:', pprint.pformat(real_preds))
+    pred_real = list(zip(pred, real))
+    print('pred, real:', pprint.pformat(pred_real))
 
-    real_sign = stats['real_sign']
     pred_sign = stats['pred_sign']
+    real_sign = stats['real_sign']
 
-    real_pred_sign = list(zip(real_sign, pred_sign))
-    print('real_sign, pred_sign:', pprint.pformat(real_pred_sign))
+    pred_real_sign = list(zip(pred_sign, real_sign))
+    print('pred_sign, real_sign:', pprint.pformat(pred_real_sign))
 
     print()
     print('training time:', stats['training_time'])
@@ -95,3 +111,9 @@ def print_model_stats(stats):
     print()
     print('real positive ratio:', stats['real_positive_ratio'])
     print('sign equal ratio:', stats['sign_equal_ratio'])
+    print()
+    print('false positive ratio:', stats['false_positive_ratio'])
+    print('true positive ratio:', stats['true_positive_ratio'])
+    print()
+    print('false negative ratio:', stats['false_negative_ratio'])
+    print('true negative ratio:', stats['true_negative_ratio'])
