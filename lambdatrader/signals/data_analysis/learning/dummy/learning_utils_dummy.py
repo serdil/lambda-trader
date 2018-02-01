@@ -30,11 +30,13 @@ def train_and_test_model(dataset, model, classification_task=False, train_ratio=
         'training_time': training_time,
     }
 
-    if hasattr(model, 'feature_importances_'):
-        _importance = model.feature_importances_
-        _name_importance = zip(_feature_names, _importance)
-        name_importance_sorted = list(reversed(sorted(_name_importance, key=itemgetter(1))))[:20]
-        metrics['importance'] = name_importance_sorted
+    if not classification_task:
+        if hasattr(model, 'feature_importances_'):
+            _importance = model.feature_importances_
+            _name_importance = zip(_feature_names, _importance)
+            name_importance_sorted = list(reversed(sorted(_name_importance,
+                                                          key=itemgetter(1))))[:20]
+            metrics['importance'] = name_importance_sorted
 
     test_metrics = test_model(model, X_test, y_test, classification_task=classification_task)
 
@@ -46,11 +48,13 @@ def test_model(model, x_test, y_test, classification_task=False):
     pred = model.predict(x_test)
     real = y_test
 
-    pred_real_sorted = list(reversed(sorted(list(zip(pred, real)), key=itemgetter(0))))
+    pred_real = list(zip(pred, real))
+    score = model.score(x_test, y_test)
 
     if not classification_task:
         mse = sklearn_metrics.mean_squared_error(y_test, pred)
-        score = model.score(x_test, y_test)
+
+        pred_real_sorted = list(reversed(sorted(list(zip(pred, real)), key=itemgetter(0))))
 
         pred_sign = pred > 0
         real_sign = y_test > 0
@@ -109,6 +113,13 @@ def test_model(model, x_test, y_test, classification_task=False):
             'true_positive_avg': true_positive_avg,
             'false_positive_avg': false_positive_avg,
             'positive_avg': positive_avg
+        }
+    else:
+        return {
+            'pred': pred,
+            'real': real,
+            'pred_real': pred_real,
+            'score': score
         }
 
 

@@ -2,7 +2,7 @@ from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.candlestickstore import CandlestickStore
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
-from lambdatrader.signals.data_analysis.features import get_feature_funcs_iter
+from lambdatrader.signals.data_analysis.feature_sets import get_large_feature_func_set
 from lambdatrader.signals.data_analysis.values import (
     make_cont_max_price_in_fifteen_mins,
 )
@@ -23,7 +23,7 @@ dataset = create_pair_dataset_from_history(market_info=market_info,
                                            pair=dataset_symbol,
                                            start_date=dataset_start_date,
                                            end_date=dataset_end_date,
-                                           feature_functions=list(get_feature_funcs_iter()),
+                                           feature_functions=list(get_large_feature_func_set()),
                                            value_function=make_cont_max_price_in_fifteen_mins())
 
 print(dataset)

@@ -10,17 +10,6 @@ LOOKBACK_NUM_CANDLES = 15
 CANDLE_PERIODS = [M5, M15, H, H4, D]
 
 
-def get_feature_funcs_iter():
-    for candle_period in CANDLE_PERIODS:
-        yield make_ohcl_delta(LOOKBACK_NUM_CANDLES, candle_period)
-        yield make_volume(LOOKBACK_NUM_CANDLES, candle_period)
-
-        for period in fib_seq():
-            yield make_sma_delta(LOOKBACK_NUM_CANDLES, candle_period, period)
-            yield make_rsi(LOOKBACK_NUM_CANDLES, candle_period, period)
-            yield make_atr(LOOKBACK_NUM_CANDLES, candle_period, period)
-
-
 def fib_seq():
     yield 3
     yield 5

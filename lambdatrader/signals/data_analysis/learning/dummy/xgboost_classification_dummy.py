@@ -1,7 +1,10 @@
-from sklearn.ensemble import RandomForestRegressor
+from pprint import pprint
+
+from xgboost import XGBRegressor, XGBClassifier
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.candlestickstore import CandlestickStore
+from lambdatrader.constants import M5
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.shelve_cache import shelve_cache_save
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
@@ -10,7 +13,7 @@ from lambdatrader.signals.data_analysis.learning.dummy.learning_utils_dummy impo
     train_and_test_model, print_model_metrics,
 )
 from lambdatrader.signals.data_analysis.values import (
-    make_cont_close_price_in_one_hour,
+    make_cont_trade_return, make_class_max_price_in_future,
 )
 from lambdatrader.utilities.utils import seconds
 
@@ -28,13 +31,13 @@ market_info = BacktestingMarketInfo(candlestick_store=
 
 latest_market_date = market_info.get_max_pair_end_time()
 
-dataset_symbol = 'BTC_ETH'
+dataset_symbol = 'BTC_VIA'
 
 # dataset_start_date = latest_market_date - seconds(days=7, hours=24*60)
-# dataset_start_date = latest_market_date - seconds(days=7, hours=24*30)
-dataset_start_date = latest_market_date - seconds(days=7, hours=24*7)
-#dataset_start_date = latest_market_date - seconds(days=7, hours=24)
-# dataset_start_date = latest_market_date - seconds(days=7, minutes=20)
+dataset_start_date = latest_market_date - seconds(days=7, hours=24*30)
+# dataset_start_date = latest_market_date - seconds(days=7, hours=24*7)
+# dataset_start_date = latest_market_date - seconds(days=7, hours=24)
+# dataset_start_date = latest_market_date - seconds(days=7, minutes=30)
 
 dataset_end_date = latest_market_date - seconds(days=7)
 
@@ -45,20 +48,22 @@ dataset = create_pair_dataset_from_history(market_info=market_info,
                                            start_date=dataset_start_date,
                                            end_date=dataset_end_date,
                                            feature_functions=list(get_large_feature_func_set()),
-                                           value_function=make_cont_close_price_in_one_hour(),
+                                           value_function=
+                                           make_class_max_price_in_future(num_candles=12,
+                                                                          candle_period=M5),
                                            cache_and_get_cached=True,
-                                           value_function_key='close_delta_one_hour')
+                                           value_function_key='max_price_class_60_min')
 
 print('created/loaded dataset\n')
 
-n_estimators = 100
+xgbc = XGBClassifier()
 
-rfr = RandomForestRegressor(n_estimators=n_estimators)
+metrics = train_and_test_model(dataset, xgbc, train_ratio=0.7, classification_task=True)
 
-stats = train_and_test_model(dataset, rfr)
-print_model_metrics(stats)
+for key, value in metrics.items():
+    print(key, ':', value)
 
-model_name = 'rfr_close_delta_{}_{}'.format(dataset_len, n_estimators)
+model_name = 'xgbc_max_price_class_60_min_{}'.format(dataset_len)
 
-save(model_name, rfr)
+save(model_name, xgbc)
 print('saved model:', model_name)
