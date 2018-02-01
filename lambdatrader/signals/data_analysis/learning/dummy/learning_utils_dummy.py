@@ -25,15 +25,15 @@ def train_and_test_model(dataset, model, classification_task=False, train_ratio=
     model.fit(X_train, y_train)
     training_time = time.time() - _start_time
 
-
-    _importance = model.feature_importances_
-    _name_importance = zip(_feature_names, _importance)
-    name_importance_sorted = list(reversed(sorted(_name_importance, key=itemgetter(1))))[:20]
-
     stats = {
         'training_time': training_time,
-        'importance': name_importance_sorted,
     }
+
+    if hasattr(model, 'feature_importances_'):
+        _importance = model.feature_importances_
+        _name_importance = zip(_feature_names, _importance)
+        name_importance_sorted = list(reversed(sorted(_name_importance, key=itemgetter(1))))[:20]
+        stats['importance'] = name_importance_sorted
 
     test_stats = test_model(model, X_test, y_test, classification_task=classification_task)
 
@@ -70,10 +70,11 @@ def test_model(model, x_test, y_test, classification_task=False):
 
 
 def print_model_stats(stats):
-    print('IMPORTANCES:')
-    for name, importance in stats['importance']:
-        print('{:<80} {}'.format(name, importance))
-    print()
+    if 'importance' in stats:
+        print('IMPORTANCES:')
+        for name, importance in stats['importance']:
+            print('{:<80} {}'.format(name, importance))
+        print()
 
     real = stats['real'] * 100
     preds = stats['pred'] * 100
