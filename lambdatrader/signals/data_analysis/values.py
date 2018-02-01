@@ -10,7 +10,7 @@ CLASS_INCREASE_UP = 'up'
 CLASS_INCREASE_FLAT_DOWN = 'flat_down'
 
 
-def make_cont_close_price_in_fifteen_mins_cont():
+def make_cont_close_price_in_fifteen_mins():
     return make_cont_close_price_in_future(num_candles=3, candle_period=M5)
 
 
