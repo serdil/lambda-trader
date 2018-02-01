@@ -1,3 +1,4 @@
+import time
 from collections import OrderedDict
 from operator import itemgetter
 
@@ -31,9 +32,10 @@ latest_market_date = market_info.get_max_pair_end_time()
 
 dataset_symbol = 'BTC_ETH'
 
-dataset_start_date = latest_market_date - seconds(days=7, hours=24*30)
+# dataset_start_date = latest_market_date - seconds(days=7, hours=24*60)
+# dataset_start_date = latest_market_date - seconds(days=7, hours=24*30)
 # dataset_start_date = latest_market_date - seconds(days=7, hours=24*7)
-# dataset_start_date = latest_market_date - seconds(days=7, hours=24)
+dataset_start_date = latest_market_date - seconds(days=7, hours=24)
 # dataset_start_date = latest_market_date - seconds(days=7, minutes=20)
 
 dataset_end_date = latest_market_date - seconds(days=7)
@@ -48,7 +50,7 @@ dataset = create_pair_dataset_from_history(market_info=market_info,
                                            value_function=make_cont_max_price_in_fifteen_mins(),
                                            cache_and_get_cached=True)
 
-print('created dataset')
+print('created/loaded dataset')
 
 feature_names = dataset.get_first_feature_names()
 
@@ -73,9 +75,13 @@ y_train = y[:split_ind]
 X_test = X[split_ind:]
 y_test = y[split_ind:]
 
+n_estimators = 100
 
-rfr = RandomForestRegressor(n_estimators=10)
+rfr = RandomForestRegressor(n_estimators=n_estimators)
+
+start_time = time.time()
 rfr.fit(X_train, y_train)
+print('training time:', time.time() - start_time)
 
 rfr_pred = rfr.predict(X_test)
 
@@ -90,6 +96,9 @@ sign_equal = np.equal(real_sign, pred_sign)
 print('predictions:', rfr_pred * 100)
 print('real:', y_test * 100)
 
+print('pred_sign:', pred_sign)
+print('real_sign:', real_sign)
+
 rfr_importance = rfr.feature_importances_
 name_importance = zip(feature_names, rfr_importance)
 name_importance_sorted = list(reversed(sorted(name_importance, key=itemgetter(1))))
@@ -101,16 +110,10 @@ for name, importance in name_importance_sorted:
 
 print('mse:', rfr_mse, 'score:', rfr_score)
 
-unique, counts = np.unique(sign_equal, return_counts=True)
-true_false_dict = dict(zip(unique, counts))
-print(true_false_dict)
-
 print('real positive ratio:', np.sum(real_sign) / float(len(real_sign)))
+print('sign equal ratio:', np.sum(sign_equal) / float(len(sign_equal)))
 
-true_ratio = true_false_dict.get(True, 0) / sum(true_false_dict.values())
-print('true ratio:', true_ratio)
-
-model_name = 'rfr_{}'.format(dataset_len)
+model_name = 'rfr_{}_{}'.format(dataset_len, n_estimators)
 
 save(model_name, rfr)
 print('saved model:', model_name)
