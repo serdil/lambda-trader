@@ -1,3 +1,10 @@
+import time
+
+import numpy as np
+import xgboost as xgb
+
+from sklearn.cross_validation import train_test_split
+from sklearn.metrics import precision_score
 from xgboost import XGBRegressor
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
@@ -33,8 +40,8 @@ latest_market_date = market_info.get_max_pair_end_time()
 dataset_symbol = 'BTC_VIA'
 
 # dataset_start_date = latest_market_date - seconds(days=7, hours=24*60)
-dataset_start_date = latest_market_date - seconds(days=7, hours=24*30)
-# dataset_start_date = latest_market_date - seconds(days=7, hours=24*7)
+# dataset_start_date = latest_market_date - seconds(days=7, hours=24*30)
+dataset_start_date = latest_market_date - seconds(days=7, hours=24*7)
 # dataset_start_date = latest_market_date - seconds(days=7, hours=24)
 # dataset_start_date = latest_market_date - seconds(days=7, minutes=30)
 
@@ -53,13 +60,48 @@ dataset = create_pair_dataset_from_history(market_info=market_info,
 
 print('created/loaded dataset\n')
 
-xgbr = XGBRegressor()
+feature_names = dataset.get_first_feature_names()
 
-metrics = train_and_test_model(dataset, xgbr, train_ratio=0.9)
-print_model_metrics(metrics)
+X = dataset.get_numpy_feature_matrix()
+y = dataset.get_numpy_value_array()
 
+train_ratio = 0.7
 
-model_name = 'xgbr_trade_return_15_mins_{}'.format(dataset_len)
+n_samples = len(y)
+split_ind = int(train_ratio * n_samples)
 
-save(model_name, xgbr)
-print('saved model:', model_name)
+X_train = X[:split_ind]
+y_train = y[:split_ind]
+
+X_test = X[split_ind:]
+y_test = y[split_ind:]
+
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+print('xtrain', X_train)
+print('xtest', X_test)
+dtrain = xgb.DMatrix(X_train, label=y_train, feature_names=feature_names)
+dtest = xgb.DMatrix(X_test, label=y_test, feature_names=feature_names)
+
+paramold = {
+    'max_depth': 3,  # the maximum depth of each tree
+    'eta': 0.3,  # the training step for each iteration
+    'silent': 0,  # logging mode - quiet
+    'objective': 'multi:softprob',  # error evaluation for multiclass training
+    'num_class': 3}  # the number of classes that exist in this datset
+
+param = {'max_depth': 2, 'eta': 1, 'silent': 1}
+
+num_round = 100  # the number of training iterations
+
+bst = xgb.train(param, dtrain, num_boost_round=num_round)
+print(bst)
+
+pred = bst.predict(dtest)
+
+print(pred)
+print(y_test)
+
+for p, y in zip(pred, y_test):
+    print('{:.6f}, {:.6f}'.format(p, y))
+    print(p>0, y>0)
