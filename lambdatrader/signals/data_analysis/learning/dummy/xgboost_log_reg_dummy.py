@@ -117,6 +117,7 @@ pred_real = list(zip(pred, y_val))
 sorted_by_pred = list(reversed(sorted(pred_real, key=lambda x: (x[0],x[1]))))
 sorted_by_real = list(reversed(sorted(pred_real, key=lambda x: (x[1],x[0]))))
 
+print()
 print('====VALIDATION=======VALIDATION=======VALIDATION=======VALIDATION=======VALIDATION===')
 
 print()
