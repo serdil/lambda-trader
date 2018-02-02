@@ -1,15 +1,36 @@
+from lambdatrader.constants import M5, M15, H, H4, D
 from lambdatrader.signals.data_analysis.features import (
-    CANDLE_PERIODS, make_ohcl_delta, LOOKBACK_NUM_CANDLES, make_volume, fib_seq, make_sma_delta,
+    make_ohcl_delta, make_volume, make_sma_delta,
     make_rsi, make_atr,
 )
 
 
+LARGE_SET_LOOKBACK_NUM_CANDLES = 15
+LARGE_SET_CANDLE_PERIODS = [M5, M15, H, H4, D]
+
+
+def get_small_feature_func_set():
+    for candle_period in [M5, M15]:
+        yield make_ohcl_delta(3, candle_period)
+        yield make_volume(3, candle_period)
+
+
 def get_large_feature_func_set():
-    for candle_period in CANDLE_PERIODS:
-        yield make_ohcl_delta(LOOKBACK_NUM_CANDLES, candle_period)
-        yield make_volume(LOOKBACK_NUM_CANDLES, candle_period)
+    for candle_period in LARGE_SET_CANDLE_PERIODS:
+        yield make_ohcl_delta(LARGE_SET_LOOKBACK_NUM_CANDLES, candle_period)
+        yield make_volume(LARGE_SET_LOOKBACK_NUM_CANDLES, candle_period)
 
         for period in fib_seq():
-            yield make_sma_delta(LOOKBACK_NUM_CANDLES, candle_period, period)
-            yield make_rsi(LOOKBACK_NUM_CANDLES, candle_period, period)
-            yield make_atr(LOOKBACK_NUM_CANDLES, candle_period, period)
+            yield make_sma_delta(LARGE_SET_LOOKBACK_NUM_CANDLES, candle_period, period)
+            yield make_rsi(LARGE_SET_LOOKBACK_NUM_CANDLES, candle_period, period)
+            yield make_atr(LARGE_SET_LOOKBACK_NUM_CANDLES, candle_period, period)
+
+
+def fib_seq():
+    yield 3
+    yield 5
+    yield 8
+    yield 13
+    yield 21
+    yield 34
+

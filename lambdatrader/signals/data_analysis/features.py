@@ -1,22 +1,10 @@
 from typing import List
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.constants import PeriodEnum, M5, H, H4, M15, D
+from lambdatrader.constants import PeriodEnum
 from lambdatrader.indicator_functions import IndicatorEnum
 from lambdatrader.signals.data_analysis.datasets import Feature
 from lambdatrader.signals.utils import get_candle, get_indicator
-
-LOOKBACK_NUM_CANDLES = 15
-CANDLE_PERIODS = [M5, M15, H, H4, D]
-
-
-def fib_seq():
-    yield 3
-    yield 5
-    yield 8
-    yield 13
-    yield 21
-    yield 34
 
 
 def make_ohcl_delta(num_candles, candle_period: PeriodEnum):
