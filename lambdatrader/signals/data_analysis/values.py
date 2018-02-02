@@ -22,6 +22,18 @@ def make_class_max_price_in_fifteen_mins():
     return make_class_max_price_in_future(num_candles=3, candle_period=M5)
 
 
+def make_binary_max_price_in_future(increase=0.01, num_candles=3, candle_period: PeriodEnum=M5):
+    def value_binary_max_price_in_future(market_info: BacktestingMarketInfo, pair):
+        cont_func = make_cont_max_price_in_future(num_candles=num_candles,
+                                                  candle_period=candle_period)
+        cont_value = cont_func(market_info, pair)
+        if cont_value >= increase:
+            return 1
+        else:
+            return 0
+    return value_binary_max_price_in_future
+
+
 def make_class_max_price_in_future(num_candles, candle_period: PeriodEnum):
     def value_class_max_price_in_future(market_info: BacktestingMarketInfo, pair):
         cont_func = make_cont_max_price_in_future(num_candles=num_candles,

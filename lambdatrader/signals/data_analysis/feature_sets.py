@@ -10,9 +10,9 @@ LARGE_SET_CANDLE_PERIODS = [M5, M15, H, H4, D]
 
 
 def get_small_feature_func_set():
-    for candle_period in [M5, M15]:
-        yield make_ohcl_delta(3, candle_period)
-        yield make_volume(3, candle_period)
+    for candle_period in [M5, M15, H, H4]:
+        yield make_ohcl_delta(5, candle_period)
+        yield make_volume(5, candle_period)
 
 
 def get_large_feature_func_set():
