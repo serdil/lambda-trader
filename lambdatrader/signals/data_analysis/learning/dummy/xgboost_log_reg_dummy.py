@@ -7,6 +7,7 @@ import numpy as np
 import xgboost as xgb
 
 import sklearn.metrics as sklearn_metrics
+from matplotlib import pyplot
 
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import precision_score
@@ -43,15 +44,17 @@ market_info = BacktestingMarketInfo(candlestick_store=
 
 latest_market_date = market_info.get_max_pair_end_time()
 
-dataset_symbol = 'BTC_VTC'
+dataset_symbol = 'BTC_LTC'
 
 day_offset = 7
 
-dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
+# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
+# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*120)
+# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*90)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*60)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*30)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*7)
+dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*7)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, minutes=30)
 
@@ -59,8 +62,10 @@ dataset_end_date = latest_market_date - seconds(days=day_offset)
 
 dataset_len = dataset_end_date - dataset_start_date
 
-value_func = make_binary_max_price_in_future(increase=0.03, num_candles=48)
-value_func_name = 'binary_max_price_4h_0.03'
+increase = 0.04
+num_candles = 48
+value_func = make_binary_max_price_in_future(increase=increase, num_candles=num_candles)
+value_func_name = 'binary_max_price_{}_{}'.format(increase, num_candles)
 
 dataset = create_pair_dataset_from_history(market_info=market_info,
                                            pair=dataset_symbol,
@@ -88,8 +93,8 @@ test_split = int(val_ratio * n_samples)
 X_train = X[:val_split]
 y_train = y[:val_split]
 
-X_val = X[val_split:]
-y_val = y[val_split:]
+X_val = X[val_split:test_split]
+y_val = y[val_split:test_split]
 
 X_test = X[test_split:]
 y_test = y[test_split:]
@@ -99,10 +104,10 @@ dval = xgb.DMatrix(X_val, label=y_val, feature_names=feature_names)
 dtest = xgb.DMatrix(X_test, label=y_test, feature_names=feature_names)
 
 
-params = {'max_depth': 2, 'eta': 0.03, 'silent': 1, 'objective': 'binary:logistic'}
+params = {'max_depth': 2, 'eta': 0.01, 'silent': 1, 'objective': 'binary:logistic'}
 evals = [(dval, 'val_set')]
 num_round = 1000
-early_stopping_rounds = 100
+early_stopping_rounds = 200
 
 bst = xgb.train(params=params,
                 dtrain=dtrain,
@@ -139,3 +144,7 @@ print()
 print('pred, real:')
 for item1, item2 in list(zip(sorted_by_pred, sorted_by_real))[:200]:
     print('{:30}{:30}'.format('{:.6f}, {:.6f}'.format(*item1), '{:.6f}, {:.6f}'.format(*item2)))
+
+xgb.plot_importance(bst)
+xgb.plot_tree(bst)
+pyplot.show()
