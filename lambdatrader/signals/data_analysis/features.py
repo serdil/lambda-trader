@@ -38,7 +38,7 @@ def make_rsi(num_candles, candle_period: PeriodEnum, rsi_period):
 
 
 def make_atr(num_candles, candle_period: PeriodEnum, atr_period):
-    return make_indicator(num_candles, candle_period, IndicatorEnum.RSI, [atr_period])
+    return make_indicator(num_candles, candle_period, IndicatorEnum.ATR, [atr_period])
 
 
 def make_indicator(num_candles, candle_period: PeriodEnum, indicator: IndicatorEnum, args: List):
