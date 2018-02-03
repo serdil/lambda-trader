@@ -20,6 +20,7 @@ from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from
 from lambdatrader.signals.data_analysis.feature_sets import (
     get_large_feature_func_set, get_small_feature_func_set, get_alt_small_feature_func_set,
     get_alt_small_feature_func_set_2, get_small_feature_func_set_with_indicators,
+    get_smallest_feature_func_set,
 )
 from lambdatrader.signals.data_analysis.learning.dummy.learning_utils_dummy import (
     train_and_test_model, print_model_metrics,
@@ -45,16 +46,16 @@ market_info = BacktestingMarketInfo(candlestick_store=
 
 latest_market_date = market_info.get_max_pair_end_time()
 
-dataset_symbol = 'BTC_RADS'
+dataset_symbol = 'BTC_ZEC'
 
 day_offset = 60
 
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*120)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*90)
+dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*90)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*60)
-dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*30)
+# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*30)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*7)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, minutes=30)
@@ -63,11 +64,12 @@ dataset_end_date = latest_market_date - seconds(days=day_offset)
 
 dataset_len = dataset_end_date - dataset_start_date
 
-increase = 0.03
+increase = 0.05
 num_candles = 48
 value_func = make_binary_max_price_in_future(increase=increase, num_candles=num_candles)
 value_func_name = 'binary_max_price_{}_{}'.format(increase, num_candles)
 
+feature_functions = list(get_small_feature_func_set_with_indicators())
 feature_funcs_name = 'with_ind'
 
 
@@ -75,7 +77,7 @@ dataset = create_pair_dataset_from_history(market_info=market_info,
                                            pair=dataset_symbol,
                                            start_date=dataset_start_date,
                                            end_date=dataset_end_date,
-                                           feature_functions=list(get_small_feature_func_set_with_indicators()),
+                                           feature_functions=feature_functions,
                                            value_function=value_func,
                                            cache_and_get_cached=True,
                                            feature_functions_key=feature_funcs_name,
@@ -109,7 +111,7 @@ params = {
 
     'objective': 'binary:logistic',
     'base_score': 0.5,
-    'eval_metric': 'error@0.90',
+    'eval_metric': 'error@0.8',
 
     'eta': 0.3,
     'gamma': 0,
@@ -147,7 +149,7 @@ feature_importances = bst.get_fscore()
 
 print()
 print('feature importances:')
-for f_name, imp in reversed(sorted(feature_importances.items(), key=itemgetter(1))):
+for f_name, imp in list(reversed(sorted(feature_importances.items(), key=itemgetter(1))))[:5]:
     print(f_name, ':', imp)
 
 best_ntree_limit = bst.best_ntree_limit
@@ -165,13 +167,10 @@ num_sig = sum([1 for pred, real in pred_real if pred >= 0.9 and real == 1.0])
 print()
 print('+++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST++++')
 
-print()
-print('number of signals:', num_sig)
-
-print()
-print('pred, real:')
-for item1, item2 in list(zip(sorted_by_pred, sorted_by_real))[:500]:
-    print('{:30}{:30}'.format('{:.6f}, {:.6f}'.format(*item1), '{:.6f}, {:.6f}'.format(*item2)))
+# print()
+# print('pred, real:')
+# for item1, item2 in list(zip(sorted_by_pred, sorted_by_real))[:500]:
+#     print('{:30}{:30}'.format('{:.6f}, {:.6f}'.format(*item1), '{:.6f}, {:.6f}'.format(*item2)))
 
 print()
 print('number of signals:', num_sig)

@@ -45,9 +45,9 @@ market_info = BacktestingMarketInfo(candlestick_store=
 
 latest_market_date = market_info.get_max_pair_end_time()
 
-dataset_symbol = 'BTC_LTC'
+dataset_symbol = 'BTC_RADS'
 
-day_offset = 60
+day_offset = 3
 
 dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
@@ -127,8 +127,6 @@ cv_fold = 10
 cv_out = xgb.cv(params=params,
                 dtrain=dtrain,
                 num_boost_round=num_round)
-
-print(cv_out)
 
 train_mean = cv_out['train-error@0.9-mean']
 train_std = cv_out['train-error@0.9-std']

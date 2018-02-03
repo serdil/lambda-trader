@@ -8,6 +8,13 @@ LARGE_SET_LOOKBACK_NUM_CANDLES = 15
 LARGE_SET_CANDLE_PERIODS = [M5, M15, H, H4, D]
 
 
+def get_smallest_feature_func_set():
+    lookback = 1
+    for candle_period in [M5]:
+        yield make_ohcl_delta(lookback, candle_period)
+        yield make_volume(lookback, candle_period)
+
+
 def get_small_feature_func_set():
     lookback = 5
     for candle_period in [M5, M15, H, H4]:
