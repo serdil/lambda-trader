@@ -12,6 +12,7 @@ from matplotlib import pyplot
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import precision_score
 from xgboost import XGBRegressor
+from xgboost.core import XGBoostError
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.candlestickstore import CandlestickStore
@@ -46,14 +47,14 @@ market_info = BacktestingMarketInfo(candlestick_store=
 
 latest_market_date = market_info.get_max_pair_end_time()
 
-dataset_symbol = 'BTC_ZEC'
+dataset_symbol = 'BTC_VIA'
 
 day_offset = 60
 
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
+dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*120)
-dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*90)
+# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*90)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*60)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*30)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*7)
@@ -90,8 +91,8 @@ feature_names = dataset.get_first_feature_names()
 X = dataset.get_numpy_feature_matrix()
 y = dataset.get_numpy_value_array()
 
-train_ratio = 0.9
-gap = 48
+train_ratio = 0.8
+gap = num_candles
 
 n_samples = len(y)
 
@@ -106,12 +107,16 @@ y_test = y[test_split:]
 dtrain = xgb.DMatrix(X_train, label=y_train, feature_names=feature_names)
 dtest = xgb.DMatrix(X_test, label=y_test, feature_names=feature_names)
 
+num_pos_samples = sum([1 for y in y_train if y >= increase])
+num_neg_samples = n_samples - num_pos_samples
+
 params = {
     'silent': 1,
+    'booster': 'gblinear',
 
     'objective': 'binary:logistic',
-    'base_score': 0.5,
-    'eval_metric': 'error@0.8',
+    'base_score': num_pos_samples / num_neg_samples,
+    'eval_metric': 'error',
 
     'eta': 0.3,
     'gamma': 0,
@@ -121,23 +126,25 @@ params = {
     'subsample': 1,
     'colsample_bytree': 1,
     'colsample_bylevel': 1,
-    'lambda': 1,
+    'lambda': 0,
     'alpha': 0,
     'tree_method': 'auto',
     'sketch_eps': 0.03,
-    'scale_pos_weight': 1,
+    'scale_pos_weight': num_neg_samples / num_pos_samples,
     'updater': 'grow_colmaker,prune',
     'refresh_leaf': 1,
     'process_type': 'default',
     'grow_policy': 'depthwise',
     'max_leaves': 0,
     'max_bin': 256,
-    'predictor': 'cpu_predictor',
+
+    'sample_type': 'weighted',
+    'rate_drop': 0.01,
 }
 
 watchlist = [(dtrain, 'train'), (dtest, 'test')]
-num_round = 1000
-early_stopping_rounds = 100
+num_round = 10000
+early_stopping_rounds = 2000
 
 bst = xgb.train(params=params,
                 dtrain=dtrain,
@@ -154,7 +161,10 @@ for f_name, imp in list(reversed(sorted(feature_importances.items(), key=itemget
 
 best_ntree_limit = bst.best_ntree_limit
 
-pred = bst.predict(dtest, ntree_limit=best_ntree_limit)
+try:
+    pred = bst.predict(dtest, ntree_limit=best_ntree_limit)
+except XGBoostError:
+    pred = bst.predict(dtest)
 train_pred = bst.predict(dtrain, ntree_limit=best_ntree_limit)
 
 pred_real = list(zip(pred, y_test))
@@ -162,7 +172,7 @@ pred_real = list(zip(pred, y_test))
 sorted_by_pred = list(reversed(sorted(pred_real, key=lambda x: (x[0],x[1]))))
 sorted_by_real = list(reversed(sorted(pred_real, key=lambda x: (x[1],x[0]))))
 
-num_sig = sum([1 for pred, real in pred_real if pred >= 0.9 and real == 1.0])
+num_sig = sum([1 for pred, real in pred_real if pred >= 0.8 and real == 1.0])
 
 print()
 print('+++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST++++')
