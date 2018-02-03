@@ -91,10 +91,10 @@ gap = 48
 
 n_samples = len(y)
 
-test_split = int(train_ratio * n_samples + gap)
+test_split = int(train_ratio * n_samples)
 
-X_train = X[:test_split]
-y_train = y[:test_split]
+X_train = X[:test_split-gap]
+y_train = y[:test_split-gap]
 
 X_test = X[test_split:]
 y_test = y[test_split:]
@@ -103,8 +103,11 @@ dtrain = xgb.DMatrix(X_train, label=y_train, feature_names=feature_names)
 dtest = xgb.DMatrix(X_test, label=y_test, feature_names=feature_names)
 
 params = {
-    'objective': 'binary:logistic',
     'silent': 1,
+
+    'objective': 'binary:logistic',
+    'base_score': 0.5,
+    'eval_metric': 'error',
 
     'eta': 0.3,
     'gamma': 0,
