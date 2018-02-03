@@ -47,7 +47,7 @@ latest_market_date = market_info.get_max_pair_end_time()
 
 dataset_symbol = 'BTC_LTC'
 
-day_offset = 90
+day_offset = 60
 
 dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
@@ -86,8 +86,8 @@ feature_names = dataset.get_first_feature_names()
 X = dataset.get_numpy_feature_matrix()
 y = dataset.get_numpy_value_array()
 
-train_ratio = 0.6
-val_ratio = 0.8
+train_ratio = 0.8
+val_ratio = 0.9
 
 n_samples = len(y)
 val_split = int(train_ratio * n_samples)
@@ -107,10 +107,10 @@ dval = xgb.DMatrix(X_val, label=y_val, feature_names=feature_names)
 dtest = xgb.DMatrix(X_test, label=y_test, feature_names=feature_names)
 
 
-params = {'max_depth': 16, 'eta': 0.0003, 'silent': 1, 'objective': 'binary:logistic'}
+params = {'max_depth': 6, 'eta': 0.01, 'silent': 1, 'objective': 'binary:logistic'}
 watchlist = [(dtrain, 'train'), (dtest, 'test'), (dval, 'val')]
 num_round = 10000
-early_stopping_rounds = 3000
+early_stopping_rounds = 100
 
 bst = xgb.train(params=params,
                 dtrain=dtrain,

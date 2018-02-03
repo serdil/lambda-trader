@@ -47,7 +47,7 @@ latest_market_date = market_info.get_max_pair_end_time()
 
 dataset_symbol = 'BTC_LTC'
 
-day_offset = 90
+day_offset = 60
 
 dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
@@ -86,31 +86,51 @@ feature_names = dataset.get_first_feature_names()
 X = dataset.get_numpy_feature_matrix()
 y = dataset.get_numpy_value_array()
 
-train_ratio = 0.6
-val_ratio = 0.8
+train_ratio = 0.8
+gap = 48
 
 n_samples = len(y)
-val_split = int(train_ratio * n_samples)
-test_split = int(val_ratio * n_samples)
 
-X_train = X[:val_split]
-y_train = y[:val_split]
+test_split = int(train_ratio * n_samples + gap)
 
-X_val = X[val_split:test_split]
-y_val = y[val_split:test_split]
+X_train = X[:test_split]
+y_train = y[:test_split]
 
 X_test = X[test_split:]
 y_test = y[test_split:]
 
 dtrain = xgb.DMatrix(X_train, label=y_train, feature_names=feature_names)
-dval = xgb.DMatrix(X_val, label=y_val, feature_names=feature_names)
 dtest = xgb.DMatrix(X_test, label=y_test, feature_names=feature_names)
 
+params = {
+    'objective': 'binary:logistic',
+    'silent': 1,
 
-params = {'max_depth': 16, 'eta': 0.0003, 'silent': 1, 'objective': 'binary:logistic'}
-watchlist = [(dtrain, 'train'), (dtest, 'test'), (dval, 'val')]
-num_round = 10000
-early_stopping_rounds = 3000
+    'eta': 0.3,
+    'gamma': 0,
+    'max_depth': 6,
+    'min_child_weight': 1,
+    'max_delta_step': 0,
+    'subsample': 1,
+    'colsample_bytree': 1,
+    'colsample_bylevel': 1,
+    'lambda': 1,
+    'alpha': 0,
+    'tree_method': 'auto',
+    'sketch_eps': 0.03,
+    'scale_pos_weight': 1,
+    'updater': 'grow_colmaker,prune',
+    'refresh_leaf': 1,
+    'process_type': 'default',
+    'grow_policy': 'depthwise',
+    'max_leaves': 0,
+    'max_bin': 256,
+    'predictor': 'cpu_predictor',
+}
+
+watchlist = [(dtrain, 'train'), (dtest, 'test')]
+num_round = 100
+early_stopping_rounds = 100
 
 bst = xgb.train(params=params,
                 dtrain=dtrain,
@@ -126,21 +146,6 @@ for f_name, imp in reversed(sorted(feature_importances.items(), key=itemgetter(1
     print(f_name, ':', imp)
 
 best_ntree_limit = bst.best_ntree_limit
-
-pred = bst.predict(dval, ntree_limit=best_ntree_limit)
-
-pred_real = list(zip(pred, y_val))
-
-sorted_by_pred = list(reversed(sorted(pred_real, key=lambda x: (x[0],x[1]))))
-sorted_by_real = list(reversed(sorted(pred_real, key=lambda x: (x[1],x[0]))))
-
-print()
-print('====VALIDATION=======VALIDATION=======VALIDATION=======VALIDATION=======VALIDATION===')
-
-print()
-print('pred, real:')
-for item1, item2 in list(zip(sorted_by_pred, sorted_by_real))[:300]:
-    print('{:30}{:30}'.format('{:.6f}, {:.6f}'.format(*item1), '{:.6f}, {:.6f}'.format(*item2)))
 
 pred = bst.predict(dtest, ntree_limit=best_ntree_limit)
 

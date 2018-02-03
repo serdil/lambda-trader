@@ -1,7 +1,7 @@
-import pprint
 import time
 from collections import defaultdict
 from operator import itemgetter
+from pprint import pprint
 
 import numpy as np
 import xgboost as xgb
@@ -20,6 +20,7 @@ from lambdatrader.shelve_cache import shelve_cache_save
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
 from lambdatrader.signals.data_analysis.feature_sets import (
     get_large_feature_func_set, get_small_feature_func_set, get_alt_small_feature_func_set,
+    get_small_feature_func_set_with_indicators,
 )
 from lambdatrader.signals.data_analysis.learning.dummy.learning_utils_dummy import (
     train_and_test_model, print_model_metrics,
@@ -71,7 +72,7 @@ dataset = create_pair_dataset_from_history(market_info=market_info,
                                            pair=dataset_symbol,
                                            start_date=dataset_start_date,
                                            end_date=dataset_end_date,
-                                           feature_functions=list(get_alt_small_feature_func_set()),
+                                           feature_functions=list(get_small_feature_func_set_with_indicators()),
                                            value_function=value_func,
                                            cache_and_get_cached=True,
                                            value_function_key=value_func_name)
@@ -83,70 +84,22 @@ feature_names = dataset.get_first_feature_names()
 X = dataset.get_numpy_feature_matrix()
 y = dataset.get_numpy_value_array()
 
-train_ratio = 0.8
-val_ratio = 0.9
 
-n_samples = len(y)
-val_split = int(train_ratio * n_samples)
-test_split = int(val_ratio * n_samples)
+dtrain = xgb.DMatrix(X, label=y, feature_names=feature_names)
 
-X_train = X[:val_split]
-y_train = y[:val_split]
-
-X_val = X[val_split:test_split]
-y_val = y[val_split:test_split]
-
-X_test = X[test_split:]
-y_test = y[test_split:]
-
-dtrain = xgb.DMatrix(X_train, label=y_train, feature_names=feature_names)
-dval = xgb.DMatrix(X_val, label=y_val, feature_names=feature_names)
-dtest = xgb.DMatrix(X_test, label=y_test, feature_names=feature_names)
-
-
-params = {'max_depth': 2, 'eta': 1, 'silent': 1, 'objective': 'binary:logistic'}
-# evals = [(dval, 'val_set')]
+params = {'max_depth': 6, 'eta': 0.01, 'silent': 1, 'objective': 'binary:logistic'}
 num_round = 100
-early_stopping_rounds = 10
-cv_fold = 10
+cv_fold = 5
 
-bst = xgb.cv(params=params,
-             dtrain=dtrain,
-             num_boost_round=num_round,
-             early_stopping_rounds=early_stopping_rounds)
+cv_out = xgb.cv(params=params,
+                dtrain=dtrain,
+                num_boost_round=num_round)
 
-print(bst)
+train_mean = cv_out['train-error-mean']
+train_std = cv_out['train-error-std']
+test_mean = cv_out['test-error-mean']
+test_std = cv_out['test-error-std']
 
-pred = bst.predict(dval)
-
-pred_real = list(zip(pred, y_val))
-
-sorted_by_pred = list(reversed(sorted(pred_real, key=lambda x: (x[0],x[1]))))
-sorted_by_real = list(reversed(sorted(pred_real, key=lambda x: (x[1],x[0]))))
-
-print()
-print('====VALIDATION=======VALIDATION=======VALIDATION=======VALIDATION=======VALIDATION===')
-
-print()
-print('pred, real:')
-for item1, item2 in list(zip(sorted_by_pred, sorted_by_real))[:200]:
-    print('{:30}{:30}'.format('{:.6f}, {:.6f}'.format(*item1), '{:.6f}, {:.6f}'.format(*item2)))
-
-pred = bst.predict(dtest)
-
-pred_real = list(zip(pred, y_test))
-
-sorted_by_pred = list(reversed(sorted(pred_real, key=lambda x: (x[0],x[1]))))
-sorted_by_real = list(reversed(sorted(pred_real, key=lambda x: (x[1],x[0]))))
-
-print()
-print('+++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST++++')
-
-print()
-print('pred, real:')
-for item1, item2 in list(zip(sorted_by_pred, sorted_by_real))[:200]:
-    print('{:30}{:30}'.format('{:.6f}, {:.6f}'.format(*item1), '{:.6f}, {:.6f}'.format(*item2)))
-
-xgb.plot_importance(bst)
-xgb.plot_tree(bst)
-pyplot.show()
+print('          {:<25}{:<25}{:<25}{:<25}'.format('train-error-mean', 'train-error-std', 'test-error-mean', 'test-error-std'))
+for i, (v1, v2, v3, v4) in enumerate(zip(train_mean, train_std, test_mean, test_std)):
+    print('{:<10}{:<25}{:<25}{:<25}{:<25}'.format(i, v1, v2, v3, v4))

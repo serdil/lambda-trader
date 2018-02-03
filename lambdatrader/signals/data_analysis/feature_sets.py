@@ -21,10 +21,10 @@ def get_small_feature_func_set_with_indicators():
         yield make_ohcl_delta(lookback, candle_period)
         yield make_volume(lookback, candle_period)
 
-        yield make_ema_delta(1, candle_period, 8)
-        yield make_ema_delta(1, candle_period, 13)
-        yield make_ema_delta(1, candle_period, 21)
-        yield make_ema_delta(1, candle_period, 55)
+        yield make_ema_delta(2, candle_period, 8)
+        yield make_ema_delta(2, candle_period, 13)
+        yield make_ema_delta(2, candle_period, 21)
+        yield make_ema_delta(2, candle_period, 55)
 
         yield make_atr(1, candle_period, 8)
 

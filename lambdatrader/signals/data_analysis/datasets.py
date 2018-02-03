@@ -4,8 +4,6 @@ from typing import List
 import numpy as np
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.shelve_cache import shelve_cache_save, shelve_cache_get
-
 
 class Feature:
     def __init__(self, name: str, value):
@@ -111,6 +109,7 @@ def create_pair_dataset_from_history(market_info: BacktestingMarketInfo,
                                                           feature_functions_key,
                                                           value_function_key)
         try:
+            from lambdatrader.shelve_cache import shelve_cache_get
             return shelve_cache_get(cache_key)
         except KeyError:
             return _compute_and_cache_pair_dataset(market_info,
@@ -149,6 +148,7 @@ def _compute_and_cache_pair_dataset(market_info,
                                                       end_date,
                                                       feature_functions_key,
                                                       value_function_key)
+    from lambdatrader.shelve_cache import shelve_cache_save
     shelve_cache_save(cache_key, data_set)
     return data_set
 
