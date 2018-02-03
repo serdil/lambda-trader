@@ -16,6 +16,7 @@ from xgboost.core import XGBoostError
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.candlestickstore import CandlestickStore
+from lambdatrader.constants import M5
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
 from lambdatrader.signals.data_analysis.feature_sets import (
@@ -28,7 +29,7 @@ from lambdatrader.signals.data_analysis.learning.dummy.learning_utils_dummy impo
 )
 from lambdatrader.signals.data_analysis.values import (
     make_cont_trade_return, make_cont_close_price_in_future, make_cont_close_price_in_fifteen_mins,
-    make_binary_max_price_in_future,
+    make_binary_max_price_in_future, make_cont_max_price_in_future,
 )
 from lambdatrader.utilities.utils import seconds
 
@@ -47,7 +48,7 @@ market_info = BacktestingMarketInfo(candlestick_store=
 
 latest_market_date = market_info.get_max_pair_end_time()
 
-dataset_symbol = 'BTC_VIA'
+dataset_symbol = 'BTC_SYS'
 
 day_offset = 60
 
@@ -67,8 +68,8 @@ dataset_len = dataset_end_date - dataset_start_date
 
 increase = 0.05
 num_candles = 48
-value_func = make_binary_max_price_in_future(increase=increase, num_candles=num_candles)
-value_func_name = 'binary_max_price_{}_{}'.format(increase, num_candles)
+value_func = make_cont_max_price_in_future(num_candles=num_candles, candle_period=M5)
+value_func_name = 'cont§_max_price_{}_{}'.format(increase, num_candles)
 
 feature_functions = list(get_small_feature_func_set_with_indicators())
 feature_funcs_name = 'with_ind'
@@ -112,15 +113,15 @@ num_neg_samples = n_samples - num_pos_samples
 
 params = {
     'silent': 1,
-    'booster': 'gblinear',
+    'booster': 'gbtree',
 
-    'objective': 'binary:logistic',
+    'objective': 'reg:linear',
     'base_score': num_pos_samples / num_neg_samples,
-    'eval_metric': 'error',
+    'eval_metric': 'rmse',
 
-    'eta': 0.3,
+    'eta': 0.1,
     'gamma': 0,
-    'max_depth': 6,
+    'max_depth': 3,
     'min_child_weight': 1,
     'max_delta_step': 0,
     'subsample': 1,
@@ -144,7 +145,7 @@ params = {
 
 watchlist = [(dtrain, 'train'), (dtest, 'test')]
 num_round = 10000
-early_stopping_rounds = 2000
+early_stopping_rounds = 200
 
 bst = xgb.train(params=params,
                 dtrain=dtrain,
@@ -156,7 +157,7 @@ feature_importances = bst.get_fscore()
 
 print()
 print('feature importances:')
-for f_name, imp in list(reversed(sorted(feature_importances.items(), key=itemgetter(1))))[:5]:
+for f_name, imp in list(reversed(sorted(feature_importances.items(), key=itemgetter(1))))[:10]:
     print(f_name, ':', imp)
 
 best_ntree_limit = bst.best_ntree_limit
@@ -165,25 +166,30 @@ try:
     pred = bst.predict(dtest, ntree_limit=best_ntree_limit)
 except XGBoostError:
     pred = bst.predict(dtest)
-train_pred = bst.predict(dtrain, ntree_limit=best_ntree_limit)
 
 pred_real = list(zip(pred, y_test))
 
 sorted_by_pred = list(reversed(sorted(pred_real, key=lambda x: (x[0],x[1]))))
 sorted_by_real = list(reversed(sorted(pred_real, key=lambda x: (x[1],x[0]))))
 
-num_sig = sum([1 for pred, real in pred_real if pred >= 0.8 and real == 1.0])
 
 print()
 print('+++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST++++')
 
-# print()
-# print('pred, real:')
-# for item1, item2 in list(zip(sorted_by_pred, sorted_by_real))[:500]:
-#     print('{:30}{:30}'.format('{:.6f}, {:.6f}'.format(*item1), '{:.6f}, {:.6f}'.format(*item2)))
+print()
+print('pred, real:')
+for item1, item2 in list(zip(sorted_by_pred, sorted_by_real))[:5000]:
+    if item1[0] < 0.05:
+        break
+    print('{:30}{:30}'.format('{:.6f}, {:.6f}'.format(*item1), '{:.6f}, {:.6f}'.format(*item2)))
 
 print()
-print('number of signals:', num_sig)
+for change_level in np.arange(0.01, 0.51, 0.01):
+    num_pos = sum([1 for pred, real in pred_real if pred >= change_level])
+    num_true_pos = sum([1 for pred, real in pred_real if pred >= change_level and real >= change_level])
+    num_false_pos = sum([1 for pred, real in pred_real if pred >= change_level and real < change_level])
+    num_failing = sum([1 for pred, real in pred_real if pred >= change_level and real < 0.005])
+    print('level:{:.2} pos:{} true_pos:{} false_pos:{} failing:{}'.format(change_level, num_pos, num_true_pos, num_false_pos, num_failing))
 
 # xgb.plot_importance(bst)
 # xgb.plot_tree(bst)
