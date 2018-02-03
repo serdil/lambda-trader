@@ -112,6 +112,7 @@ def create_pair_dataset_from_history(market_info: BacktestingMarketInfo,
             from lambdatrader.shelve_cache import shelve_cache_get
             return shelve_cache_get(cache_key)
         except KeyError:
+            print('dataset cache miss')
             return _compute_and_cache_pair_dataset(market_info,
                                                    pair,
                                                    start_date,
