@@ -179,7 +179,7 @@ print('+++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST
 print()
 print('pred, real:')
 for item1, item2 in list(zip(sorted_by_pred, sorted_by_real))[:5000]:
-    if item1[0] < 0.10:
+    if item1[0] < 0.05:
         break
     print('{:30}{:30}'.format('{:.6f}, {:.6f}'.format(*item1), '{:.6f}, {:.6f}'.format(*item2)))
 
