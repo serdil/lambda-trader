@@ -119,9 +119,9 @@ params = {
     'base_score': num_pos_samples / num_neg_samples,
     'eval_metric': 'rmse',
 
-    'eta': 0.1,
+    'eta': 0.0001,
     'gamma': 0,
-    'max_depth': 3,
+    'max_depth': 2,
     'min_child_weight': 1,
     'max_delta_step': 0,
     'subsample': 1,
@@ -145,7 +145,7 @@ params = {
 
 watchlist = [(dtrain, 'train'), (dtest, 'test')]
 num_round = 10000
-early_stopping_rounds = 200
+early_stopping_rounds = 500
 
 bst = xgb.train(params=params,
                 dtrain=dtrain,
@@ -179,7 +179,7 @@ print('+++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST
 print()
 print('pred, real:')
 for item1, item2 in list(zip(sorted_by_pred, sorted_by_real))[:5000]:
-    if item1[0] < 0.05:
+    if item1[0] < 0.10:
         break
     print('{:30}{:30}'.format('{:.6f}, {:.6f}'.format(*item1), '{:.6f}, {:.6f}'.format(*item2)))
 
