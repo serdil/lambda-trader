@@ -20,7 +20,6 @@ from lambdatrader.shelve_cache import shelve_cache_save
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
 from lambdatrader.signals.data_analysis.feature_sets import (
     get_large_feature_func_set, get_small_feature_func_set, get_alt_small_feature_func_set,
-    get_alt_small_feature_func_set_2, get_small_feature_func_set_with_indicators,
 )
 from lambdatrader.signals.data_analysis.learning.dummy.learning_utils_dummy import (
     train_and_test_model, print_model_metrics,
@@ -47,7 +46,7 @@ latest_market_date = market_info.get_max_pair_end_time()
 
 dataset_symbol = 'BTC_LTC'
 
-day_offset = 90
+day_offset = 60
 
 dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
@@ -68,13 +67,11 @@ num_candles = 48
 value_func = make_binary_max_price_in_future(increase=increase, num_candles=num_candles)
 value_func_name = 'binary_max_price_{}_{}'.format(increase, num_candles)
 
-
-
 dataset = create_pair_dataset_from_history(market_info=market_info,
                                            pair=dataset_symbol,
                                            start_date=dataset_start_date,
                                            end_date=dataset_end_date,
-                                           feature_functions=list(get_small_feature_func_set_with_indicators()),
+                                           feature_functions=list(get_alt_small_feature_func_set()),
                                            value_function=value_func,
                                            cache_and_get_cached=True,
                                            value_function_key=value_func_name)
@@ -86,8 +83,8 @@ feature_names = dataset.get_first_feature_names()
 X = dataset.get_numpy_feature_matrix()
 y = dataset.get_numpy_value_array()
 
-train_ratio = 0.6
-val_ratio = 0.8
+train_ratio = 0.8
+val_ratio = 0.9
 
 n_samples = len(y)
 val_split = int(train_ratio * n_samples)
@@ -107,27 +104,20 @@ dval = xgb.DMatrix(X_val, label=y_val, feature_names=feature_names)
 dtest = xgb.DMatrix(X_test, label=y_test, feature_names=feature_names)
 
 
-params = {'max_depth': 8, 'eta': 0.001, 'silent': 1, 'objective': 'binary:logistic'}
-watchlist = [(dtrain, 'train'), (dtest, 'test'), (dval, 'val')]
-num_round = 10000
-early_stopping_rounds = 3000
+params = {'max_depth': 2, 'eta': 1, 'silent': 1, 'objective': 'binary:logistic'}
+# evals = [(dval, 'val_set')]
+num_round = 100
+early_stopping_rounds = 10
+cv_fold = 10
 
-bst = xgb.train(params=params,
-                dtrain=dtrain,
-                num_boost_round=num_round,
-                evals=watchlist,
-                early_stopping_rounds=early_stopping_rounds)
+bst = xgb.cv(params=params,
+             dtrain=dtrain,
+             num_boost_round=num_round,
+             early_stopping_rounds=early_stopping_rounds)
 
-feature_importances = bst.get_fscore()
+print(bst)
 
-print()
-print('feature importances:')
-for f_name, imp in reversed(sorted(feature_importances.items(), key=itemgetter(1))):
-    print(f_name, ':', imp)
-
-best_ntree_limit = bst.best_ntree_limit
-
-pred = bst.predict(dval, ntree_limit=best_ntree_limit)
+pred = bst.predict(dval)
 
 pred_real = list(zip(pred, y_val))
 
@@ -139,10 +129,10 @@ print('====VALIDATION=======VALIDATION=======VALIDATION=======VALIDATION=======V
 
 print()
 print('pred, real:')
-for item1, item2 in list(zip(sorted_by_pred, sorted_by_real))[:300]:
+for item1, item2 in list(zip(sorted_by_pred, sorted_by_real))[:200]:
     print('{:30}{:30}'.format('{:.6f}, {:.6f}'.format(*item1), '{:.6f}, {:.6f}'.format(*item2)))
 
-pred = bst.predict(dtest, ntree_limit=best_ntree_limit)
+pred = bst.predict(dtest)
 
 pred_real = list(zip(pred, y_test))
 
@@ -154,9 +144,9 @@ print('+++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST
 
 print()
 print('pred, real:')
-for item1, item2 in list(zip(sorted_by_pred, sorted_by_real))[:300]:
+for item1, item2 in list(zip(sorted_by_pred, sorted_by_real))[:200]:
     print('{:30}{:30}'.format('{:.6f}, {:.6f}'.format(*item1), '{:.6f}, {:.6f}'.format(*item2)))
 
-# xgb.plot_importance(bst)
-# xgb.plot_tree(bst)
-# pyplot.show()
+xgb.plot_importance(bst)
+xgb.plot_tree(bst)
+pyplot.show()

@@ -57,6 +57,10 @@ def make_sma_delta(num_candles, candle_period, sma_period):
     return make_indicator_delta(num_candles, candle_period, IndicatorEnum.SMA, [sma_period])
 
 
+def make_ema_delta(num_candles, candle_period: PeriodEnum, ema_period):
+    return make_indicator_delta(num_candles, candle_period, IndicatorEnum.EMA, [ema_period])
+
+
 def make_indicator_delta(num_candles, candle_period: PeriodEnum,
                          indicator: IndicatorEnum, args: List):
     def feature_indicator_delta(market_info: BacktestingMarketInfo, pair):
