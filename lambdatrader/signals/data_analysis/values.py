@@ -77,6 +77,20 @@ def make_cont_max_price_in_future(num_candles, candle_period: PeriodEnum):
     return value_cont_max_price_in_future
 
 
+def make_cont_min_price_in_future(num_candles, candle_period: PeriodEnum):
+    def value_cont_min_price_in_future(market_info: BacktestingMarketInfo, pair):
+        last_candle = market_info.get_pair_period_candlestick(pair, 0, period=candle_period)
+        lowest_until_future = float('inf')
+        for i in range(-1, -num_candles-1, -1):
+            candle = market_info.get_pair_period_candlestick(pair=pair,
+                                                             ind=i,
+                                                             period=candle_period)
+            lowest_until_future = min(lowest_until_future, candle.high)
+        return lowest_until_future / last_candle.close - 1.0
+
+    return value_cont_min_price_in_future
+
+
 def make_cont_trade_return(num_candles=3, tp_level=0.03, candle_period=M5):
     def value_cont_trade_return(market_info: BacktestingMarketInfo, pair):
         max_price_func = make_cont_max_price_in_future(num_candles=num_candles,

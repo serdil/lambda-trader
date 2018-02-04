@@ -29,7 +29,7 @@ from lambdatrader.signals.data_analysis.learning.dummy.learning_utils_dummy impo
 )
 from lambdatrader.signals.data_analysis.values import (
     make_cont_trade_return, make_cont_close_price_in_future, make_cont_close_price_in_fifteen_mins,
-    make_binary_max_price_in_future, make_cont_max_price_in_future,
+    make_binary_max_price_in_future, make_cont_max_price_in_future, make_cont_min_price_in_future,
 )
 from lambdatrader.utilities.utils import seconds
 
@@ -67,9 +67,9 @@ dataset_end_date = latest_market_date - seconds(days=day_offset)
 dataset_len = dataset_end_date - dataset_start_date
 
 increase = 0.05
-num_candles = 48
-value_func = make_cont_max_price_in_future(num_candles=num_candles, candle_period=M5)
-value_func_name = 'cont§_max_price_{}_{}'.format(increase, num_candles)
+num_candles = 12
+value_func = make_cont_min_price_in_future(num_candles=num_candles, candle_period=M5)
+value_func_name = 'cont_min_price_{}_{}'.format(increase, num_candles)
 
 feature_functions = list(get_small_feature_func_set_with_indicators())
 feature_funcs_name = 'with_ind'
@@ -119,7 +119,7 @@ params = {
     'base_score': num_pos_samples / num_neg_samples,
     'eval_metric': 'rmse',
 
-    'eta': 0.0001,
+    'eta': 0.01,
     'gamma': 0,
     'max_depth': 2,
     'min_child_weight': 1,
@@ -144,8 +144,8 @@ params = {
 }
 
 watchlist = [(dtrain, 'train'), (dtest, 'test')]
-num_round = 10000
-early_stopping_rounds = 500
+num_round = 100000
+early_stopping_rounds = 20
 
 bst = xgb.train(params=params,
                 dtrain=dtrain,
@@ -157,7 +157,7 @@ feature_importances = bst.get_fscore()
 
 print()
 print('feature importances:')
-for f_name, imp in list(reversed(sorted(feature_importances.items(), key=itemgetter(1))))[:10]:
+for f_name, imp in list(reversed(sorted(feature_importances.items(), key=itemgetter(1))))[:20]:
     print(f_name, ':', imp)
 
 best_ntree_limit = bst.best_ntree_limit
@@ -169,6 +169,9 @@ except XGBoostError:
 
 pred_real = list(zip(pred, y_test))
 
+reverse_sorted_by_pred = list(sorted(pred_real, key=lambda x: (x[0],x[1])))
+reverse_sorted_by_real = list(sorted(pred_real, key=lambda x: (x[1],x[0])))
+
 sorted_by_pred = list(reversed(sorted(pred_real, key=lambda x: (x[0],x[1]))))
 sorted_by_real = list(reversed(sorted(pred_real, key=lambda x: (x[1],x[0]))))
 
@@ -178,8 +181,15 @@ print('+++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST+++++++TEST
 
 print()
 print('pred, real:')
-for item1, item2 in list(zip(sorted_by_pred, sorted_by_real))[:5000]:
+for item1, item2 in list(zip(sorted_by_pred, sorted_by_real))[:100]:
     if item1[0] < 0.05:
+        break
+    print('{:30}{:30}'.format('{:.6f}, {:.6f}'.format(*item1), '{:.6f}, {:.6f}'.format(*item2)))
+
+print()
+print('reverse pred, real:')
+for item1, item2 in list(zip(reverse_sorted_by_pred, reverse_sorted_by_real))[:100]:
+    if item2[1] > -0.00:
         break
     print('{:30}{:30}'.format('{:.6f}, {:.6f}'.format(*item1), '{:.6f}, {:.6f}'.format(*item2)))
 
