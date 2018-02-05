@@ -1,4 +1,7 @@
+import random
+
 from lambdatrader.constants import M5, M15, H, H4, D
+from lambdatrader.signals.data_analysis.datasets import Feature
 from lambdatrader.signals.data_analysis.features import (
     make_ohcl_delta, make_volume, make_sma_delta, make_rsi, make_atr, make_ema_delta,
 )
@@ -6,6 +9,14 @@ from lambdatrader.signals.data_analysis.features import (
 
 LARGE_SET_LOOKBACK_NUM_CANDLES = 15
 LARGE_SET_CANDLE_PERIODS = [M5, M15, H, H4, D]
+
+
+def get_dummy_feature_func_set():
+    yield dummy_feature
+
+
+def get_small_random_feature_func_set():
+    yield rand_feature
 
 
 def get_smallest_feature_func_set():
@@ -75,3 +86,10 @@ def fib_seq():
     yield 21
     yield 34
 
+
+def dummy_feature(a, b):
+    yield Feature(name='dummy', value=0)
+
+
+def rand_feature(a, b):
+    yield Feature(name='randomnumber', value=random.randint(0, 1000))
