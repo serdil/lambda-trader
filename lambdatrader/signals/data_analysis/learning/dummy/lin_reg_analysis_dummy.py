@@ -201,9 +201,13 @@ bst_close = xgb.train(params=params,
                       evals=watchlist_close,
                       early_stopping_rounds=early_stopping_rounds)
 
-pred_max = bst_max.predict(dtest_max)
-pred_min = bst_min.predict(dtest_min)
-pred_close = bst_close.predict(dtest_close)
+max_best_ntree_limit = bst_max.best_ntree_limit
+min_best_ntree_limit = bst_min.best_ntree_limit
+close_best_ntree_limit = bst_close.best_ntree_limit
+
+pred_max = bst_max.predict(dtest_max, ntree_limit=max_best_ntree_limit)
+pred_min = bst_min.predict(dtest_min, ntree_limit=min_best_ntree_limit)
+pred_close = bst_close.predict(dtest_close, ntree_limit=close_best_ntree_limit)
 
 pred_real_max = list(zip(pred_max, y_max_test))
 pred_real_min = list(zip(pred_min, y_min_test))
