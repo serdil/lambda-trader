@@ -29,8 +29,8 @@ latest_market_date = market_info.get_max_pair_end_time()
 day_offset = 60
 
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*500)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
-dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
+dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
+# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*120)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*90)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*60)
@@ -44,7 +44,7 @@ dataset_end_date = latest_market_date - seconds(days=day_offset)
 dataset_len = dataset_end_date - dataset_start_date
 
 
-dataset_symbol = 'BTC_RADS'
+dataset_symbol = 'BTC_SYS'
 
 dummy_feature_functions = list(get_dummy_feature_func_set())
 dummy_feature_functions_name = 'dummy'
@@ -52,7 +52,7 @@ dummy_feature_functions_name = 'dummy'
 feature_functions = list(get_small_feature_func_set_with_indicators())
 feature_funcs_name = 'with_ind'
 
-num_candles = 12
+num_candles = 48
 
 max_price_value_func = make_cont_max_price_in_future(num_candles=num_candles, candle_period=M5)
 max_price_value_func_name = 'cont_max_price_{}'.format(num_candles)
@@ -152,7 +152,7 @@ params = {
     'base_score': 0,
     'eval_metric': 'rmse',
 
-    'eta': 0.01,
+    'eta': 0.001,
     'gamma': 0,
     'max_depth': 1,
     'min_child_weight': 1,
@@ -180,8 +180,8 @@ watchlist_max = [(dtrain_max, 'train_max'), (dtest_max, 'test_max')]
 watchlist_min = [(dtrain_min, 'train_min'), (dtest_min, 'test_min')]
 watchlist_close = [(dtrain_close, 'train_close'), (dtest_close, 'test_close')]
 
-num_round = 2000
-early_stopping_rounds = 20
+num_round = 10000
+early_stopping_rounds = 2000
 
 bst_max = xgb.train(params=params,
                     dtrain=dtrain_max,
@@ -223,7 +223,7 @@ sorted_by_sum = list(reversed(sorted(pred_real_max_min_close, key=sort_key_pred_
 
 tp_level = 0.8
 p_sum = 0
-num_eval = 20
+num_eval = 100
 for pred_real_max, pred_real_min, pred_real_close in sorted_by_sum[:num_eval]:
     if pred_real_max[1] >= pred_real_max[0] * tp_level:
         profit = pred_real_max[0] * tp_level
