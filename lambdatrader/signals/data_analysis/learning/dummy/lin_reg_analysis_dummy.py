@@ -152,7 +152,7 @@ params = {
     'base_score': 0,
     'eval_metric': 'rmse',
 
-    'eta': 0.001,
+    'eta': 0.01,
     'gamma': 0,
     'max_depth': 1,
     'min_child_weight': 1,
