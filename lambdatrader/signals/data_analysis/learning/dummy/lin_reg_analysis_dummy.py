@@ -44,7 +44,7 @@ dataset_end_date = latest_market_date - seconds(days=day_offset)
 dataset_len = dataset_end_date - dataset_start_date
 
 
-dataset_symbol = 'BTC_SYS'
+dataset_symbol = 'BTC_LTC'
 
 dummy_feature_functions = list(get_dummy_feature_func_set())
 dummy_feature_functions_name = 'dummy'
@@ -181,7 +181,7 @@ watchlist_min = [(dtrain_min, 'train_min'), (dtest_min, 'test_min')]
 watchlist_close = [(dtrain_close, 'train_close'), (dtest_close, 'test_close')]
 
 num_round = 10000
-early_stopping_rounds = 2000
+early_stopping_rounds = 1000
 
 bst_max = xgb.train(params=params,
                     dtrain=dtrain_max,
