@@ -1,8 +1,11 @@
+# get max prices, min prices and close prices for 4 hours
+# train model to predict max price in 4 hours
+# train model to predict min price in 4 hours
+# train model to predict close price in 4 hours
+# determine trading gains for different
+# (max_price_threshold, min_price_threshold, close_price_threshold) pairs.
+from operator import itemgetter
 
-# get max prices, min prices and close prices for 1 hour
-# train model to predict max price in 1 hour
-# train model to predict min price in 1 hour
-# determine trading gains for different (max_price_threshold, min_price_threshold) pairs.
 import numpy as np
 import xgboost as xgb
 
@@ -44,7 +47,7 @@ dataset_end_date = latest_market_date - seconds(days=day_offset)
 dataset_len = dataset_end_date - dataset_start_date
 
 
-dataset_symbol = 'BTC_ETC'
+dataset_symbol = 'BTC_DGB'
 
 dummy_feature_functions = list(get_dummy_feature_func_set())
 dummy_feature_functions_name = 'dummy'
@@ -167,9 +170,9 @@ params = {
     'base_score': 0,
     'eval_metric': 'rmse',
 
-    'eta': 0.1,
+    'eta': 0.001,
     'gamma': 0,
-    'max_depth': 2,
+    'max_depth': 1,
     'min_child_weight': 1,
     'max_delta_step': 0,
     'subsample': 1,
@@ -191,14 +194,14 @@ params = {
     'rate_drop': 0.01,
 }
 
-watchlist_max = [(dtrain_max, 'train_max'), (dval_max, 'val_max'), (dtest_max, 'test_max')]
-watchlist_min = [(dtrain_min, 'train_min'), (dval_min, 'val_min'), (dtest_min, 'test_min')]
+watchlist_max = [(dtrain_max, 'train_max'), (dtest_max, 'test_max'), (dval_max, 'val_max')]
+watchlist_min = [(dtrain_min, 'train_min'), (dtest_min, 'test_min'), (dval_min, 'val_min')]
 watchlist_close = [(dtrain_close, 'train_close'),
-                   (dval_close, 'val_close'), (dtest_close, 'test_close')]
+                   (dtest_close, 'test_close'), (dval_close, 'val_close')]
 
 
 num_round = 10000
-early_stopping_rounds = 200
+early_stopping_rounds = 100
 
 bst_max = xgb.train(params=params,
                     dtrain=dtrain_max,
@@ -217,6 +220,25 @@ bst_close = xgb.train(params=params,
                       num_boost_round=num_round,
                       evals=watchlist_close,
                       early_stopping_rounds=early_stopping_rounds)
+
+feature_importances_max = bst_max.get_fscore()
+feature_importances_min = bst_min.get_fscore()
+feature_importances_close = bst_close.get_fscore()
+
+print()
+print('feature importances max:')
+for f_name, imp in list(reversed(sorted(feature_importances_max.items(), key=itemgetter(1))))[:10]:
+    print(f_name, ':', imp)
+
+print()
+print('feature importances min:')
+for f_name, imp in list(reversed(sorted(feature_importances_min.items(), key=itemgetter(1))))[:10]:
+    print(f_name, ':', imp)
+
+print()
+print('feature importances close:')
+for f_name, imp in list(reversed(sorted(feature_importances_close.items(), key=itemgetter(1))))[:10]:
+    print(f_name, ':', imp)
 
 
 max_pred_key = lambda a: a[0][0]
@@ -303,10 +325,10 @@ for close_pred_threshold in np.arange(close_pred_begin, close_pred_end, close_pr
                 avg_sum_score = sum([max_pred_key(a) + min_pred_key(a) + close_pred_key(a)
                                      for a in filtered]) / n_sig
 
-                print('max_min_close_thr {:<+8.5f} {:<+8.5f} {:<+8.5f} n_sig {:<4} true_pos {:<4} total_profit {:<+7.4f} avg_profit {:<+8.5f} min_sum_s {:<+8.5f}, avg_s_s {:<+8.5f}'
-                      .format(max_pred_threshold, min_pred_threshold, close_pred_threshold, n_sig, true_pos, total_profit, avg_profit, min_sum_score, avg_sum_score))
+                print('close_max_min_thr {:<+8.5f} {:<+8.5f} {:<+8.5f} n_sig {:<4} true_pos {:<4} total_profit {:<+7.4f} avg_profit {:<+8.5f} min_sum_s {:<+8.5f}, avg_s_s {:<+8.5f}'
+                      .format(close_pred_threshold, max_pred_threshold, min_pred_threshold, n_sig, true_pos, total_profit, avg_profit, min_sum_score, avg_sum_score))
 
-
+print()
 for a in pred_real_max_min_close_profit[-10:]:
     print(a)
 
@@ -370,136 +392,135 @@ for close_pred_threshold in np.arange(close_pred_begin, close_pred_end, close_pr
                 avg_sum_score = sum([max_pred_key(a) + min_pred_key(a) + close_pred_key(a)
                                      for a in filtered]) / n_sig
 
-                print('max_min_close_thr {:<+8.5f} {:<+8.5f} {:<+8.5f} n_sig {:<4} true_pos {:<4} total_profit {:<+7.4f} avg_profit {:<+8.5f} min_sum_s {:<+8.5f}, avg_s_s {:<+8.5f}'
-                      .format(max_pred_threshold, min_pred_threshold, close_pred_threshold, n_sig, true_pos, total_profit, avg_profit, min_sum_score, avg_sum_score))
+                print('close_max_min_thr {:<+8.5f} {:<+8.5f} {:<+8.5f} n_sig {:<4} true_pos {:<4} total_profit {:<+7.4f} avg_profit {:<+8.5f} min_sum_s {:<+8.5f}, avg_s_s {:<+8.5f}'
+                      .format(close_pred_threshold, max_pred_threshold, min_pred_threshold, n_sig, true_pos, total_profit, avg_profit, min_sum_score, avg_sum_score))
 
 
+print()
 for a in pred_real_max_min_close_profit[-10:]:
     print(a)
 
 
-#
-# # REAL TEST
-#
-# real_test_num_days = 30
-# real_test_start_date = dataset_end_date
-# real_test_end_date = real_test_start_date + seconds(days=real_test_num_days)
-#
-#
-# dataset = create_pair_dataset_from_history(market_info=market_info,
-#                                            pair=dataset_symbol,
-#                                            start_date=real_test_start_date,
-#                                            end_date=real_test_end_date,
-#                                            feature_functions=feature_functions,
-#                                            value_function=max_price_value_func,
-#                                            cache_and_get_cached=True,
-#                                            feature_functions_key=feature_funcs_name,
-#                                            value_function_key=max_price_value_func_name)
-#
-# max_price_value_dataset = create_pair_dataset_from_history(market_info=market_info,
-#                                                            pair=dataset_symbol,
-#                                                            start_date=real_test_start_date,
-#                                                            end_date=real_test_end_date,
-#                                                            feature_functions=dummy_feature_functions,
-#                                                            value_function=max_price_value_func,
-#                                                            cache_and_get_cached=True,
-#                                                            feature_functions_key=dummy_feature_functions_name,
-#                                                            value_function_key=max_price_value_func_name)
-#
-# min_price_value_dataset = create_pair_dataset_from_history(market_info=market_info,
-#                                                            pair=dataset_symbol,
-#                                                            start_date=real_test_start_date,
-#                                                            end_date=real_test_end_date,
-#                                                            feature_functions=dummy_feature_functions,
-#                                                            value_function=min_price_value_func,
-#                                                            cache_and_get_cached=True,
-#                                                            feature_functions_key=dummy_feature_functions_name,
-#                                                            value_function_key=min_price_value_func_name)
-#
-# close_price_value_dataset = create_pair_dataset_from_history(market_info=market_info,
-#                                                              pair=dataset_symbol,
-#                                                              start_date=real_test_start_date,
-#                                                              end_date=real_test_end_date,
-#                                                              feature_functions=dummy_feature_functions,
-#                                                              value_function=close_price_value_func,
-#                                                              cache_and_get_cached=True,
-#                                                              feature_functions_key=dummy_feature_functions_name,
-#                                                              value_function_key=close_price_value_func_name)
-#
-# X = dataset.get_numpy_feature_matrix()
-# y_max = max_price_value_dataset.get_numpy_value_array()
-# y_min = min_price_value_dataset.get_numpy_value_array()
-# y_close = close_price_value_dataset.get_numpy_value_array()
-#
-# drealtest_max = xgb.DMatrix(X, label=y_max, feature_names=feature_names)
-#
-# drealtest_min = xgb.DMatrix(X, label=y_min, feature_names=feature_names)
-#
-# drealtest_close = xgb.DMatrix(X, label=y_close, feature_names=feature_names)
-#
-# pred_max = bst_max.predict(drealtest_max, ntree_limit=max_best_ntree_limit)
-# pred_min = bst_min.predict(drealtest_min, ntree_limit=min_best_ntree_limit)
-# pred_close = bst_close.predict(drealtest_close, ntree_limit=close_best_ntree_limit)
-#
-# pred_real_max = list(zip(pred_max, y_max_val))
-# pred_real_min = list(zip(pred_min, y_min_val))
-# pred_real_close = list(zip(pred_close, y_close_val))
-#
-# pred_real_max_min_close = list(zip(pred_real_max, pred_real_min, pred_real_close))
-#
-# profits = [compute_profit(a) for a in pred_real_max_min_close]
-#
-# pred_real_max_min_close_profit = list(zip(pred_real_max_min_close, profits))
-#
-# maximum_max_pred = max_pred_key(max(pred_real_max_min_close, key=max_pred_key))
-#
-# maximum_min_pred = min_pred_key(max(pred_real_max_min_close, key=min_pred_key))
-#
-# maximum_close_pred = close_pred_key(max(pred_real_max_min_close, key=close_pred_key))
-#
-# max_pred_step = 0.01
-# max_pred_begin = 0.00
-# max_pred_end = maximum_max_pred+max_pred_step
-#
-# min_pred_step = 0.01
-# min_pred_begin = -0.05
-# min_pred_end = maximum_min_pred+min_pred_step
-#
-# close_pred_step = 0.01
-# close_pred_begin = 0.00
-# close_pred_end = maximum_close_pred+close_pred_step
-#
-# print()
-# print('++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++')
-# print('++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++')
-# print('++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++')
-# print()
-#
-#
-# for close_pred_threshold in np.arange(close_pred_begin, close_pred_end, close_pred_step):
-#     for max_pred_threshold in np.arange(max_pred_begin, max_pred_end, max_pred_step):
-#         for min_pred_threshold in np.arange(min_pred_begin, min_pred_end, min_pred_step):
-#             filter_close = filter(lambda a: close_pred_key(a) >= close_pred_threshold, pred_real_max_min_close)
-#             filter_max = filter(lambda a: max_pred_key(a) >= max_pred_threshold, filter_close)
-#             filter_min = filter(lambda a: min_pred_key(a) >= min_pred_threshold, filter_max)
-#
-#             filtered = list(filter_min)
-#
-#             if filtered:
-#                 n_sig = len(filtered)
-#                 total_profit = sum([compute_profit(a) for a in filtered])
-#
-#                 avg_profit = total_profit / n_sig
-#
-#                 true_pos = sum([one_for_tp_hit_else_zero(a) for a in filtered])
-#
-#                 min_sum_score = max_pred_threshold + min_pred_threshold + close_pred_threshold
-#                 avg_sum_score = sum([max_pred_key(a) + min_pred_key(a) + close_pred_key(a)
-#                                      for a in filtered]) / n_sig
-#
-#                 print('max_min_close_thr {:<+8.5f} {:<+8.5f} {:<+8.5f} n_sig {:<4} true_pos {:<4} total_profit {:<+7.4f} avg_profit {:<+8.5f} min_sum_s {:<+8.5f}, avg_s_s {:<+8.5f}'
-#                       .format(max_pred_threshold, min_pred_threshold, close_pred_threshold, n_sig, true_pos, total_profit, avg_profit, min_sum_score, avg_sum_score))
-#
-#
-# for a in pred_real_max_min_close_profit[-10:]:
-#     print(a)
+
+# REAL TEST
+
+print()
+print('++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++')
+print()
+
+real_test_num_days = 30
+real_test_start_date = dataset_end_date
+real_test_end_date = real_test_start_date + seconds(days=real_test_num_days)
+
+
+dataset = create_pair_dataset_from_history(market_info=market_info,
+                                           pair=dataset_symbol,
+                                           start_date=real_test_start_date,
+                                           end_date=real_test_end_date,
+                                           feature_functions=feature_functions,
+                                           value_function=max_price_value_func,
+                                           cache_and_get_cached=True,
+                                           feature_functions_key=feature_funcs_name,
+                                           value_function_key=max_price_value_func_name)
+
+max_price_value_dataset = create_pair_dataset_from_history(market_info=market_info,
+                                                           pair=dataset_symbol,
+                                                           start_date=real_test_start_date,
+                                                           end_date=real_test_end_date,
+                                                           feature_functions=dummy_feature_functions,
+                                                           value_function=max_price_value_func,
+                                                           cache_and_get_cached=True,
+                                                           feature_functions_key=dummy_feature_functions_name,
+                                                           value_function_key=max_price_value_func_name)
+
+min_price_value_dataset = create_pair_dataset_from_history(market_info=market_info,
+                                                           pair=dataset_symbol,
+                                                           start_date=real_test_start_date,
+                                                           end_date=real_test_end_date,
+                                                           feature_functions=dummy_feature_functions,
+                                                           value_function=min_price_value_func,
+                                                           cache_and_get_cached=True,
+                                                           feature_functions_key=dummy_feature_functions_name,
+                                                           value_function_key=min_price_value_func_name)
+
+close_price_value_dataset = create_pair_dataset_from_history(market_info=market_info,
+                                                             pair=dataset_symbol,
+                                                             start_date=real_test_start_date,
+                                                             end_date=real_test_end_date,
+                                                             feature_functions=dummy_feature_functions,
+                                                             value_function=close_price_value_func,
+                                                             cache_and_get_cached=True,
+                                                             feature_functions_key=dummy_feature_functions_name,
+                                                             value_function_key=close_price_value_func_name)
+
+X = dataset.get_numpy_feature_matrix()
+y_max = max_price_value_dataset.get_numpy_value_array()
+y_min = min_price_value_dataset.get_numpy_value_array()
+y_close = close_price_value_dataset.get_numpy_value_array()
+
+drealtest_max = xgb.DMatrix(X, label=y_max, feature_names=feature_names)
+
+drealtest_min = xgb.DMatrix(X, label=y_min, feature_names=feature_names)
+
+drealtest_close = xgb.DMatrix(X, label=y_close, feature_names=feature_names)
+
+pred_max = bst_max.predict(drealtest_max, ntree_limit=max_best_ntree_limit)
+pred_min = bst_min.predict(drealtest_min, ntree_limit=min_best_ntree_limit)
+pred_close = bst_close.predict(drealtest_close, ntree_limit=close_best_ntree_limit)
+
+pred_real_max = list(zip(pred_max, y_max_val))
+pred_real_min = list(zip(pred_min, y_min_val))
+pred_real_close = list(zip(pred_close, y_close_val))
+
+pred_real_max_min_close = list(zip(pred_real_max, pred_real_min, pred_real_close))
+
+profits = [compute_profit(a) for a in pred_real_max_min_close]
+
+pred_real_max_min_close_profit = list(zip(pred_real_max_min_close, profits))
+
+maximum_max_pred = max_pred_key(max(pred_real_max_min_close, key=max_pred_key))
+
+maximum_min_pred = min_pred_key(max(pred_real_max_min_close, key=min_pred_key))
+
+maximum_close_pred = close_pred_key(max(pred_real_max_min_close, key=close_pred_key))
+
+max_pred_step = 0.01
+max_pred_begin = 0.00
+max_pred_end = maximum_max_pred+max_pred_step
+
+min_pred_step = 0.01
+min_pred_begin = -0.05
+min_pred_end = maximum_min_pred+min_pred_step
+
+close_pred_step = 0.01
+close_pred_begin = 0.00
+close_pred_end = maximum_close_pred+close_pred_step
+
+for close_pred_threshold in np.arange(close_pred_begin, close_pred_end, close_pred_step):
+    for max_pred_threshold in np.arange(max_pred_begin, max_pred_end, max_pred_step):
+        for min_pred_threshold in np.arange(min_pred_begin, min_pred_end, min_pred_step):
+            filter_close = filter(lambda a: close_pred_key(a) >= close_pred_threshold, pred_real_max_min_close)
+            filter_max = filter(lambda a: max_pred_key(a) >= max_pred_threshold, filter_close)
+            filter_min = filter(lambda a: min_pred_key(a) >= min_pred_threshold, filter_max)
+
+            filtered = list(filter_min)
+
+            if filtered:
+                n_sig = len(filtered)
+                total_profit = sum([compute_profit(a) for a in filtered])
+
+                avg_profit = total_profit / n_sig
+
+                true_pos = sum([one_for_tp_hit_else_zero(a) for a in filtered])
+
+                min_sum_score = max_pred_threshold + min_pred_threshold + close_pred_threshold
+                avg_sum_score = sum([max_pred_key(a) + min_pred_key(a) + close_pred_key(a)
+                                     for a in filtered]) / n_sig
+
+                print('close_max_min_thr {:<+8.5f} {:<+8.5f} {:<+8.5f} n_sig {:<4} true_pos {:<4} total_profit {:<+7.4f} avg_profit {:<+8.5f} min_sum_s {:<+8.5f}, avg_s_s {:<+8.5f}'
+                      .format(close_pred_threshold, max_pred_threshold, min_pred_threshold, n_sig, true_pos, total_profit, avg_profit, min_sum_score, avg_sum_score))
+
+
+print()
+for a in pred_real_max_min_close_profit[-10:]:
+    print(a)
