@@ -41,8 +41,8 @@ day_offset = 60
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*120)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*90)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*60)
-dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*30)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*7)
+# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*30)
+dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*7)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, minutes=30)
 
@@ -51,7 +51,7 @@ dataset_end_date = latest_market_date - seconds(days=day_offset)
 dataset_len = dataset_end_date - dataset_start_date
 
 
-dataset_symbol = 'BTC_XRP'
+dataset_symbol = 'BTC_ETC'
 
 dummy_feature_functions = list(get_dummy_feature_func_set())
 dummy_feature_functions_name = 'dummy'
@@ -168,7 +168,7 @@ dtest_close = xgb.DMatrix(X_test, label=y_close_test, feature_names=feature_name
 
 params = {
     'silent': 1,
-    'booster': 'gbtree',
+    'booster': 'gblinear',
 
     'objective': 'reg:linear',
     'base_score': 0,
@@ -363,15 +363,15 @@ def analyze_output(pred_real_max, pred_real_min, pred_real_close):
     maximum_close_pred = close_pred_key(max(pred_real_max_min_close, key=close_pred_key))
 
     max_pred_step = 0.01
-    max_pred_begin = math.floor(minimum_max_pred / max_pred_step) * max_pred_step
+    max_pred_begin = max(math.floor(minimum_max_pred / max_pred_step) * max_pred_step, -0.05)
     max_pred_end = maximum_max_pred + max_pred_step
 
     min_pred_step = 0.01
-    min_pred_begin = math.floor(minimum_min_pred / min_pred_step) * min_pred_step
+    min_pred_begin = max(math.floor(minimum_min_pred / min_pred_step) * min_pred_step, -0.05)
     min_pred_end = maximum_min_pred + min_pred_step
 
     close_pred_step = 0.01
-    close_pred_begin = math.floor(minimum_close_pred / close_pred_step) * close_pred_step
+    close_pred_begin = max(math.floor(minimum_close_pred / close_pred_step)*close_pred_step, -0.05)
     close_pred_end = maximum_close_pred + close_pred_step
 
     for close_pred_thr in np.arange(close_pred_begin, close_pred_end, close_pred_step):
@@ -519,7 +519,7 @@ print()
 print('++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++')
 print()
 
-real_test_num_days = 30
+real_test_num_days = 3
 real_test_start_date = dataset_end_date
 real_test_end_date = real_test_start_date + seconds(days=real_test_num_days)
 
