@@ -51,7 +51,7 @@ dataset_end_date = latest_market_date - seconds(days=day_offset)
 dataset_len = dataset_end_date - dataset_start_date
 
 
-dataset_symbol = 'BTC_ETC'
+dataset_symbol = 'BTC_CVC'
 
 dummy_feature_functions = list(get_dummy_feature_func_set())
 dummy_feature_functions_name = 'dummy'
@@ -519,7 +519,7 @@ print()
 print('++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++')
 print()
 
-real_test_num_days = 3
+real_test_num_days = 14
 real_test_start_date = dataset_end_date
 real_test_end_date = real_test_start_date + seconds(days=real_test_num_days)
 
