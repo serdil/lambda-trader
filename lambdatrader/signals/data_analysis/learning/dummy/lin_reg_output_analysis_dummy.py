@@ -240,7 +240,12 @@ max_best_ntree_limit = bst_max.best_ntree_limit
 min_best_ntree_limit = bst_min.best_ntree_limit
 close_best_ntree_limit = bst_close.best_ntree_limit
 
+
 # VALIDATION PERFORMANCE
+
+print()
+print('++++VALIDATION++++++++VALIDATION++++++++VALIDATION++++++++VALIDATION++++++++VALIDATION++++++++VALIDATION++++')
+print()
 
 pred_max = bst_max.predict(dval_max, ntree_limit=max_best_ntree_limit)
 pred_min = bst_min.predict(dval_min, ntree_limit=min_best_ntree_limit)
@@ -308,6 +313,9 @@ for a in pred_real_max_min_close_profit[-10:]:
 
 # TEST PERFORMANCE
 
+print()
+print('++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++')
+print()
 
 pred_max = bst_max.predict(dtest_max, ntree_limit=max_best_ntree_limit)
 pred_min = bst_min.predict(dtest_min, ntree_limit=min_best_ntree_limit)
