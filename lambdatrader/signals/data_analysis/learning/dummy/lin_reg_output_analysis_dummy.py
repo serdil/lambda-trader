@@ -330,6 +330,7 @@ def analyze_output(pred_real_max, pred_real_min, pred_real_close):
                     avg_profit = total_profit / n_sig
 
                     # TODO: compute avg_real_max avg_real_close, avg_real_min
+                    # TODO: compute max_hit_rate min_hit_rate close_hit_rate (positive)
 
                     # TODO: give some scores to model for some determined threshold levels
 
