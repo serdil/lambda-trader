@@ -11,6 +11,7 @@ from operator import itemgetter
 
 import numpy as np
 import xgboost as xgb
+from xgboost.core import XGBoostError
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.candlestickstore import CandlestickStore
@@ -35,12 +36,12 @@ latest_market_date = market_info.get_max_pair_end_time()
 day_offset = 60
 
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*500)
-dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
+# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*120)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*90)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*60)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*30)
+dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*30)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*7)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, minutes=30)
@@ -50,7 +51,7 @@ dataset_end_date = latest_market_date - seconds(days=day_offset)
 dataset_len = dataset_end_date - dataset_start_date
 
 
-dataset_symbol = 'BTC_LTC'
+dataset_symbol = 'BTC_XRP'
 
 dummy_feature_functions = list(get_dummy_feature_func_set())
 dummy_feature_functions_name = 'dummy'
@@ -457,16 +458,6 @@ def analyze_output(pred_real_max, pred_real_min, pred_real_close):
                                                       real_max_avg,
                                                       real_close_avg))
 
-                    # print('close_max_min_thr {:<+8.5f} {:<+8.5f} {:<+8.5f} '
-                    #       'n_sig {:<4} '
-                    #       'true_pos {:<4} '
-                    #       'total_profit {:<+7.4f} '
-                    #       'avg_profit {:<+8.5f} '
-                    #       'min_sum_s {:<+8.5f}, '
-                    #       'avg_s_s {:<+8.5f}'.format(close_pred_threshold, max_pred_threshold,
-                    #                                  min_pred_threshold, n_sig, true_pos, total_profit,
-                    #                                  avg_profit, min_sum_score, avg_sum_score))
-
     # TODO: give some scores to model for some determined threshold levels
 
     print()
@@ -480,9 +471,16 @@ print()
 print('++++VALIDATION++++++++VALIDATION++++++++VALIDATION++++++++VALIDATION++++++++VALIDATION++++++++VALIDATION++++')
 print()
 
-pred_max = bst_max.predict(dval_max, ntree_limit=max_best_ntree_limit)
-pred_min = bst_min.predict(dval_min, ntree_limit=min_best_ntree_limit)
-pred_close = bst_close.predict(dval_close, ntree_limit=close_best_ntree_limit)
+
+try:
+    pred_max = bst_max.predict(dval_max, ntree_limit=max_best_ntree_limit)
+    pred_min = bst_min.predict(dval_min, ntree_limit=min_best_ntree_limit)
+    pred_close = bst_close.predict(dval_close, ntree_limit=close_best_ntree_limit)
+except XGBoostError:
+    pred_max = bst_max.predict(dval_max)
+    pred_min = bst_min.predict(dval_min)
+    pred_close = bst_close.predict(dval_close)
+
 
 pred_real_max = list(zip(pred_max, y_max_val))
 pred_real_min = list(zip(pred_min, y_min_val))
@@ -498,9 +496,15 @@ print()
 print('++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++')
 print()
 
-pred_max = bst_max.predict(dtest_max, ntree_limit=max_best_ntree_limit)
-pred_min = bst_min.predict(dtest_min, ntree_limit=min_best_ntree_limit)
-pred_close = bst_close.predict(dtest_close, ntree_limit=close_best_ntree_limit)
+try:
+    pred_max = bst_max.predict(dval_max, ntree_limit=max_best_ntree_limit)
+    pred_min = bst_min.predict(dval_min, ntree_limit=min_best_ntree_limit)
+    pred_close = bst_close.predict(dval_close, ntree_limit=close_best_ntree_limit)
+except XGBoostError:
+    pred_max = bst_max.predict(dval_max)
+    pred_min = bst_min.predict(dval_min)
+    pred_close = bst_close.predict(dval_close)
+
 
 pred_real_max = list(zip(pred_max, y_max_test))
 pred_real_min = list(zip(pred_min, y_min_test))
@@ -571,12 +575,17 @@ drealtest_min = xgb.DMatrix(X, label=y_min, feature_names=feature_names)
 
 drealtest_close = xgb.DMatrix(X, label=y_close, feature_names=feature_names)
 
-pred_max = bst_max.predict(drealtest_max, ntree_limit=max_best_ntree_limit)
-pred_min = bst_min.predict(drealtest_min, ntree_limit=min_best_ntree_limit)
-pred_close = bst_close.predict(drealtest_close, ntree_limit=close_best_ntree_limit)
+try:
+    pred_max = bst_max.predict(drealtest_max, ntree_limit=max_best_ntree_limit)
+    pred_min = bst_min.predict(drealtest_min, ntree_limit=min_best_ntree_limit)
+    pred_close = bst_close.predict(drealtest_close, ntree_limit=close_best_ntree_limit)
+except XGBoostError:
+    pred_max = bst_max.predict(drealtest_max)
+    pred_min = bst_min.predict(drealtest_min)
+    pred_close = bst_close.predict(drealtest_close)
 
-pred_real_max = list(zip(pred_max, y_max_val))
-pred_real_min = list(zip(pred_min, y_min_val))
-pred_real_close = list(zip(pred_close, y_close_val))
+pred_real_max = list(zip(pred_max, y_max))
+pred_real_min = list(zip(pred_min, y_min))
+pred_real_close = list(zip(pred_close, y_close))
 
 analyze_output(pred_real_max, pred_real_min, pred_real_close)
