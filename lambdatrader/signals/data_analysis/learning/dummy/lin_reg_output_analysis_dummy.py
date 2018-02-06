@@ -53,6 +53,7 @@ dataset_len = dataset_end_date - dataset_start_date
 
 print('start_date: {} end_date: {}'.format(datetime.utcfromtimestamp(dataset_start_date),
                                          datetime.utcfromtimestamp(dataset_end_date)))
+print()
 
 
 dataset_symbol = 'BTC_CVC'
