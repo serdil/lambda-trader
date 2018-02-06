@@ -4,6 +4,9 @@
 # train model to predict close price in 4 hours
 # determine trading gains for different
 # (max_price_threshold, min_price_threshold, close_price_threshold) pairs.
+
+import math
+
 from operator import itemgetter
 
 import numpy as np
@@ -29,15 +32,15 @@ market_info = BacktestingMarketInfo(candlestick_store=
 
 latest_market_date = market_info.get_max_pair_end_time()
 
-day_offset = 60
+day_offset = 200
 
-dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*500)
+# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*500)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*120)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*90)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*60)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*30)
+dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*30)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*7)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, minutes=30)
@@ -52,8 +55,8 @@ dataset_symbol = 'BTC_XMR'
 dummy_feature_functions = list(get_dummy_feature_func_set())
 dummy_feature_functions_name = 'dummy'
 
-feature_functions = list(get_small_feature_func_set_with_indicators())
-feature_funcs_name = 'with_ind'
+feature_functions = list(get_small_feature_func_set())
+feature_funcs_name = 'small'
 
 num_candles = 48
 
@@ -170,10 +173,10 @@ params = {
     'base_score': 0,
     'eval_metric': 'rmse',
 
-    'eta': 0.1,
+    'eta': 0.01,
     'gamma': 0,
-    'max_depth': 1,
-    'min_child_weight': 1,
+    'max_depth': 3,
+    'min_child_weight': 2,
     'max_delta_step': 0,
     'subsample': 1,
     'colsample_bytree': 1,
@@ -249,18 +252,108 @@ max_real_key = lambda a: a[0][1]
 min_real_key = lambda a: a[1][1]
 close_real_key = lambda a: a[2][1]
 
-tp_level = 1.0
-compute_profit = lambda a: close_pred_key(a) * tp_level \
-    if close_pred_key(a) > 0 and max_real_key(a) >= close_pred_key(a) * tp_level \
-    else close_real_key(a)
-one_for_tp_hit_else_zero = lambda a: 1 \
-    if close_pred_key(a) > 0 and max_real_key(a) >= close_pred_key(a) * tp_level \
-    else 0
+tp_level = 0.9
+
+
+def tp_at_close_pred_profit(a):
+    return close_pred_key(a) * tp_level \
+        if tp_at_close_pred_one(a) == 1 \
+        else close_real_key(a)
+
+
+def tp_at_close_pred_one(a):
+    return 1 \
+        if close_pred_key(a) > 0 and max_real_key(a) >= close_pred_key(a) * tp_level \
+        else 0
+
+
+def tp_at_max_pred_profit(a):
+    return max_pred_key(a) * tp_level \
+        if tp_at_max_pred_one(a) == 1 \
+        else close_real_key(a)
+
+
+def tp_at_max_pred_one(a):
+    return 1 \
+        if max_pred_key(a) > 0 and max_real_key(a) >= max_pred_key(a) * tp_level \
+        else 0
 
 
 max_best_ntree_limit = bst_max.best_ntree_limit
 min_best_ntree_limit = bst_min.best_ntree_limit
 close_best_ntree_limit = bst_close.best_ntree_limit
+
+
+def analyze_output(pred_real_max, pred_real_min, pred_real_close):
+    pred_real_max_min_close = list(zip(pred_real_max, pred_real_min, pred_real_close))
+
+    profits = [tp_at_close_pred_profit(a) for a in pred_real_max_min_close]
+
+    pred_real_max_min_close_profit = list(zip(pred_real_max_min_close, profits))
+
+    minimum_max_pred = max_pred_key(min(pred_real_max_min_close, key=max_pred_key))
+    maximum_max_pred = max_pred_key(max(pred_real_max_min_close, key=max_pred_key))
+
+    minimum_min_pred = min_pred_key(min(pred_real_max_min_close, key=min_pred_key))
+    maximum_min_pred = min_pred_key(max(pred_real_max_min_close, key=min_pred_key))
+
+    minimum_close_pred = close_pred_key(min(pred_real_max_min_close, key=close_pred_key))
+    maximum_close_pred = close_pred_key(max(pred_real_max_min_close, key=close_pred_key))
+
+    max_pred_step = 0.01
+    max_pred_begin = math.floor(minimum_max_pred / max_pred_step) * max_pred_step
+    max_pred_end = maximum_max_pred + max_pred_step
+
+    min_pred_step = 0.01
+    min_pred_begin = math.floor(minimum_min_pred / min_pred_step) * min_pred_step
+    min_pred_end = maximum_min_pred + min_pred_step
+
+    close_pred_step = 0.01
+    close_pred_begin = math.floor(minimum_close_pred / close_pred_step) * close_pred_step
+    close_pred_end = maximum_close_pred + close_pred_step
+
+    for close_pred_threshold in np.arange(close_pred_begin, close_pred_end, close_pred_step):
+        for max_pred_threshold in np.arange(max_pred_begin, max_pred_end, max_pred_step):
+            for min_pred_threshold in np.arange(min_pred_begin, min_pred_end, min_pred_step):
+                filter_close = filter(lambda a: close_pred_key(a) >= close_pred_threshold,
+                                      pred_real_max_min_close)
+                filter_max = filter(lambda a: max_pred_key(a) >= max_pred_threshold, filter_close)
+                filter_min = filter(lambda a: min_pred_key(a) >= min_pred_threshold, filter_max)
+
+                filtered = list(filter_min)
+
+                if filtered:
+                    n_sig = len(filtered)
+
+                    # TODO: implement and measure different TP and SL strategies
+                    total_profit = sum([tp_at_close_pred_profit(a) for a in filtered])
+                    avg_profit = total_profit / n_sig
+
+                    # TODO: compute avg_real_max avg_real_close, avg_real_min
+
+                    # TODO: give some scores to model for some determined threshold levels
+
+                    true_pos = sum([tp_at_close_pred_one(a) for a in filtered])
+
+                    min_sum_score = max_pred_threshold + min_pred_threshold + close_pred_threshold
+                    avg_sum_score = sum(
+                        [max_pred_key(a) + min_pred_key(a) + close_pred_key(a) for a in
+                         filtered]) / n_sig
+
+                    print('close_max_min_thr {:<+8.5f} {:<+8.5f} {:<+8.5f} '
+                          'n_sig {:<4} '
+                          'true_pos {:<4} '
+                          'total_profit {:<+7.4f} '
+                          'avg_profit {:<+8.5f} '
+                          'min_sum_s {:<+8.5f}, '
+                          'avg_s_s {:<+8.5f}'.format(close_pred_threshold, max_pred_threshold,
+                                                     min_pred_threshold, n_sig, true_pos,
+                                                     total_profit, avg_profit, min_sum_score,
+                                                     avg_sum_score))
+
+    print()
+    for a in pred_real_max_min_close_profit[-10:]:
+        print(a)
 
 
 # VALIDATION PERFORMANCE
@@ -277,66 +370,8 @@ pred_real_max = list(zip(pred_max, y_max_val))
 pred_real_min = list(zip(pred_min, y_min_val))
 pred_real_close = list(zip(pred_close, y_close_val))
 
-pred_real_max_min_close = list(zip(pred_real_max, pred_real_min, pred_real_close))
 
-profits = [compute_profit(a) for a in pred_real_max_min_close]
-
-pred_real_max_min_close_profit = list(zip(pred_real_max_min_close, profits))
-
-minimum_max_pred = max_pred_key(min(pred_real_max_min_close, key=max_pred_key))
-maximum_max_pred = max_pred_key(max(pred_real_max_min_close, key=max_pred_key))
-
-minimum_min_pred = min_pred_key(min(pred_real_max_min_close, key=min_pred_key))
-maximum_min_pred = min_pred_key(max(pred_real_max_min_close, key=min_pred_key))
-
-minimum_close_pred = close_pred_key(min(pred_real_max_min_close, key=close_pred_key))
-maximum_close_pred = close_pred_key(max(pred_real_max_min_close, key=close_pred_key))
-
-max_pred_step = 0.01
-max_pred_begin = 0.00
-max_pred_end = maximum_max_pred+max_pred_step
-
-min_pred_step = 0.01
-min_pred_begin = -0.05
-min_pred_end = maximum_min_pred+min_pred_step
-
-close_pred_step = 0.01
-close_pred_begin = 0.00
-close_pred_end = maximum_close_pred+close_pred_step
-
-for close_pred_threshold in np.arange(close_pred_begin, close_pred_end, close_pred_step):
-    for max_pred_threshold in np.arange(max_pred_begin, max_pred_end, max_pred_step):
-        for min_pred_threshold in np.arange(min_pred_begin, min_pred_end, min_pred_step):
-            filter_close = filter(lambda a: close_pred_key(a) >= close_pred_threshold, pred_real_max_min_close)
-            filter_max = filter(lambda a: max_pred_key(a) >= max_pred_threshold, filter_close)
-            filter_min = filter(lambda a: min_pred_key(a) >= min_pred_threshold, filter_max)
-
-            filtered = list(filter_min)
-
-            if filtered:
-                n_sig = len(filtered)
-
-                # TODO: implement and measure different TP and SL strategies
-                total_profit = sum([compute_profit(a) for a in filtered])
-
-                avg_profit = total_profit / n_sig
-
-                # TODO: compute avg_real_max avg_real_close, avg_real_min
-
-                # TODO: (for later) give some scores to model for some determined threshold levels
-
-                true_pos = sum([one_for_tp_hit_else_zero(a) for a in filtered])
-
-                min_sum_score = max_pred_threshold + min_pred_threshold + close_pred_threshold
-                avg_sum_score = sum([max_pred_key(a) + min_pred_key(a) + close_pred_key(a)
-                                     for a in filtered]) / n_sig
-
-                print('close_max_min_thr {:<+8.5f} {:<+8.5f} {:<+8.5f} n_sig {:<4} true_pos {:<4} total_profit {:<+7.4f} avg_profit {:<+8.5f} min_sum_s {:<+8.5f}, avg_s_s {:<+8.5f}'
-                      .format(close_pred_threshold, max_pred_threshold, min_pred_threshold, n_sig, true_pos, total_profit, avg_profit, min_sum_score, avg_sum_score))
-
-print()
-for a in pred_real_max_min_close_profit[-10:]:
-    print(a)
+analyze_output(pred_real_max, pred_real_min, pred_real_close)
 
 
 # TEST PERFORMANCE
@@ -353,59 +388,7 @@ pred_real_max = list(zip(pred_max, y_max_test))
 pred_real_min = list(zip(pred_min, y_min_test))
 pred_real_close = list(zip(pred_close, y_close_test))
 
-pred_real_max_min_close = list(zip(pred_real_max, pred_real_min, pred_real_close))
-
-profits = [compute_profit(a) for a in pred_real_max_min_close]
-
-pred_real_max_min_close_profit = list(zip(pred_real_max_min_close, profits))
-
-maximum_max_pred = max_pred_key(max(pred_real_max_min_close, key=max_pred_key))
-
-maximum_min_pred = min_pred_key(max(pred_real_max_min_close, key=min_pred_key))
-
-maximum_close_pred = close_pred_key(max(pred_real_max_min_close, key=close_pred_key))
-
-max_pred_step = 0.01
-max_pred_begin = 0.00
-max_pred_end = maximum_max_pred+max_pred_step
-
-min_pred_step = 0.01
-min_pred_begin = -0.05
-min_pred_end = maximum_min_pred+min_pred_step
-
-close_pred_step = 0.01
-close_pred_begin = 0.00
-close_pred_end = maximum_close_pred+close_pred_step
-
-for close_pred_threshold in np.arange(close_pred_begin, close_pred_end, close_pred_step):
-    for max_pred_threshold in np.arange(max_pred_begin, max_pred_end, max_pred_step):
-        for min_pred_threshold in np.arange(min_pred_begin, min_pred_end, min_pred_step):
-            filter_close = filter(lambda a: close_pred_key(a) >= close_pred_threshold, pred_real_max_min_close)
-            filter_max = filter(lambda a: max_pred_key(a) >= max_pred_threshold, filter_close)
-            filter_min = filter(lambda a: min_pred_key(a) >= min_pred_threshold, filter_max)
-
-            filtered = list(filter_min)
-
-            if filtered:
-                n_sig = len(filtered)
-                total_profit = sum([compute_profit(a) for a in filtered])
-
-                avg_profit = total_profit / n_sig
-
-                true_pos = sum([one_for_tp_hit_else_zero(a) for a in filtered])
-
-                min_sum_score = max_pred_threshold + min_pred_threshold + close_pred_threshold
-                avg_sum_score = sum([max_pred_key(a) + min_pred_key(a) + close_pred_key(a)
-                                     for a in filtered]) / n_sig
-
-                print('close_max_min_thr {:<+8.5f} {:<+8.5f} {:<+8.5f} n_sig {:<4} true_pos {:<4} total_profit {:<+7.4f} avg_profit {:<+8.5f} min_sum_s {:<+8.5f}, avg_s_s {:<+8.5f}'
-                      .format(close_pred_threshold, max_pred_threshold, min_pred_threshold, n_sig, true_pos, total_profit, avg_profit, min_sum_score, avg_sum_score))
-
-
-print()
-for a in pred_real_max_min_close_profit[-10:]:
-    print(a)
-
+analyze_output(pred_real_max, pred_real_min, pred_real_close)
 
 
 # REAL TEST
@@ -478,55 +461,4 @@ pred_real_max = list(zip(pred_max, y_max_val))
 pred_real_min = list(zip(pred_min, y_min_val))
 pred_real_close = list(zip(pred_close, y_close_val))
 
-pred_real_max_min_close = list(zip(pred_real_max, pred_real_min, pred_real_close))
-
-profits = [compute_profit(a) for a in pred_real_max_min_close]
-
-pred_real_max_min_close_profit = list(zip(pred_real_max_min_close, profits))
-
-maximum_max_pred = max_pred_key(max(pred_real_max_min_close, key=max_pred_key))
-
-maximum_min_pred = min_pred_key(max(pred_real_max_min_close, key=min_pred_key))
-
-maximum_close_pred = close_pred_key(max(pred_real_max_min_close, key=close_pred_key))
-
-max_pred_step = 0.01
-max_pred_begin = 0.00
-max_pred_end = maximum_max_pred+max_pred_step
-
-min_pred_step = 0.01
-min_pred_begin = -0.05
-min_pred_end = maximum_min_pred+min_pred_step
-
-close_pred_step = 0.01
-close_pred_begin = 0.00
-close_pred_end = maximum_close_pred+close_pred_step
-
-for close_pred_threshold in np.arange(close_pred_begin, close_pred_end, close_pred_step):
-    for max_pred_threshold in np.arange(max_pred_begin, max_pred_end, max_pred_step):
-        for min_pred_threshold in np.arange(min_pred_begin, min_pred_end, min_pred_step):
-            filter_close = filter(lambda a: close_pred_key(a) >= close_pred_threshold, pred_real_max_min_close)
-            filter_max = filter(lambda a: max_pred_key(a) >= max_pred_threshold, filter_close)
-            filter_min = filter(lambda a: min_pred_key(a) >= min_pred_threshold, filter_max)
-
-            filtered = list(filter_min)
-
-            if filtered:
-                n_sig = len(filtered)
-                total_profit = sum([compute_profit(a) for a in filtered])
-
-                avg_profit = total_profit / n_sig
-
-                true_pos = sum([one_for_tp_hit_else_zero(a) for a in filtered])
-
-                min_sum_score = max_pred_threshold + min_pred_threshold + close_pred_threshold
-                avg_sum_score = sum([max_pred_key(a) + min_pred_key(a) + close_pred_key(a)
-                                     for a in filtered]) / n_sig
-
-                print('close_max_min_thr {:<+8.5f} {:<+8.5f} {:<+8.5f} n_sig {:<4} true_pos {:<4} total_profit {:<+7.4f} avg_profit {:<+8.5f} min_sum_s {:<+8.5f}, avg_s_s {:<+8.5f}'
-                      .format(close_pred_threshold, max_pred_threshold, min_pred_threshold, n_sig, true_pos, total_profit, avg_profit, min_sum_score, avg_sum_score))
-
-
-print()
-for a in pred_real_max_min_close_profit[-10:]:
-    print(a)
+analyze_output(pred_real_max, pred_real_min, pred_real_close)
