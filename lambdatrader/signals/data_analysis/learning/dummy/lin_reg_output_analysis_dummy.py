@@ -384,7 +384,7 @@ def analyze_output(pred_real_max, pred_real_min, pred_real_close):
 
                 filtered = list(filter_min)
 
-                if filtered:
+                if len(filtered) >= 10:
                     n_sig = len(filtered)
 
                     # TODO: implement and measure different TP and SL strategies
