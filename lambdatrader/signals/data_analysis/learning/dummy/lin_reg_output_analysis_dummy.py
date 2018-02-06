@@ -31,8 +31,8 @@ latest_market_date = market_info.get_max_pair_end_time()
 
 day_offset = 60
 
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*500)
-dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
+dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*500)
+# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*120)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*90)
@@ -47,7 +47,7 @@ dataset_end_date = latest_market_date - seconds(days=day_offset)
 dataset_len = dataset_end_date - dataset_start_date
 
 
-dataset_symbol = 'BTC_DGB'
+dataset_symbol = 'BTC_XMR'
 
 dummy_feature_functions = list(get_dummy_feature_func_set())
 dummy_feature_functions_name = 'dummy'
@@ -170,7 +170,7 @@ params = {
     'base_score': 0,
     'eval_metric': 'rmse',
 
-    'eta': 0.001,
+    'eta': 0.1,
     'gamma': 0,
     'max_depth': 1,
     'min_child_weight': 1,
@@ -315,9 +315,15 @@ for close_pred_threshold in np.arange(close_pred_begin, close_pred_end, close_pr
 
             if filtered:
                 n_sig = len(filtered)
+
+                # TODO: implement and measure different TP and SL strategies
                 total_profit = sum([compute_profit(a) for a in filtered])
 
                 avg_profit = total_profit / n_sig
+
+                # TODO: compute avg_real_max avg_real_close, avg_real_min
+
+                # TODO: (for later) give some scores to model for some determined threshold levels
 
                 true_pos = sum([one_for_tp_hit_else_zero(a) for a in filtered])
 
