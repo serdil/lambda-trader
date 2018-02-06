@@ -6,6 +6,7 @@
 # (max_price_threshold, min_price_threshold, close_price_threshold) pairs.
 
 import math
+from datetime import datetime
 
 from operator import itemgetter
 
@@ -33,7 +34,7 @@ market_info = BacktestingMarketInfo(candlestick_store=
 
 latest_market_date = market_info.get_max_pair_end_time()
 
-day_offset = 60
+day_offset = 120
 
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*500)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
@@ -49,6 +50,9 @@ dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*7)
 dataset_end_date = latest_market_date - seconds(days=day_offset)
 
 dataset_len = dataset_end_date - dataset_start_date
+
+print('start_date: {} end_date: {}'.format(datetime.utcfromtimestamp(dataset_start_date),
+                                         datetime.utcfromtimestamp(dataset_end_date)))
 
 
 dataset_symbol = 'BTC_CVC'
