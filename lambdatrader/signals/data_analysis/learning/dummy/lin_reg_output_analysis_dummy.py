@@ -39,11 +39,11 @@ day_offset = 120
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*500)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*120)
+dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*120)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*90)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*60)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*30)
-dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*7)
+# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*7)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, minutes=30)
 
@@ -56,7 +56,7 @@ print('start_date: {} end_date: {}'.format(datetime.utcfromtimestamp(dataset_sta
 print()
 
 
-dataset_symbol = 'BTC_CVC'
+dataset_symbol = 'BTC_ETC'
 
 dummy_feature_functions = list(get_dummy_feature_func_set())
 dummy_feature_functions_name = 'dummy'
@@ -524,7 +524,7 @@ print()
 print('++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++')
 print()
 
-real_test_num_days = 14
+real_test_num_days = 60
 real_test_start_date = dataset_end_date
 real_test_end_date = real_test_start_date + seconds(days=real_test_num_days)
 
