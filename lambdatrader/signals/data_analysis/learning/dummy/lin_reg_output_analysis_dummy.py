@@ -35,12 +35,12 @@ latest_market_date = market_info.get_max_pair_end_time()
 day_offset = 60
 
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*500)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
+dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*120)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*90)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*60)
-dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*30)
+# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*30)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*7)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, minutes=30)
@@ -50,7 +50,7 @@ dataset_end_date = latest_market_date - seconds(days=day_offset)
 dataset_len = dataset_end_date - dataset_start_date
 
 
-dataset_symbol = 'BTC_XMR'
+dataset_symbol = 'BTC_LTC'
 
 dummy_feature_functions = list(get_dummy_feature_func_set())
 dummy_feature_functions_name = 'dummy'
@@ -224,6 +224,12 @@ bst_close = xgb.train(params=params,
                       evals=watchlist_close,
                       early_stopping_rounds=early_stopping_rounds)
 
+
+max_best_ntree_limit = bst_max.best_ntree_limit
+min_best_ntree_limit = bst_min.best_ntree_limit
+close_best_ntree_limit = bst_close.best_ntree_limit
+
+
 feature_importances_max = bst_max.get_fscore()
 feature_importances_min = bst_min.get_fscore()
 feature_importances_close = bst_close.get_fscore()
@@ -244,44 +250,99 @@ for f_name, imp in list(reversed(sorted(feature_importances_close.items(), key=i
     print(f_name, ':', imp)
 
 
-max_pred_key = lambda a: a[0][0]
-min_pred_key = lambda a: a[1][0]
-close_pred_key = lambda a: a[2][0]
+def max_pred_key(a):
+    return a[0][0]
 
-max_real_key = lambda a: a[0][1]
-min_real_key = lambda a: a[1][1]
-close_real_key = lambda a: a[2][1]
+
+def min_pred_key(a):
+    return a[1][0]
+
+
+def close_pred_key(a):
+    return a[2][0]
+
+
+def max_real_key(a):
+    return a[0][1]
+
+
+def min_real_key(a):
+    return a[1][1]
+
+
+def close_real_key(a):
+    return a[2][1]
+
 
 tp_level = 0.9
 
 
 def tp_at_close_pred_profit(a):
     return close_pred_key(a) * tp_level \
-        if tp_at_close_pred_one(a) == 1 \
+        if one_if_tp_at_close_pred_hit(a) == 1 \
         else close_real_key(a)
 
 
-def tp_at_close_pred_one(a):
+def one_if_tp_at_close_pred_hit(a):
     return 1 \
         if close_pred_key(a) > 0 and max_real_key(a) >= close_pred_key(a) * tp_level \
         else 0
 
 
+def get_tp_at_close_pred_thr_profit(thr):
+    def tp_at_close_pred_thr_profit(a):
+        return thr * tp_level \
+            if get_one_if_tp_at_close_pred_thr_hit(thr)(a) == 1 \
+            else close_real_key(a)
+    return tp_at_close_pred_thr_profit
+
+
+def get_one_if_tp_at_close_pred_thr_hit(thr):
+    def one_if_tp_at_close_pred_thr_hit(a):
+        return 1 \
+            if thr > 0 and close_real_key(a) >= thr * tp_level \
+            else 0
+    return one_if_tp_at_close_pred_thr_hit
+
+
 def tp_at_max_pred_profit(a):
     return max_pred_key(a) * tp_level \
-        if tp_at_max_pred_one(a) == 1 \
+        if one_if_tp_at_max_pred_hit(a) == 1 \
         else close_real_key(a)
 
 
-def tp_at_max_pred_one(a):
+def one_if_tp_at_max_pred_hit(a):
     return 1 \
         if max_pred_key(a) > 0 and max_real_key(a) >= max_pred_key(a) * tp_level \
         else 0
 
 
-max_best_ntree_limit = bst_max.best_ntree_limit
-min_best_ntree_limit = bst_min.best_ntree_limit
-close_best_ntree_limit = bst_close.best_ntree_limit
+def get_tp_at_max_pred_thr_profit(thr):
+    def tp_at_max_pred_thr_profit(a):
+        return thr * tp_level \
+            if get_one_if_tp_at_max_pred_thr_hit(thr)(a) == 1 \
+            else close_real_key(a)
+    return tp_at_max_pred_thr_profit
+
+
+def get_one_if_tp_at_max_pred_thr_hit(thr):
+    def one_if_tp_at_max_pred_thr_hit(a):
+        return 1 \
+            if thr > 0 and max_real_key(a) >= thr * tp_level \
+            else 0
+    return one_if_tp_at_max_pred_thr_hit
+
+
+def one_if_max_pred_hit(a):
+    return 1 if max_real_key(a) >= max_pred_key(a) else 0
+
+
+def one_if_min_pred_hit(a):
+    return 1 if min_real_key(a) >= min_pred_key(a) else 0
+
+
+def one_if_close_pred_hit(a):
+    return 1 if close_real_key(a) >= close_pred_key(a) else 0
 
 
 def analyze_output(pred_real_max, pred_real_min, pred_real_close):
@@ -312,13 +373,13 @@ def analyze_output(pred_real_max, pred_real_min, pred_real_close):
     close_pred_begin = math.floor(minimum_close_pred / close_pred_step) * close_pred_step
     close_pred_end = maximum_close_pred + close_pred_step
 
-    for close_pred_threshold in np.arange(close_pred_begin, close_pred_end, close_pred_step):
-        for max_pred_threshold in np.arange(max_pred_begin, max_pred_end, max_pred_step):
-            for min_pred_threshold in np.arange(min_pred_begin, min_pred_end, min_pred_step):
-                filter_close = filter(lambda a: close_pred_key(a) >= close_pred_threshold,
+    for close_pred_thr in np.arange(close_pred_begin, close_pred_end, close_pred_step):
+        for max_pred_thr in np.arange(max_pred_begin, max_pred_end, max_pred_step):
+            for min_pred_thr in np.arange(min_pred_begin, min_pred_end, min_pred_step):
+                filter_close = filter(lambda a: close_pred_key(a) >= close_pred_thr,
                                       pred_real_max_min_close)
-                filter_max = filter(lambda a: max_pred_key(a) >= max_pred_threshold, filter_close)
-                filter_min = filter(lambda a: min_pred_key(a) >= min_pred_threshold, filter_max)
+                filter_max = filter(lambda a: max_pred_key(a) >= max_pred_thr, filter_close)
+                filter_min = filter(lambda a: min_pred_key(a) >= min_pred_thr, filter_max)
 
                 filtered = list(filter_min)
 
@@ -326,31 +387,87 @@ def analyze_output(pred_real_max, pred_real_min, pred_real_close):
                     n_sig = len(filtered)
 
                     # TODO: implement and measure different TP and SL strategies
-                    total_profit = sum([tp_at_close_pred_profit(a) for a in filtered])
-                    avg_profit = total_profit / n_sig
 
-                    # TODO: compute avg_real_max avg_real_close, avg_real_min
-                    # TODO: compute max_hit_rate min_hit_rate close_hit_rate (positive)
+                    # tp strategies
 
-                    # TODO: give some scores to model for some determined threshold levels
+                    close_pred_tp_count = sum(map(one_if_tp_at_close_pred_hit, filtered))
+                    close_pred_tp_rate = close_pred_tp_count / n_sig
+                    close_pred_total_profit = sum(map(tp_at_close_pred_profit, filtered))
+                    close_pred_avg_profit = close_pred_total_profit / n_sig
 
-                    true_pos = sum([tp_at_close_pred_one(a) for a in filtered])
+                    max_pred_tp_count = sum(map(one_if_tp_at_max_pred_hit, filtered))
+                    max_pred_tp_rate = max_pred_tp_count / n_sig
+                    max_pred_total_profit = sum(map(tp_at_max_pred_profit, filtered))
+                    max_pred_avg_profit = max_pred_total_profit / n_sig
 
-                    min_sum_score = max_pred_threshold + min_pred_threshold + close_pred_threshold
-                    avg_sum_score = sum(
-                        [max_pred_key(a) + min_pred_key(a) + close_pred_key(a) for a in
-                         filtered]) / n_sig
+                    one_if_close_pred_thr = get_one_if_tp_at_close_pred_thr_hit(close_pred_thr)
+                    tp_at_close_pred_thr_profit = get_tp_at_close_pred_thr_profit(close_pred_thr)
+                    close_pred_thr_tp_count = sum(map(one_if_close_pred_thr, filtered))
+                    close_pred_thr_tp_rate = close_pred_thr_tp_count / n_sig
+                    close_pred_thr_total_profit = sum(map(tp_at_close_pred_thr_profit, filtered))
+                    close_pred_thr_avg_profit = close_pred_thr_total_profit / n_sig
 
-                    print('close_max_min_thr {:<+8.5f} {:<+8.5f} {:<+8.5f} '
+                    one_if_max_pred_thr = get_one_if_tp_at_max_pred_thr_hit(max_pred_thr)
+                    tp_at_max_pred_thr_profit = get_tp_at_max_pred_thr_profit(max_pred_thr)
+                    max_pred_thr_tp_count = sum(map(one_if_max_pred_thr, filtered))
+                    max_pred_thr_tp_rate = max_pred_thr_tp_count / n_sig
+                    max_pred_thr_total_profit = sum(map(tp_at_max_pred_thr_profit, filtered))
+                    max_pred_thr_avg_profit = max_pred_thr_total_profit / n_sig
+
+                    # hit rates
+                    max_pred_hit_count = sum(map(one_if_max_pred_hit, filtered))
+                    max_pred_hit_rate = max_pred_hit_count / n_sig
+
+                    min_pred_hit_count = sum(map(one_if_min_pred_hit, filtered))
+                    min_pred_hit_rate = min_pred_hit_count / n_sig
+
+                    close_pred_hit_count = sum(map(one_if_close_pred_hit, filtered))
+                    close_pred_hit_rate = close_pred_hit_count / n_sig
+
+                    # avg real max-min-close
+                    real_max_sum = sum(map(max_real_key, filtered))
+                    real_max_avg = real_max_sum / n_sig
+
+                    real_min_sum = sum(map(min_real_key, filtered))
+                    real_min_avg = real_min_sum / n_sig
+
+                    real_close_sum = sum(map(close_real_key, filtered))
+                    real_close_avg = real_close_sum / n_sig
+
+                    print('cl_ma_mi {:<+5.2f} {:<+5.2f} {:<+5.2f} '
                           'n_sig {:<4} '
-                          'true_pos {:<4} '
-                          'total_profit {:<+7.4f} '
-                          'avg_profit {:<+8.5f} '
-                          'min_sum_s {:<+8.5f}, '
-                          'avg_s_s {:<+8.5f}'.format(close_pred_threshold, max_pred_threshold,
-                                                     min_pred_threshold, n_sig, true_pos,
-                                                     total_profit, avg_profit, min_sum_score,
-                                                     avg_sum_score))
+                          'cp_avgp {:<+8.5f} '
+                          'mp_avgp {:<+8.5f} '
+                          'cpt_avgp {:<+8.5f} '
+                          'mpt_avgp {:<+8.5f} '
+                          'cp_hr {:<+8.5f} '
+                          'mp_hr {:<+8.5f} '
+                          'max_avg {:<+8.5f} '
+                          'close_avg {:<+8.5f} '
+                          '                  '.format(close_pred_thr,
+                                                      max_pred_thr,
+                                                      min_pred_thr,
+                                                      n_sig,
+                                                      close_pred_avg_profit,
+                                                      max_pred_avg_profit,
+                                                      close_pred_thr_avg_profit,
+                                                      max_pred_thr_avg_profit,
+                                                      close_pred_hit_rate,
+                                                      max_pred_hit_rate,
+                                                      real_max_avg,
+                                                      real_close_avg))
+
+                    # print('close_max_min_thr {:<+8.5f} {:<+8.5f} {:<+8.5f} '
+                    #       'n_sig {:<4} '
+                    #       'true_pos {:<4} '
+                    #       'total_profit {:<+7.4f} '
+                    #       'avg_profit {:<+8.5f} '
+                    #       'min_sum_s {:<+8.5f}, '
+                    #       'avg_s_s {:<+8.5f}'.format(close_pred_threshold, max_pred_threshold,
+                    #                                  min_pred_threshold, n_sig, true_pos, total_profit,
+                    #                                  avg_profit, min_sum_score, avg_sum_score))
+
+    # TODO: give some scores to model for some determined threshold levels
 
     print()
     for a in pred_real_max_min_close_profit[-10:]:
