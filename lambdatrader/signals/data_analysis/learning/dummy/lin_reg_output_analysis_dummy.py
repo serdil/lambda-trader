@@ -524,7 +524,7 @@ print()
 print('++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++++++REAL_TEST++++')
 print()
 
-real_test_num_days = 60
+real_test_num_days = 7
 real_test_start_date = dataset_end_date
 real_test_end_date = real_test_start_date + seconds(days=real_test_num_days)
 
