@@ -106,3 +106,7 @@ def make_cont_trade_return(num_candles=3, tp_level=0.03, candle_period=M5):
             return future_price
 
     return value_cont_trade_return
+
+
+def value_dummy(market_info, pair):
+    return 0
