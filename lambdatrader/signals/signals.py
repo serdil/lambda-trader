@@ -337,7 +337,7 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
         )
 
 
-MODEL_UPDATE_INTERVAL = seconds(days=7)
+MODEL_UPDATE_INTERVAL = seconds(days=30)
 TP_LEVEL = 0.9
 
 
@@ -345,10 +345,10 @@ class LinRegSignalGenerator(BaseSignalGenerator):
 
     NUM_CANDLES = 48
     CANDLE_PERIOD = M5
-    TRAINING_LEN = seconds(days=7)
+    TRAINING_LEN = seconds(days=120)
 
     MAX_THR = 0.05
-    CLOSE_THR = 0.05
+    CLOSE_THR = 0.04
 
     MIN_THR = -1.00
 
@@ -371,7 +371,10 @@ class LinRegSignalGenerator(BaseSignalGenerator):
         }
 
     def get_allowed_pairs(self):
-        return self.market_info.get_active_pairs()
+        return sorted(self.market_info.get_active_pairs())
+        # return ['BTC_LTC', 'BTC_ETH', 'BTC_ETC', 'BTC_XMR', 'BTC_SYS', 'BTC_VIA', 'BTC_SC']
+        # return ['BTC_XRP']
+        # return ['BTC_SC']
 
     def pre_analyze_market(self, tracked_signals):
         self.update_predictors()
@@ -380,7 +383,9 @@ class LinRegSignalGenerator(BaseSignalGenerator):
     def update_predictors(self):
         training_end_date = self.market_date - (self.NUM_CANDLES+1) * self.CANDLE_PERIOD.seconds()
         training_start_date = training_end_date - self.TRAINING_LEN
-        for pair in self.market_info.get_active_pairs():
+        num_pairs = len(list(self.get_allowed_pairs()))
+        for i, pair in enumerate(self.get_allowed_pairs()):
+            print('({}/{}) training: {}'.format(i, num_pairs, pair))
             try:
                 predictor = train_max_min_close_pred_lin_reg_model(market_info=
                                                                    self._dummy_market_info,
@@ -390,9 +395,11 @@ class LinRegSignalGenerator(BaseSignalGenerator):
                                                                    num_candles=self.NUM_CANDLES,
                                                                    candle_period=self.CANDLE_PERIOD)
             except KeyError:
-                del self.predictors[pair]
+                if pair in self.predictors:
+                    del self.predictors[pair]
             else:
                 self.predictors[pair] = predictor
+        print('=================training complete!==================')
 
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
 
@@ -413,12 +420,16 @@ class LinRegSignalGenerator(BaseSignalGenerator):
                                                     feature_functions=feature_funcs,
                                                     value_function=value_func)
 
-        features = data_set.get_numpy_feature_matrix()[0]
+        feature_names = data_set.get_first_feature_names()
+        feature_values = data_set.get_numpy_feature_matrix()[0]
 
-        max_pred, min_pred, close_pred = self.predictors[pair](features)
+        max_pred, min_pred, close_pred = self.predictors[pair](feature_names, feature_values)
 
-        if max_pred < self.MAX_THR or close_pred < self.CLOSE_THR or  min_pred < self.MIN_THR:
+        if max_pred < self.MAX_THR or close_pred < self.CLOSE_THR or min_pred < self.MIN_THR:
             return
+
+        print()
+        print(pair, 'pair preds:', max_pred, min_pred, close_pred)
 
         latest_ticker = self.market_info.get_pair_ticker(pair=pair)
         price = latest_ticker.lowest_ask

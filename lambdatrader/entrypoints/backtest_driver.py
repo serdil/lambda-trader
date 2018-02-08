@@ -12,7 +12,7 @@ from lambdatrader.evaluation.utils import statistics_over_periods, period_statis
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.signals.signals import (
-    DynamicRetracementSignalGenerator,
+    DynamicRetracementSignalGenerator, LinRegSignalGenerator,
 )
 from lambdatrader.utilities.utils import date_floor
 
@@ -31,8 +31,7 @@ end_date = market_info.get_max_pair_end_time() \
            - BACKTEST_END_OFFSET_SECONDS
 
 signal_generators = [
-        DynamicRetracementSignalGenerator(market_info=market_info,
-                                          enable_disable=ENABLE_DISABLE_TRADING)
+        LinRegSignalGenerator(market_info=market_info)
     ]
 signal_executor = SignalExecutor(market_info=market_info, account=account)
 

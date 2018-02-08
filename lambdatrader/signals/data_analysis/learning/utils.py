@@ -1,6 +1,5 @@
 import numpy as np
 import xgboost as xgb
-from xgboost.core import XGBoostError
 
 from lambdatrader.constants import M5
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
@@ -9,17 +8,20 @@ from lambdatrader.signals.data_analysis.feature_sets import (
 )
 from lambdatrader.signals.data_analysis.values import (
     make_cont_max_price_in_future, make_cont_min_price_in_future, make_cont_close_price_in_future,
+    value_dummy,
 )
 
 
-def train_max_min_close_pred_lin_reg_model(market_info, 
+def train_max_min_close_pred_lin_reg_model(market_info,
                                            pair, 
                                            start_date, 
                                            end_date, 
                                            num_candles=48, 
-                                           train_ratio=0.8, 
+                                           train_ratio=0.6,
                                            candle_period=M5):
     feature_funcs = list(get_small_feature_func_set())
+    feature_funcs_key = 'small'
+
     dummy_feature_funcs = list(get_dummy_feature_func_set())
     max_price_value_func =  make_cont_max_price_in_future(num_candles=num_candles,
                                                           candle_period=candle_period)
@@ -33,8 +35,9 @@ def train_max_min_close_pred_lin_reg_model(market_info,
                                                start_date=start_date,
                                                end_date=end_date,
                                                feature_functions=feature_funcs,
-                                               value_function=max_price_value_func,
-                                               cache_and_get_cached=False)
+                                               value_function=value_dummy,
+                                               cache_and_get_cached=False,
+                                               feature_functions_key=feature_funcs_key)
 
     max_price_value_dataset = create_pair_dataset_from_history(market_info=market_info,
                                                                pair=pair,
@@ -136,17 +139,23 @@ def train_max_min_close_pred_lin_reg_model(market_info,
 
 def _get_predictor_func(bst_max, bst_min, bst_close,
                         max_best_ntree_limit, min_best_ntree_limit, close_best_ntree_limit):
-    def _predictor_func(feature_values):
+    def _predictor_func(feature_names, feature_values):
         x = np.array([feature_values])
-        dmatrix = xgb.DMatrix(x)
-        try:
-            max_preds = bst_max.predict(dmatrix, n_tree_limit=max_best_ntree_limit)
-            min_preds = bst_min.predict(dmatrix, n_tree_limit=min_best_ntree_limit)
-            close_preds = bst_close.predict(dmatrix, n_tree_limit=close_best_ntree_limit)
-        except XGBoostError:
-            max_preds = bst_max.predict(dmatrix)
-            min_preds = bst_min.predict(dmatrix)
-            close_preds = bst_close.predict(dmatrix)
+        dmatrix = xgb.DMatrix(x, feature_names=feature_names)
+
+        # TODO: check model type
+        # try:
+        #     max_preds = bst_max.predict(dmatrix, ntree_limit=max_best_ntree_limit)
+        #     min_preds = bst_min.predict(dmatrix, ntree_limit=min_best_ntree_limit)
+        #     close_preds = bst_close.predict(dmatrix, ntree_limit=close_best_ntree_limit)
+        # except XGBoostError:
+        #     max_preds = bst_max.predict(dmatrix)
+        #     min_preds = bst_min.predict(dmatrix)
+        #     close_preds = bst_close.predict(dmatrix)
+
+        max_preds = bst_max.predict(dmatrix)
+        min_preds = bst_min.predict(dmatrix)
+        close_preds = bst_close.predict(dmatrix)
 
         assert len(max_preds) == 1 and len(min_preds) == 1 and len(close_preds) == 1
         return max_preds[0], min_preds[0], close_preds[0]

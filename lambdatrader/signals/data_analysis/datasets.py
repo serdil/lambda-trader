@@ -160,17 +160,12 @@ def _compute_pair_dataset(market_info,
                           end_date,
                           feature_functions,
                           value_function):
-    pair_start_date = market_info.get_pair_start_time(pair)
-    pair_end_date = market_info.get_pair_end_time(pair)
 
-    actual_start_date = max(start_date, pair_start_date)
-    actual_end_date = min(end_date, pair_end_date)
-
-    market_info.set_market_date(actual_start_date)
+    market_info.set_market_date(start_date)
 
     data_points = []
 
-    while market_info.market_date <= actual_end_date:
+    while market_info.market_date <= end_date:
         feature_set = compute_feature_set(market_info, pair, feature_functions)
         value = value_function(market_info, pair)
         data_points.append(DataPoint(feature_set=feature_set, value=value))
