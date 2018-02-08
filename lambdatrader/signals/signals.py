@@ -383,11 +383,13 @@ class LinRegSignalGenerator(BaseSignalGenerator):
 
     @every_n_market_seconds(n=MODEL_UPDATE_INTERVAL)
     def update_predictors(self):
+        self.logger.info('training predictors...')
         training_end_date = self.market_date - (self.NUM_CANDLES+1) * self.CANDLE_PERIOD.seconds()
         training_start_date = training_end_date - self.TRAINING_LEN
         num_pairs = len(list(self.get_allowed_pairs()))
         for i, pair in enumerate(self.get_allowed_pairs()):
-            print('({}/{}) training: {}'.format(i, num_pairs, pair))
+            self.backtest_print('({}/{}) training: {}'.format(i, num_pairs, pair))
+            self.debug('%s', '({}/{}) training: {}'.format(i, num_pairs, pair))
             try:
                 predictor = train_max_min_close_pred_lin_reg_model(market_info=
                                                                    self._dummy_market_info,
@@ -401,7 +403,8 @@ class LinRegSignalGenerator(BaseSignalGenerator):
                     del self.predictors[pair]
             else:
                 self.predictors[pair] = predictor
-        print('=================training complete!==================')
+        self.backtest_print('=================training complete!==================')
+        self.logger.info('training complete!')
 
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
 
@@ -430,12 +433,26 @@ class LinRegSignalGenerator(BaseSignalGenerator):
         if max_pred < self.MAX_THR or close_pred < self.CLOSE_THR or min_pred < self.MIN_THR:
             return
 
-        print()
-        print(pair, 'pair preds:', max_pred, min_pred, close_pred)
+        self.backtest_print()
+        self.backtest_print(pair, 'pair preds:', max_pred, min_pred, close_pred)
+
+        latest_candle = self.market_info.get_pair_candlestick(pair=pair)
+        latest_candle_date = latest_candle.date
+
+        self.logger.info('signal for %s, pred values: %.4f %.4f %.4f',
+                         pair, max_pred, min_pred, close_pred)
+
+        if latest_candle_date - self.market_date >= self.CANDLE_PERIOD.seconds():
+            self.logger.info('latest candle out of date, dismissing signal.')
+            return
 
         latest_ticker = self.market_info.get_pair_ticker(pair=pair)
         price = latest_ticker.lowest_ask
         market_date = self.market_date
+
+        if price > latest_candle.close:
+            self.logger.info('lowest ask higher than latest candlestick close, dismissing signal.')
+            return
 
         target_price = price * (1 + max_pred * TP_LEVEL)
 
