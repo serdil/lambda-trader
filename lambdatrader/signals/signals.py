@@ -373,6 +373,8 @@ class LinRegSignalGenerator(BaseSignalGenerator):
     def get_allowed_pairs(self):
         return sorted(self.market_info.get_active_pairs())
         # return ['BTC_LTC', 'BTC_ETH', 'BTC_ETC', 'BTC_XMR', 'BTC_SYS', 'BTC_VIA', 'BTC_SC']
+        # return ['BTC_VIA']
+        # return ['BTC_RADS']
         # return ['BTC_XRP']
         # return ['BTC_SC']
 
