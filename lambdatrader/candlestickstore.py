@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from collections import defaultdict
+from threading import RLock
 
 from blist import sorteddict
 
@@ -14,6 +15,15 @@ DATABASE_DIR = CANDLESTICK_DB_DIRECTORY
 
 if not os.path.isdir(DATABASE_DIR):
     os.makedirs(DATABASE_DIR, exist_ok=True)
+
+
+def rlock(method):
+    def wrapper(*args, **kwargs):
+        if not hasattr(args[0], '_access_lock'):
+            args[0]._access_lock = RLock()
+        with args[0]._access_lock:
+            return method(*args, **kwargs)
+    return wrapper
 
 
 class CandlestickStore:  # TODO make thread safe
@@ -33,6 +43,7 @@ class CandlestickStore:  # TODO make thread safe
 
             self.__sync_with_existing_pairs_in_db()
 
+        @rlock
         def get_pairs(self):
             return list(
                 map(self.pair_from_pair_period,
@@ -40,6 +51,7 @@ class CandlestickStore:  # TODO make thread safe
                     | set(self.__chunks_in_db.keys()) | self.__synced_pair_periods)
             )
 
+        @rlock
         def append_candlestick(self, pair, candlestick: Candlestick):
             period = candlestick.period
             pair_period = self.pair_period_name(pair, candlestick.period)
@@ -54,6 +66,7 @@ class CandlestickStore:  # TODO make thread safe
             self.__history[pair_period][candlestick.date] = candlestick
             self.__chunks_in_memory[pair_period].add(self.__get_chunk_no(date=candlestick.date))
 
+        @rlock
         def get_candlestick(self, pair, date, period=M5):
             pair_period = self.pair_period_name(pair, period)
             self.__sync_pair_period_if_not_synced(pair_period)
@@ -61,6 +74,7 @@ class CandlestickStore:  # TODO make thread safe
                 self.__load_chunk(pair_period=pair_period, chunk_no=self.__get_chunk_no(date=date))
             return self.__history[pair_period][date]
 
+        @rlock
         def get_pair_period_oldest_date(self, pair, period=M5):
             pair_period = self.pair_period_name(pair, period)
             self.__sync_pair_period_if_not_synced(pair_period=pair_period)
@@ -71,6 +85,7 @@ class CandlestickStore:  # TODO make thread safe
 
             return pair_period_history[pair_period_history.keys()[0]].date
 
+        @rlock
         def get_pair_period_newest_date(self, pair, period=M5):
             pair_period = self.pair_period_name(pair, period)
             self.__sync_pair_period_if_not_synced(pair_period=pair_period)
@@ -153,6 +168,7 @@ class CandlestickStore:  # TODO make thread safe
                 self.__chunks_in_db[pair_period].add(chunk_no)
             self.__chunks_in_memory[pair_period].add(chunk_no)
 
+        @rlock
         def persist_chunks(self):
             for pair_period, chunks_in_memory in self.__chunks_in_memory.items():
                 pair = self.pair_from_pair_period(pair_period)
@@ -233,6 +249,7 @@ class CandlestickStore:  # TODO make thread safe
 
     __instances = {}
 
+    @rlock
     @classmethod
     def get_for_exchange(cls, exchange: ExchangeEnum=ExchangeEnum.POLONIEX):
         if exchange not in cls.__instances:
