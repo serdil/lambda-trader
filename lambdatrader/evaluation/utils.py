@@ -1,3 +1,5 @@
+import math
+
 from lambdatrader.evaluation.statistics import Statistics
 from lambdatrader.models.tradinginfo import TradingInfo
 
@@ -32,3 +34,48 @@ def statistics_over_periods(trading_info: TradingInfo, start=None, end=None, per
                                                              end_date=period[1]))
 
     return statistics.calc_stats_over_periods(period_stats=period_stats)
+
+
+def period_stats_roi_max_drawdown_score(trading_info):
+    period_stats = period_statistics(trading_info)
+
+    roi_live = period_stats['roi_live']
+    period_length = period_stats['period_length']
+    max_drawdown_live = period_stats['maximum_drawdown_live']
+
+    if max_drawdown_live == 0:
+        max_drawdown_live = 0.0001
+
+    score = roi_live / period_length * 10000000
+    print('roi_live:', roi_live, 'max_draw:', max_drawdown_live, 'score:', score)
+    return score
+
+
+def get_roi_live_cost(trading_info):
+    result = get_costs(trading_info)['roi_live_cost']
+    return result
+
+
+def get_max_drawdown_live_cost(trading_info):
+    result = get_costs(trading_info)['max_drawdown_live_cost']
+    return result
+
+
+def get_costs(trading_info):
+    period_stats = period_statistics(trading_info)
+
+    period_length = period_stats['period_length']
+    length_norm = period_length / 1000000
+
+    roi_live = period_stats['roi_live']
+    max_drawdown_live = period_stats['maximum_drawdown_live']
+
+    print(roi_live, max_drawdown_live)
+    return {
+        'roi_live_cost': __descending(roi_live / length_norm),
+        'max_drawdown_live_cost': __descending(-max_drawdown_live)
+    }
+
+
+def __descending(value):
+    return math.e**(-value)

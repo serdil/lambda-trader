@@ -30,7 +30,7 @@ class BaseMarketInfo:
     def get_pair_latest_candlestick(self, pair, period=M5):
         raise NotImplementedError
 
-    def get_pair_candlestick(self, pair, ind, period=M5):
+    def get_pair_candlestick(self, pair, ind, period=M5, allow_lookahead=False):
         raise NotImplementedError
 
     def is_candlesticks_supported(self):

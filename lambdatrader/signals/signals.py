@@ -1,6 +1,7 @@
-from logging import ERROR
 from typing import Iterable, Optional
 
+from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
+from lambdatrader.candlestickstore import CandlestickStore
 from lambdatrader.config import (
     RETRACEMENT_SIGNALS__ORDER_TIMEOUT, RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT,
     RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR, RETRACEMENT_SIGNALS__RETRACEMENT_RATIO,
@@ -11,15 +12,24 @@ from lambdatrader.config import (
     GREEN_MARKET_MAJORITY_NUM, GREEN_MARKET_NUM_CANDLES, GREEN_MARKET_UP_THRESHOLD,
     ENABLING_DISABLING_CHECK_INTERVAL,
 )
+from lambdatrader.constants import M5
+from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.loghandlers import (
-    get_logger_with_all_handlers, get_logger_with_console_handler, get_silent_logger,
+    get_trading_logger,
 )
 from lambdatrader.models.tradesignal import (
     PriceEntry, PriceTakeProfitSuccessExit, TimeoutStopLossFailureExit, TradeSignal,
 )
 from lambdatrader.signals.analysis import Analysis
+from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
+from lambdatrader.signals.data_analysis.feature_sets import get_small_feature_func_set
+from lambdatrader.signals.data_analysis.learning.utils import train_max_min_close_pred_lin_reg_model
+from lambdatrader.signals.data_analysis.values import value_dummy
 from lambdatrader.utilities.decorators import every_n_market_seconds
 from lambdatrader.utilities.utils import seconds
+
+from lambdatrader.signals.constants import ONE_DAY_SECONDS
+from lambdatrader.signals.optimization import OptimizationMixin
 
 
 class BaseSignalGenerator:
@@ -29,15 +39,9 @@ class BaseSignalGenerator:
         self.LIVE = live
         self.SILENT = silent
 
-        self.analysis = Analysis(market_info=market_info)
+        self.logger = get_trading_logger(__name__, live=live, silent=silent)
 
-        if self.LIVE:
-            self.logger = get_logger_with_all_handlers(__name__)
-        elif self.SILENT:
-            self.logger = get_silent_logger(__name__)
-        else:
-            self.logger = get_logger_with_console_handler(__name__)
-            self.logger.setLevel(ERROR)
+        self.analysis = Analysis(market_info=market_info, live=live, silent=silent)
 
     def generate_signals(self, tracked_signals):
         self.debug('generate_signals')
@@ -88,12 +92,17 @@ class BaseSignalGenerator:
         pass
 
 
-class RetracementSignalGenerator(BaseSignalGenerator):
+class RetracementSignalGenerator(BaseSignalGenerator, OptimizationMixin):
 
     HIGH_VOLUME_LIMIT = RETRACEMENT_SIGNALS__HIGH_VOLUME_LIMIT
-    ORDER_TIMEOUT = RETRACEMENT_SIGNALS__ORDER_TIMEOUT
-    BUY_PROFIT_FACTOR = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
-    RETRACEMENT_RATIO = RETRACEMENT_SIGNALS__RETRACEMENT_RATIO
+
+    ORDER_TIMEOUT_P1 = RETRACEMENT_SIGNALS__ORDER_TIMEOUT
+    BUY_PROFIT_FACTOR_P2 = RETRACEMENT_SIGNALS__BUY_PROFIT_FACTOR
+    RETRACEMENT_RATIO_P3 = RETRACEMENT_SIGNALS__RETRACEMENT_RATIO
+
+    def __init__(self, market_info, live=False, silent=False, optimize=False):
+        super().__init__(market_info, live, silent)
+        self.__optimize = optimize
 
     def get_allowed_pairs(self):
         self.debug('get_allowed_pairs')
@@ -102,7 +111,32 @@ class RetracementSignalGenerator(BaseSignalGenerator):
         )
         return high_volume_pairs
 
+    def optimization_set_params(self, *args):
+        self.set_params(*args)
+
+    def set_params(self, *args):
+        self.ORDER_TIMEOUT_P1 = args[0]
+        self.BUY_PROFIT_FACTOR_P2 = args[1]
+        self.RETRACEMENT_RATIO_P3 = args[2]
+
+    def optimization_get_params_info(self):
+        return {
+            'num_params': 3,
+            'type': ['F', 'F', 'F'],
+            'min': [ONE_DAY_SECONDS//24, 1.01, 0.01],
+            'max': [ONE_DAY_SECONDS*7, 2.00, 0.99]
+        }
+
+    def optimization_get_optimization_periods_info(self):
+        return {
+            'periods': [7*ONE_DAY_SECONDS],
+            'weights': [1],
+            'max_costs': [10]
+        }
+
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
+        if self.__optimize:
+            self.optimization_update_parameters_if_necessary()
 
         if pair in [signal.pair for signal in tracked_signals]:
             self.debug('pair_already_in_tracked_signals:%s', pair)
@@ -112,7 +146,7 @@ class RetracementSignalGenerator(BaseSignalGenerator):
         price = latest_ticker.lowest_ask
         market_date = self.market_date
 
-        target_price = price * self.BUY_PROFIT_FACTOR
+        target_price = price * self.BUY_PROFIT_FACTOR_P2
         day_high_price = latest_ticker.high24h
 
         price_is_lower_than_day_high = target_price < day_high_price
@@ -121,7 +155,7 @@ class RetracementSignalGenerator(BaseSignalGenerator):
             return
 
         current_retracement_ratio = (target_price - price) / (day_high_price - price)
-        retracement_ratio_satisfied = current_retracement_ratio <= self.RETRACEMENT_RATIO
+        retracement_ratio_satisfied = current_retracement_ratio <= self.RETRACEMENT_RATIO_P3
 
         if retracement_ratio_satisfied:
             self.debug('retracement_ratio_satisfied')
@@ -133,7 +167,7 @@ class RetracementSignalGenerator(BaseSignalGenerator):
 
             entry = PriceEntry(price)
             success_exit = PriceTakeProfitSuccessExit(price=target_price)
-            failure_exit = TimeoutStopLossFailureExit(timeout=self.ORDER_TIMEOUT)
+            failure_exit = TimeoutStopLossFailureExit(timeout=self.ORDER_TIMEOUT_P1)
 
             trade_signal = TradeSignal(date=market_date, exchange=None, pair=pair, entry=entry,
                                        success_exit=success_exit, failure_exit=failure_exit)
@@ -264,8 +298,8 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
             return
 
         current_retracement_ratio = (target_price - price) / (period_high_price - price)
-        retracement_ratio_satisfied = current_retracement_ratio <= \
-                                      self.pairs_retracement_ratios[pair]
+        retracement_ratio_satisfied = (current_retracement_ratio <=
+                                       self.pairs_retracement_ratios[pair])
 
         if retracement_ratio_satisfied:
             self.debug('retracement_ratio_satisfied')
@@ -301,3 +335,146 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
             num_candles=self.GREEN_MARKET_NUM_CANDLES,
             up_threshold=self.GREEN_MARKET_UP_THRESHOLD
         )
+
+
+MODEL_UPDATE_INTERVAL = seconds(days=30)
+TP_LEVEL = 0.9
+
+
+class LinRegSignalGenerator(BaseSignalGenerator):
+
+    NUM_CANDLES = 48
+    CANDLE_PERIOD = M5
+    TRAINING_LEN = seconds(days=120)
+
+    MAX_THR = 0.05
+    CLOSE_THR = 0.04
+
+    MIN_THR = -1.00
+
+    def __init__(self, market_info, live=False, silent=False, **kwargs):
+        super().__init__(market_info, live=live, silent=silent)
+        self._dummy_market_info = BacktestingMarketInfo(candlestick_store=
+                                                        CandlestickStore
+                                                        .get_for_exchange(ExchangeEnum.POLONIEX))
+        self.predictors = {}
+
+    def get_algo_descriptor(self):
+        return {
+            'CLASS_NAME': self.__class__.__name__,
+            'MODEL_UPDATE_INTERVAL': MODEL_UPDATE_INTERVAL,
+            'TRAINING_LEN': self.TRAINING_LEN,
+            'TP_LEVEL': TP_LEVEL,
+            'MAX_THR': self.MAX_THR,
+            'CLOSE_THR': self.CLOSE_THR,
+            'MIN_THR': self.MIN_THR,
+        }
+
+    def get_allowed_pairs(self):
+        return sorted(self.market_info.get_active_pairs())
+        # return ['BTC_LTC', 'BTC_ETH', 'BTC_ETC', 'BTC_XMR', 'BTC_SYS', 'BTC_VIA', 'BTC_SC']
+        # return ['BTC_VIA']
+        # return ['BTC_RADS']
+        # return ['BTC_XRP']
+        # return ['BTC_SC']
+
+    def pre_analyze_market(self, tracked_signals):
+        self.update_predictors()
+
+    @every_n_market_seconds(n=MODEL_UPDATE_INTERVAL)
+    def update_predictors(self):
+        self.logger.info('training predictors...')
+        training_end_date = self.market_date - (self.NUM_CANDLES+1) * self.CANDLE_PERIOD.seconds()
+        training_start_date = training_end_date - self.TRAINING_LEN
+        num_pairs = len(list(self.get_allowed_pairs()))
+        for i, pair in enumerate(self.get_allowed_pairs()):
+            self.backtest_print('({}/{}) training: {}'.format(i, num_pairs, pair))
+            self.debug('%s', '({}/{}) training: {}'.format(i, num_pairs, pair))
+            try:
+                predictor = train_max_min_close_pred_lin_reg_model(market_info=
+                                                                   self._dummy_market_info,
+                                                                   pair=pair,
+                                                                   start_date=training_start_date,
+                                                                   end_date=training_end_date,
+                                                                   num_candles=self.NUM_CANDLES,
+                                                                   candle_period=self.CANDLE_PERIOD)
+            except KeyError:
+                if pair in self.predictors:
+                    del self.predictors[pair]
+            else:
+                self.predictors[pair] = predictor
+        self.backtest_print('=================training complete!==================')
+        self.logger.info('training complete!')
+
+    def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
+
+        if pair in [signal.pair for signal in tracked_signals]:
+            self.debug('pair_already_in_tracked_signals:%s', pair)
+            return
+
+        if pair not in self.predictors:
+            return
+
+        feature_funcs = list(get_small_feature_func_set())
+        value_func = value_dummy
+
+        try:
+            latest_candle = self.market_info.get_pair_candlestick(pair=pair)
+            latest_candle_date = latest_candle.date
+
+            data_set = create_pair_dataset_from_history(self._dummy_market_info,
+                                                        pair=pair,
+                                                        start_date=latest_candle_date,
+                                                        end_date=latest_candle_date,
+                                                        feature_functions=feature_funcs,
+                                                        value_function=value_func)
+
+            feature_names = data_set.get_first_feature_names()
+            feature_values = data_set.get_numpy_feature_matrix()[0]
+        except KeyError:
+            self.logger.error('KeyError: %s', pair)
+            return
+
+        max_pred, min_pred, close_pred = self.predictors[pair](feature_names, feature_values)
+
+        if max_pred < self.MAX_THR or close_pred < self.CLOSE_THR or min_pred < self.MIN_THR:
+            return
+
+        self.backtest_print()
+        self.backtest_print(pair, 'pair preds:', max_pred, min_pred, close_pred)
+
+        self.logger.info('signal for %s, pred values: %.4f %.4f %.4f',
+                         pair, max_pred, min_pred, close_pred)
+
+        # if self.market_date - latest_candle_date >= self.CANDLE_PERIOD.seconds():
+        #     self.logger.info('latest candle out of date, dismissing signal.')
+        #     return
+
+        latest_ticker = self.market_info.get_pair_ticker(pair=pair)
+        price = latest_ticker.lowest_ask
+        market_date = self.market_date
+
+        if self.LIVE:
+            if price - latest_candle.close > 0.005:
+                self.logger.info('lowest ask higher than latest candlestick close, '
+                                 'dismissing signal.')
+                return
+
+        target_price = price * (1 + max_pred * TP_LEVEL)
+
+        self.debug('market_date:%s', str(market_date))
+        self.debug('latest_ticker:%s:%s', pair, str(latest_ticker))
+        self.debug('target_price:%s', str(target_price))
+
+        target_duration = seconds(seconds=self.NUM_CANDLES * self.CANDLE_PERIOD.seconds())
+
+        entry = PriceEntry(price)
+        success_exit = PriceTakeProfitSuccessExit(price=target_price)
+        failure_exit = TimeoutStopLossFailureExit(timeout=target_duration)
+
+        trade_signal = TradeSignal(date=market_date, exchange=None, pair=pair, entry=entry,
+                                   success_exit=success_exit, failure_exit=failure_exit)
+
+        self.logger.debug('trade_signal:%s', str(trade_signal))
+
+        return trade_signal

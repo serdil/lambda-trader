@@ -9,9 +9,10 @@ from lambdatrader.config import (
     BACKTESTING_NUM_DAYS, BACKTESTING_END_OFFSET_DAYS, ENABLE_DISABLE_TRADING,
 )
 from lambdatrader.evaluation.utils import statistics_over_periods, period_statistics
+from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.signals.signals import (
-    DynamicRetracementSignalGenerator,
+    DynamicRetracementSignalGenerator, LinRegSignalGenerator,
 )
 from lambdatrader.utilities.utils import date_floor
 
@@ -20,7 +21,7 @@ ONE_DAY = 24 * 3600
 BACKTEST_NUM_SECONDS = date_floor(ONE_DAY * BACKTESTING_NUM_DAYS)
 BACKTEST_END_OFFSET_SECONDS = date_floor(ONE_DAY * BACKTESTING_END_OFFSET_DAYS)
 
-market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
+market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_for_exchange(POLONIEX))
 
 account = BacktestingAccount(market_info=market_info, balances={'BTC': 100})
 
@@ -30,8 +31,7 @@ end_date = market_info.get_max_pair_end_time() \
            - BACKTEST_END_OFFSET_SECONDS
 
 signal_generators = [
-        DynamicRetracementSignalGenerator(market_info=market_info,
-                                          enable_disable=ENABLE_DISABLE_TRADING)
+        LinRegSignalGenerator(market_info=market_info)
     ]
 signal_executor = SignalExecutor(market_info=market_info, account=account)
 

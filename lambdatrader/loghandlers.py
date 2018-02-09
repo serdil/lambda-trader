@@ -5,17 +5,21 @@ from telegram_handler import TelegramHandler
 
 from lambdatrader.config import (
     TELEGRAM_TOKEN, BOT_NAME, TELEGRAM_CHAT_IDS, TELEGRAM_ENABLED, DEBUG_TO_CONSOLE,
+    BOT_LOG_DIRECTORY,
 )
-from lambdatrader.utilities.utils import get_project_directory
 
 _1MB = 1024 * 1024
 _5MB = 5 * _1MB
 _256MB = 256 * _1MB
 _1GB = 1024 * _1MB
 
-LOG_FOLDER_PATH = os.path.join(get_project_directory(), 'log')
-DEBUG_LOG_PATH = os.path.join(LOG_FOLDER_PATH, 'debug.log')
-INFO_LOG_PATH = os.path.join(LOG_FOLDER_PATH, 'info.log')
+LOG_DIRECTORY = BOT_LOG_DIRECTORY
+
+if not os.path.isdir(LOG_DIRECTORY):
+    os.makedirs(LOG_DIRECTORY, exist_ok=True)
+
+DEBUG_LOG_PATH = os.path.join(LOG_DIRECTORY, 'debug.log')
+INFO_LOG_PATH = os.path.join(LOG_DIRECTORY, 'info.log')
 
 formatter = logging.Formatter(
     BOT_NAME + ': ' + '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -59,17 +63,17 @@ def add_all_handlers(logger):
             logger.addHandler(handler)
 
 
-def get_logger_with_all_handlers(name):
+def get_logger_with_all_handlers(name, level=logging.DEBUG):
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(level)
     if not len(logger.handlers):
         add_all_handlers(logger)
     return logger
 
 
-def get_logger_with_console_handler(name):
+def get_logger_with_console_handler(name, level=logging.DEBUG):
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(level)
     logger.addHandler(console_handler)
     return logger
 
@@ -78,3 +82,12 @@ def get_silent_logger(name):
     logger = logging.getLogger(name)
     logger.handlers = []
     return logger
+
+
+def get_trading_logger(name, live=False, silent=False):
+    if live:
+        return get_logger_with_all_handlers(name)
+    elif silent:
+        return get_silent_logger(name)
+    else:
+        return get_logger_with_console_handler(name, level=logging.ERROR)

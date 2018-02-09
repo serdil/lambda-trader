@@ -19,6 +19,8 @@ class BacktestingMarketInfo(BaseMarketInfo):
         self.__last_high_calc_date = {}
         self.__last_high_calc_high = {}
 
+        self.__candlestick_cache = {}
+
     def get_exchange(self) -> ExchangeEnum:
         return ExchangeEnum.BACKTESTING
 
@@ -33,10 +35,10 @@ class BacktestingMarketInfo(BaseMarketInfo):
         return self.__market_date
 
     def inc_market_date(self):
-        self.__market_date += M5_SECONDS
+        self.__market_date += self.step
 
-    def get_pair_candlestick(self, pair, ind=0, period=M5):
-        if ind < 0:
+    def get_pair_candlestick(self, pair, ind=0, period=M5, allow_lookahead=False):
+        if ind < 0 and not allow_lookahead:
             raise Exception('Cannot look ahead.')
         try:
             return self.get_pair_period_candlestick(pair, ind=ind, period=period)
@@ -45,16 +47,29 @@ class BacktestingMarketInfo(BaseMarketInfo):
             raise e
 
     def get_pair_period_candlestick(self, pair, ind, period=M5):
+        candle_date = date_floor(self.market_date, period=period) - ind * period.seconds()
+        cache_key = self.candlestick_cache_key(candle_date, pair, period)
+        try:
+            return self.__candlestick_cache[cache_key]
+        except KeyError:
+            return self.compute_and_cache_pair_period_candlestick(pair, ind, period)
+
+    def compute_and_cache_pair_period_candlestick(self, pair, ind, period):
         end_date = date_floor(self.market_date, period=period) - ind * period.seconds()
         start_date = (date_floor(self.market_date, period=period)
-                      - (ind+1) * period.seconds() + M5_SECONDS)
+                      - (ind + 1) * period.seconds() + M5_SECONDS)
         candlestick = self.candlestick_store.get_candlestick(pair=pair, date=start_date)
-        for date in range(start_date+M5_SECONDS, end_date+M5_SECONDS, M5_SECONDS):
-            next_candlestick = self.candlestick_store.get_candlestick(pair=pair,
-                                                                      date=end_date)
+        for date in range(start_date + M5_SECONDS, end_date + M5_SECONDS, M5_SECONDS):
+            next_candlestick = self.candlestick_store.get_candlestick(pair=pair, date=end_date)
             candlestick = candlestick.batch_with(next_candlestick)
         candlestick.period = period
+        cache_key = self.candlestick_cache_key(end_date, pair, period)
+        self.__candlestick_cache[cache_key] = candlestick
         return candlestick
+
+    @staticmethod
+    def candlestick_cache_key(date, pair, period):
+        return date, pair, period.name
 
     def get_pair_latest_candlestick(self, pair, period=M5):
         return self.get_pair_candlestick(pair=pair, ind=0, period=period)
@@ -153,14 +168,20 @@ class BacktestingMarketInfo(BaseMarketInfo):
         return min(map(
             lambda p: self.__get_pair_end_time_from_store(pair=p), self.__get_pairs_from_store()))
 
+    def get_pair_start_time(self, pair):
+        return self.__get_pair_start_time_from_store(pair)
+
+    def get_pair_end_time(self, pair):
+        return self.__get_pair_end_time_from_store(pair)
+
     def __get_pairs_from_store(self):
         return self.candlestick_store.get_pairs()
 
     def __get_pair_start_time_from_store(self, pair):
-        return self.candlestick_store.get_pair_oldest_date(pair=pair)
+        return self.candlestick_store.get_pair_period_oldest_date(pair=pair)
 
     def __get_pair_end_time_from_store(self, pair):
-        return self.candlestick_store.get_pair_newest_date(pair=pair)
+        return self.candlestick_store.get_pair_period_newest_date(pair=pair)
 
     def get_active_pairs(self, return_usdt_btc=False):
         pairs_set = set(
@@ -198,3 +219,7 @@ class BacktestingMarketInfo(BaseMarketInfo):
 
     def get_indicator(self, pair, indicator: IndicatorEnum, args, ind=0, period=M5):
         return self.indicators.compute(pair, indicator, args, ind=ind, period=period)
+
+    @property
+    def step(self):
+        return M5_SECONDS

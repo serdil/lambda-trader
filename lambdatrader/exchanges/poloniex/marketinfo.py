@@ -3,13 +3,13 @@ from time import sleep
 
 from poloniex import PoloniexError
 
-from lambdatrader.constants import M5_SECONDS, M5
-from lambdatrader.indicator_functions import IndicatorEnum
+from lambdatrader.constants import M5
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.exchanges.poloniex.constants import OLDEST_DATE
 from lambdatrader.exchanges.poloniex.polxclient import polo
 from lambdatrader.exchanges.poloniex.utils import APICallExecutor, map_exception
 from lambdatrader.executors.utils import retry_on_exception
+from lambdatrader.indicator_functions import IndicatorEnum
 from lambdatrader.indicators import Indicators
 from lambdatrader.loghandlers import get_logger_with_all_handlers
 from lambdatrader.marketinfo import BaseMarketInfo
@@ -71,10 +71,10 @@ class PolxMarketInfo(BaseMarketInfo):
     def market_date(self):
         return get_now_timestamp()
 
-    def get_pair_candlestick(self, pair, ind=0, period=M5):
+    def get_pair_candlestick(self, pair, ind=0, period=M5, allow_lookahead=False):
         if period is not M5:
             raise NotImplementedError
-        date = self.candlestick_store.get_pair_newest_date(pair) - ind * period.seconds()
+        date = self.candlestick_store.get_pair_period_newest_date(pair) - ind * period.seconds()
         return self.candlestick_store.get_candlestick(pair=pair, date=date)
 
     def get_pair_latest_candlestick(self, pair, period=M5):
@@ -139,7 +139,7 @@ class PolxMarketInfo(BaseMarketInfo):
         with self.__ticker_lock:
             self.__ticker = ticker_dict
 
-    def fetch_candlesticks(self):
+    def fetch_candlesticks(self, period=M5):
         self.logger.debug('fetching_candlesticks')
         with self.__ticker_lock:
             if self.__ticker == {}:
@@ -148,45 +148,47 @@ class PolxMarketInfo(BaseMarketInfo):
         pairs = self.get_active_pairs(return_usdt_btc=True)
 
         for pair in pairs:
-            self.__fetch_pair_candlesticks(pair)
+            self.__fetch_pair_candlesticks(pair, period=period)
 
     def get_indicator(self, pair, indicator: IndicatorEnum, args, ind=0, period=M5):
         return self.indicators.compute(pair, indicator, args, ind=ind, period=period)
 
-    def __fetch_pair_candlesticks(self, pair):
+    def __fetch_pair_candlesticks(self, pair, period):
         self.logger.debug('fetching_pair_candlesticks: %s', pair)
-        start_date = self.candlestick_store.get_pair_newest_date(pair)
+        start_date = self.candlestick_store.get_pair_period_newest_date(pair, period=period)
         if start_date is None:
             start_date = OLDEST_DATE
 
         end_date = self.market_date
 
-        if end_date - start_date > M5_SECONDS:
-            candlesticks = self.__get_pair_candlesticks_with_retry(pair, start_date, end_date)
+        if end_date - start_date > period.seconds():
+            candlesticks = self.__get_pair_candlesticks_with_retry(pair, start_date,
+                                                                   end_date, period=period)
 
             self.logger.debug('fetched_pair_candlesticks: %s %s', pair, len(candlesticks))
             for candlestick in candlesticks:
                 self.candlestick_store.append_candlestick(pair, candlestick)
 
-    def __get_pair_candlesticks_with_retry(self, pair, start_date, end_date):
+    def __get_pair_candlesticks_with_retry(self, pair, start_date, end_date, period=M5):
         return retry_on_exception(
-            task=lambda: self.__get_pair_candlesticks(pair, start_date, end_date),
+            task=lambda: self.__get_pair_candlesticks(pair, start_date, end_date, period=period),
             logger=self.logger
         )
 
-    def __get_pair_candlesticks(self, pair, start_date, end_date):
+    def __get_pair_candlesticks(self, pair, start_date, end_date, period=M5):
         polx_chart_data = self.__api_call(
-            lambda: polo.returnChartData(currencyPair=pair, period=M5_SECONDS,
+            lambda: polo.returnChartData(currencyPair=pair, period=period.seconds(),
                                          start=start_date, end=end_date)
         )
 
-        return self.polx_chart_data_to_candlesticks(polx_chart_data)
+        return self.polx_chart_data_to_candlesticks(polx_chart_data, period=period)
 
     @staticmethod
-    def polx_chart_data_to_candlesticks(chart_data):
+    def polx_chart_data_to_candlesticks(chart_data, period=M5):
         candlesticks = []
         for c in chart_data:
-            candlesticks.append(Candlestick(date=int(c['date']),
+            candlesticks.append(Candlestick(period=period,
+                                            date=int(c['date']),
                                             high=float(c['high']),
                                             low=float(c['low']),
                                             _open=float(c['open']),

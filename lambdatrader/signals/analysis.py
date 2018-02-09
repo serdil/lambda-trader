@@ -4,8 +4,9 @@ from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.candlestickstore import CandlestickStore
 from lambdatrader.constants import M5
 from lambdatrader.evaluation.utils import period_statistics
+from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.executors.executors import SignalExecutor
-from lambdatrader.loghandlers import get_logger_with_all_handlers
+from lambdatrader.loghandlers import get_trading_logger
 from lambdatrader.signals.analysis_utils import (
     get_estimated_balances_list, find_smaller_equal_date_index,
 )
@@ -14,9 +15,15 @@ from lambdatrader.utilities.utils import candlesticks
 
 class Analysis:
 
-    def __init__(self, market_info):
+    def __init__(self, market_info, live=False, silent=False):
         self.market_info = market_info
-        self.logger = get_logger_with_all_handlers(__name__)
+        self.LIVE = live
+        self.SILENT = silent
+        self.logger = get_trading_logger(__name__, live=live, silent=silent)
+
+    def backtest_print(self, *args):
+        if not self.LIVE and not self.SILENT:
+            print(*args)
 
     @property
     def market_date(self):
@@ -201,7 +208,6 @@ class Analysis:
                 this_candle = self.market_info.get_pair_candlestick(pair, ind=0)
             except KeyError as e:
                 self.logger.error('KeyError while getting candlestick for {}:{}'.format(pair, e))
-                print('KeyError while getting candlestick for {}:{}'.format(pair, e))
                 return False
 
             old_price = old_candle.close
@@ -266,7 +272,6 @@ class Analysis:
                 this_candle = self.market_info.get_pair_candlestick(pair, ind=0)
             except KeyError as e:
                 self.logger.error('KeyError while getting candlestick for {}:{}'.format(pair, e))
-                print('KeyError while getting candlestick for {}:{}'.format(pair, e))
                 return False
 
             old_price = old_candle.close
@@ -281,7 +286,8 @@ class Analysis:
         return num_upped >= majority_num
 
     def get_backtesting_trading_info(self, backtesting_time, signal_generator_class):
-        market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
+        market_info = BacktestingMarketInfo(candlestick_store=
+                                            CandlestickStore.get_for_exchange(exchange=POLONIEX))
 
         account = BacktestingAccount(market_info=market_info, balances={'BTC': 100})
 
