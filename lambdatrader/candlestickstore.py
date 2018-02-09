@@ -249,8 +249,8 @@ class CandlestickStore:  # TODO make thread safe
 
     __instances = {}
 
-    @rlock
     @classmethod
+    @rlock
     def get_for_exchange(cls, exchange: ExchangeEnum=ExchangeEnum.POLONIEX):
         if exchange not in cls.__instances:
             cls.__instances[exchange] = cls.__CandlestickStore(exchange=exchange)
