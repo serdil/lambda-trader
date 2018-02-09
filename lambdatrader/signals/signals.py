@@ -418,15 +418,22 @@ class LinRegSignalGenerator(BaseSignalGenerator):
         feature_funcs = list(get_small_feature_func_set())
         value_func = value_dummy
 
-        data_set = create_pair_dataset_from_history(self._dummy_market_info,
-                                                    pair=pair,
-                                                    start_date=self.market_date,
-                                                    end_date=self.market_date,
-                                                    feature_functions=feature_funcs,
-                                                    value_function=value_func)
+        try:
+            latest_candle = self.market_info.get_pair_candlestick(pair=pair)
+            latest_candle_date = latest_candle.date
 
-        feature_names = data_set.get_first_feature_names()
-        feature_values = data_set.get_numpy_feature_matrix()[0]
+            data_set = create_pair_dataset_from_history(self._dummy_market_info,
+                                                        pair=pair,
+                                                        start_date=latest_candle_date,
+                                                        end_date=latest_candle_date,
+                                                        feature_functions=feature_funcs,
+                                                        value_function=value_func)
+
+            feature_names = data_set.get_first_feature_names()
+            feature_values = data_set.get_numpy_feature_matrix()[0]
+        except KeyError:
+            self.logger.error('KeyError: %s', pair)
+            return
 
         max_pred, min_pred, close_pred = self.predictors[pair](feature_names, feature_values)
 
@@ -436,23 +443,21 @@ class LinRegSignalGenerator(BaseSignalGenerator):
         self.backtest_print()
         self.backtest_print(pair, 'pair preds:', max_pred, min_pred, close_pred)
 
-        latest_candle = self.market_info.get_pair_candlestick(pair=pair)
-        latest_candle_date = latest_candle.date
-
         self.logger.info('signal for %s, pred values: %.4f %.4f %.4f',
                          pair, max_pred, min_pred, close_pred)
 
-        if latest_candle_date - self.market_date >= self.CANDLE_PERIOD.seconds():
-            self.logger.info('latest candle out of date, dismissing signal.')
-            return
+        # if self.market_date - latest_candle_date >= self.CANDLE_PERIOD.seconds():
+        #     self.logger.info('latest candle out of date, dismissing signal.')
+        #     return
 
         latest_ticker = self.market_info.get_pair_ticker(pair=pair)
         price = latest_ticker.lowest_ask
         market_date = self.market_date
 
         if self.LIVE:
-            if price > latest_candle.close:
-                self.logger.info('lowest ask higher than latest candlestick close, dismissing signal.')
+            if price - latest_candle.close > 0.005:
+                self.logger.info('lowest ask higher than latest candlestick close, '
+                                 'dismissing signal.')
                 return
 
         target_price = price * (1 + max_pred * TP_LEVEL)
