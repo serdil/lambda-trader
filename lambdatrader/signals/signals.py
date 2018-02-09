@@ -450,9 +450,10 @@ class LinRegSignalGenerator(BaseSignalGenerator):
         price = latest_ticker.lowest_ask
         market_date = self.market_date
 
-        if price > latest_candle.close:
-            self.logger.info('lowest ask higher than latest candlestick close, dismissing signal.')
-            return
+        if self.LIVE:
+            if price > latest_candle.close:
+                self.logger.info('lowest ask higher than latest candlestick close, dismissing signal.')
+                return
 
         target_price = price * (1 + max_pred * TP_LEVEL)
 
