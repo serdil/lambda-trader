@@ -502,13 +502,13 @@ print('++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST+++++
 print()
 
 try:
-    pred_max = bst_max.predict(dval_max, ntree_limit=max_best_ntree_limit)
-    pred_min = bst_min.predict(dval_min, ntree_limit=min_best_ntree_limit)
-    pred_close = bst_close.predict(dval_close, ntree_limit=close_best_ntree_limit)
+    pred_max = bst_max.predict(dtest_max, ntree_limit=max_best_ntree_limit)
+    pred_min = bst_min.predict(dtest_min, ntree_limit=min_best_ntree_limit)
+    pred_close = bst_close.predict(dtest_close, ntree_limit=close_best_ntree_limit)
 except XGBoostError:
-    pred_max = bst_max.predict(dval_max)
-    pred_min = bst_min.predict(dval_min)
-    pred_close = bst_close.predict(dval_close)
+    pred_max = bst_max.predict(dtest_max)
+    pred_min = bst_min.predict(dtest_min)
+    pred_close = bst_close.predict(dtest_close)
 
 
 pred_real_max = list(zip(pred_max, y_max_test))
