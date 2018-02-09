@@ -33,6 +33,13 @@ def get_small_feature_func_set():
         yield make_volume(lookback, candle_period)
 
 
+def get_all_periods_last_five_ohclv_feature_func_set():
+    lookback = 5
+    for candle_period in [M5, M15, H, H4, D]:
+        yield make_ohcl_delta(lookback, candle_period)
+        yield make_volume(lookback, candle_period)
+
+
 def get_small_feature_func_set_with_indicators():
     lookback = 5
     for candle_period in [M5, M15, H, H4]:

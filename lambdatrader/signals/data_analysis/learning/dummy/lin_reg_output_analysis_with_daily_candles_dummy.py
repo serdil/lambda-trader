@@ -21,7 +21,7 @@ from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
 from lambdatrader.signals.data_analysis.feature_sets import (
     get_small_feature_func_set, get_dummy_feature_func_set,
-    get_small_feature_func_set_with_indicators,
+    get_small_feature_func_set_with_indicators, get_all_periods_last_five_ohclv_feature_func_set,
 )
 from lambdatrader.signals.data_analysis.values import (
     make_cont_max_price_in_future, make_cont_close_price_in_future, make_cont_min_price_in_future,
@@ -61,8 +61,8 @@ dataset_symbol = 'BTC_VIA'
 dummy_feature_functions = list(get_dummy_feature_func_set())
 dummy_feature_functions_name = 'dummy'
 
-feature_functions = list(get_small_feature_func_set())
-feature_funcs_name = 'small'
+feature_functions = list(get_all_periods_last_five_ohclv_feature_func_set())
+feature_funcs_name = 'with_day'
 
 num_candles = 48
 
