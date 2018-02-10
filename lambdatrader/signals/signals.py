@@ -345,7 +345,7 @@ class LinRegSignalGenerator(BaseSignalGenerator):
 
     NUM_CANDLES = 48
     CANDLE_PERIOD = M5
-    TRAINING_LEN = seconds(days=200)
+    TRAINING_LEN = seconds(days=120)
     TRAIN_VAL_RATIO = 0.6
 
     MAX_THR = 0.05
