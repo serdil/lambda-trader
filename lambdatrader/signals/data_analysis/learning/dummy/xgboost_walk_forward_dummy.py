@@ -40,7 +40,8 @@ day_offset = 7
 
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*500)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
-dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
+dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*250)
+# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*120)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*90)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*60)
@@ -58,7 +59,9 @@ print('start_date: {} end_date: {}'.format(datetime.utcfromtimestamp(dataset_sta
 print()
 
 
-dataset_symbol = 'BTC_VIA'
+dataset_symbol = 'BTC_SC'
+
+print('symbol:', dataset_symbol)
 
 dummy_feature_functions = list(get_dummy_feature_func_set())
 dummy_feature_functions_name = 'dummy'
@@ -131,8 +134,8 @@ def days_to_candles(num_days):
     return seconds(days=num_days) // M5.seconds()
 
 
-train_val_days = 90
-train_ratio = 0.7
+train_val_days = 200
+train_ratio = 0.9
 
 train_days = int(train_val_days * train_ratio)
 validation_days = train_val_days - train_days
@@ -153,7 +156,9 @@ nontest_len = window_size - retrain_len
 test_end = n_samples - ((n_samples - nontest_len) % retrain_len)
 
 total_test_days = (test_end - nontest_len) // days_to_candles(1)
+num_training_rounds = total_test_days // retrain_interval_days
 print('total test days:', total_test_days)
+print('num training rounds:', num_training_rounds)
 
 # print('window size', window_size)
 # print('n_samples', n_samples)
