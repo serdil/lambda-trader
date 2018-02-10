@@ -40,8 +40,8 @@ day_offset = 120
 
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*500)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
-dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*120)
+dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
+# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*120)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*90)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*60)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*30)
@@ -126,8 +126,8 @@ y_close = close_price_value_dataset.get_numpy_value_array()
 
 print('created/loaded dataset\n')
 
-train_ratio = 0.6
-validation_ratio = 0.8
+train_ratio = 0.8
+validation_ratio = 0.9
 gap = num_candles
 
 n_samples = len(X)
