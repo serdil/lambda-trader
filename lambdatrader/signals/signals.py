@@ -345,10 +345,16 @@ class LinRegSignalGenerator(BaseSignalGenerator):
 
     NUM_CANDLES = 48
     CANDLE_PERIOD = M5
-    TRAINING_LEN = seconds(days=120)
+    TRAINING_LEN = seconds(days=200)
+    TRAIN_VAL_RATIO = 0.6
 
     MAX_THR = 0.05
     CLOSE_THR = 0.04
+
+    MAX_RMSE_THR = 0.03
+
+    USE_RMSE_FOR_CLOSE_THR = True
+    USE_RMSE_FOR_MAX_THR = True
 
     MIN_THR = -1.00
 
@@ -358,21 +364,32 @@ class LinRegSignalGenerator(BaseSignalGenerator):
                                                         CandlestickStore
                                                         .get_for_exchange(ExchangeEnum.POLONIEX))
         self.predictors = {}
+        self.max_rmses = {}
+        self.min_rmses = {}
+        self.close_rmses = {}
 
     def get_algo_descriptor(self):
         return {
             'CLASS_NAME': self.__class__.__name__,
             'MODEL_UPDATE_INTERVAL': MODEL_UPDATE_INTERVAL,
             'TRAINING_LEN': self.TRAINING_LEN,
+            'TRAIN_VAL_RATIO': self.TRAIN_VAL_RATIO,
             'TP_LEVEL': TP_LEVEL,
             'MAX_THR': self.MAX_THR,
             'CLOSE_THR': self.CLOSE_THR,
             'MIN_THR': self.MIN_THR,
+            'USE_RMSE_FOR_MAX_THR': self.USE_RMSE_FOR_MAX_THR,
+            'USE_RMSE_FOR_CLOSE_THR': self.USE_RMSE_FOR_CLOSE_THR,
+            'MAX_RMSE_THR': self.MAX_RMSE_THR
         }
 
     def get_allowed_pairs(self):
         return sorted(self.market_info.get_active_pairs())
         # return ['BTC_LTC', 'BTC_ETH', 'BTC_ETC', 'BTC_XMR', 'BTC_SYS', 'BTC_VIA', 'BTC_SC']
+        # return ['BTC_XMR']
+        # return ['BTC_SYS']
+        # return ['BTC_ETH']
+        # return ['BTC_ETC']
         # return ['BTC_VIA']
         # return ['BTC_RADS']
         # return ['BTC_XRP']
@@ -391,18 +408,24 @@ class LinRegSignalGenerator(BaseSignalGenerator):
             self.backtest_print('({}/{}) training: {}'.format(i, num_pairs, pair))
             self.debug('%s', '({}/{}) training: {}'.format(i, num_pairs, pair))
             try:
-                predictor = train_max_min_close_pred_lin_reg_model(market_info=
+                train_res = train_max_min_close_pred_lin_reg_model(market_info=
                                                                    self._dummy_market_info,
                                                                    pair=pair,
                                                                    start_date=training_start_date,
                                                                    end_date=training_end_date,
                                                                    num_candles=self.NUM_CANDLES,
-                                                                   candle_period=self.CANDLE_PERIOD)
+                                                                   candle_period=self.CANDLE_PERIOD,
+                                                                   train_ratio=self.TRAIN_VAL_RATIO)
+                predictor, rmses = train_res
+                max_rmse, min_rmse, close_rmse = rmses
             except KeyError:
                 if pair in self.predictors:
                     del self.predictors[pair]
             else:
                 self.predictors[pair] = predictor
+                self.max_rmses[pair] = max_rmse
+                self.min_rmses[pair] = min_rmse
+                self.close_rmses[pair] = close_rmse
         self.backtest_print('=================training complete!==================')
         self.logger.info('training complete!')
 
@@ -437,7 +460,17 @@ class LinRegSignalGenerator(BaseSignalGenerator):
 
         max_pred, min_pred, close_pred = self.predictors[pair](feature_names, feature_values)
 
-        if max_pred < self.MAX_THR or close_pred < self.CLOSE_THR or min_pred < self.MIN_THR:
+        if self.USE_RMSE_FOR_MAX_THR:
+            max_thr = max(self.max_rmses[pair], self.MAX_RMSE_THR)
+        else:
+            max_thr = self.MAX_THR
+
+        if self.USE_RMSE_FOR_CLOSE_THR:
+            close_thr = self.close_rmses[pair]
+        else:
+            close_thr = self.CLOSE_THR
+
+        if max_pred < max_thr or close_pred < close_thr or min_pred < self.MIN_THR:
             return
 
         self.backtest_print()

@@ -120,21 +120,36 @@ def train_max_min_close_pred_lin_reg_model(market_info,
     num_round = 10000
     early_stopping_rounds = 100
 
+    max_evals_result = {}
+    min_evals_result = {}
+    close_evals_result = {}
+
     bst_max = xgb.train(params=params, dtrain=dtrain_max, num_boost_round=num_round,
-                        evals=watchlist_max, early_stopping_rounds=early_stopping_rounds)
+                        evals=watchlist_max, early_stopping_rounds=early_stopping_rounds,
+                        evals_result=max_evals_result)
 
     bst_min = xgb.train(params=params, dtrain=dtrain_min, num_boost_round=num_round,
-                        evals=watchlist_min, early_stopping_rounds=early_stopping_rounds)
+                        evals=watchlist_min, early_stopping_rounds=early_stopping_rounds,
+                        evals_result=min_evals_result)
 
     bst_close = xgb.train(params=params, dtrain=dtrain_close, num_boost_round=num_round,
-                          evals=watchlist_close, early_stopping_rounds=early_stopping_rounds)
+                          evals=watchlist_close, early_stopping_rounds=early_stopping_rounds,
+                          evals_result=close_evals_result)
+
+    max_rmse = max_evals_result['val_max']['rmse'][-1]
+    min_rmse = min_evals_result['val_min']['rmse'][-1]
+    close_rmse = close_evals_result['val_close']['rmse'][-1]
 
     max_best_ntree_limit = bst_max.best_ntree_limit
     min_best_ntree_limit = bst_min.best_ntree_limit
     close_best_ntree_limit = bst_close.best_ntree_limit
 
-    return _get_predictor_func(bst_max, bst_min, bst_close,
-                               max_best_ntree_limit, min_best_ntree_limit, close_best_ntree_limit)
+    predictor_func = _get_predictor_func(bst_max, bst_min, bst_close,
+                                         max_best_ntree_limit,
+                                         min_best_ntree_limit,
+                                         close_best_ntree_limit)
+
+    return predictor_func, (max_rmse, min_rmse, close_rmse)
 
 
 def _get_predictor_func(bst_max, bst_min, bst_close,
