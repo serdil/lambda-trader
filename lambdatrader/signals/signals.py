@@ -338,23 +338,30 @@ class DynamicRetracementSignalGenerator(BaseSignalGenerator):  # TODO deduplicat
 
 
 MODEL_UPDATE_INTERVAL = seconds(days=30)
-TP_LEVEL = 0.9
+TP_LEVEL = 1.0
+
+TP_STRATEGY_MAX_PRED_MULT = 'max_pred_mult'
+TP_STRATEGY_CLOSE_PRED_MULT = 'close_pred_mult'
 
 
 class LinRegSignalGenerator(BaseSignalGenerator):
 
     NUM_CANDLES = 48
     CANDLE_PERIOD = M5
-    TRAINING_LEN = seconds(days=120)
-    TRAIN_VAL_RATIO = 0.6
+    TRAINING_LEN = seconds(days=500)
+    TRAIN_VAL_RATIO = 0.7
 
-    MAX_THR = 0.05
-    CLOSE_THR = 0.04
+    MAX_THR = 0.00
+    CLOSE_THR = 0.02
 
     MAX_RMSE_THR = 0.03
+    CLOSE_RMSE_THR = 0.02
+
+    MAX_RMSE_MULT = 1
+    CLOSE_RMSE_MULT = 1
 
     USE_RMSE_FOR_CLOSE_THR = True
-    USE_RMSE_FOR_MAX_THR = True
+    USE_RMSE_FOR_MAX_THR = False
 
     MIN_THR = -1.00
 
@@ -380,12 +387,14 @@ class LinRegSignalGenerator(BaseSignalGenerator):
             'MIN_THR': self.MIN_THR,
             'USE_RMSE_FOR_MAX_THR': self.USE_RMSE_FOR_MAX_THR,
             'USE_RMSE_FOR_CLOSE_THR': self.USE_RMSE_FOR_CLOSE_THR,
-            'MAX_RMSE_THR': self.MAX_RMSE_THR
+            'MAX_RMSE_THR': self.MAX_RMSE_THR,
+            'CLOSE_RMSE_THR': self.CLOSE_RMSE_THR
         }
 
     def get_allowed_pairs(self):
         return sorted(self.market_info.get_active_pairs())
         # return ['BTC_LTC', 'BTC_ETH', 'BTC_ETC', 'BTC_XMR', 'BTC_SYS', 'BTC_VIA', 'BTC_SC']
+        # return ['BTC_LTC']
         # return ['BTC_XMR']
         # return ['BTC_SYS']
         # return ['BTC_ETH']
@@ -466,7 +475,7 @@ class LinRegSignalGenerator(BaseSignalGenerator):
             max_thr = self.MAX_THR
 
         if self.USE_RMSE_FOR_CLOSE_THR:
-            close_thr = self.close_rmses[pair]
+            close_thr = max(self.close_rmses[pair], self.CLOSE_RMSE_THR)
         else:
             close_thr = self.CLOSE_THR
 
@@ -493,7 +502,7 @@ class LinRegSignalGenerator(BaseSignalGenerator):
                                  'dismissing signal.')
                 return
 
-        target_price = price * (1 + max_pred * TP_LEVEL)
+        target_price = price * (1 + close_pred * TP_LEVEL)
 
         self.debug('market_date:%s', str(market_date))
         self.debug('latest_ticker:%s:%s', pair, str(latest_ticker))
