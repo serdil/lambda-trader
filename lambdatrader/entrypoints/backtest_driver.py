@@ -31,8 +31,8 @@ end_date = market_info.get_max_pair_end_time() \
 lin_reg_sig_gen_factory = LinRegSignalGeneratorFactory(market_info, live=False, silent=False)
 
 signal_generators = [
-    # lin_reg_sig_gen_factory.get_first_conf_lin_reg_signal_generator(),
-    lin_reg_sig_gen_factory.get_second_conf_lin_reg_signal_generator(),
+    lin_reg_sig_gen_factory.get_first_conf_lin_reg_signal_generator(),
+    # lin_reg_sig_gen_factory.get_second_conf_lin_reg_signal_generator(),
 ]
 
 signal_executor = SignalExecutor(market_info=market_info, account=account)
@@ -44,7 +44,7 @@ backtest.backtest(account=account, market_info=market_info, signal_generators=si
                   signal_executor=signal_executor, start=start_date, end=end_date)
 
 print('Signal Generator Used:')
-pprint(DynamicRetracementSignalGenerator.__dict__)
+pprint(signal_generators[0].__class__.__dict__)
 pprint(signal_generators[0].__dict__)
 
 print()
