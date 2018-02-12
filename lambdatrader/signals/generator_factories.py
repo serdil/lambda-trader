@@ -7,7 +7,9 @@ from lambdatrader.signals.generators.linreg import (
 )
 from lambdatrader.utilities.utils import seconds
 
-LIN_REG_FIRST_CONF_SETTINGS = LinRegSignalGeneratorSettings(
+
+def get_lin_reg_first_conf_settings(exclude_external=True):
+    return LinRegSignalGeneratorSettings(
                  num_candles=48,
                  candle_period=M5,
                  training_len=seconds(days=120),
@@ -22,9 +24,12 @@ LIN_REG_FIRST_CONF_SETTINGS = LinRegSignalGeneratorSettings(
                  use_rmse_for_close_thr=False,
                  use_rmse_for_max_thr=False,
                  tp_level=1.0,
-                 tp_strategy=LINREG__TP_STRATEGY_MAX_PRED_MULT)
+                 tp_strategy=LINREG__TP_STRATEGY_MAX_PRED_MULT,
+                 exclude_external=exclude_external)
 
-LIN_REG_SECOND_CONF_SETTINGS = LinRegSignalGeneratorSettings(
+
+def get_lin_reg_second_conf_settings(exclude_external=True):
+    return LinRegSignalGeneratorSettings(
                  num_candles=48,
                  candle_period=M5,
                  training_len=seconds(days=500),
@@ -39,7 +44,8 @@ LIN_REG_SECOND_CONF_SETTINGS = LinRegSignalGeneratorSettings(
                  use_rmse_for_close_thr=True,
                  use_rmse_for_max_thr=False,
                  tp_level=1.0,
-                 tp_strategy=LINREG__TP_STRATEGY_CLOSE_PRED_MULT)
+                 tp_strategy=LINREG__TP_STRATEGY_CLOSE_PRED_MULT,
+                 exclude_external=exclude_external)
 
 
 class LinRegSignalGeneratorFactory:
@@ -49,11 +55,21 @@ class LinRegSignalGeneratorFactory:
         self.live = live
         self.silent = silent
 
-    def get_first_conf_lin_reg_signal_generator(self):
-        return self._create_with_settings(LIN_REG_FIRST_CONF_SETTINGS)
+    def get_excluding_first_conf_lin_reg_signal_generator(self):
+        settings = get_lin_reg_first_conf_settings(exclude_external=True)
+        return self._create_with_settings(settings)
 
-    def get_second_conf_lin_reg_signal_generator(self):
-        return self._create_with_settings(LIN_REG_SECOND_CONF_SETTINGS)
+    def get_excluding_second_conf_lin_reg_signal_generator(self):
+        settings = get_lin_reg_second_conf_settings(exclude_external=True)
+        return self._create_with_settings(settings)
+
+    def get_non_excluding_first_conf_lin_reg_signal_generator(self):
+        settings = get_lin_reg_first_conf_settings(exclude_external=False)
+        return self._create_with_settings(settings)
+
+    def get_non_excluding_second_conf_lin_reg_signal_generator(self):
+        settings = get_lin_reg_second_conf_settings(exclude_external=False)
+        return self._create_with_settings(settings)
 
     def _create_with_settings(self, settings):
         return LinRegSignalGenerator(self.market_info,

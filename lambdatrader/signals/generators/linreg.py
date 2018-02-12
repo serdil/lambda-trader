@@ -1,3 +1,4 @@
+import uuid
 from typing import Optional
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
@@ -39,7 +40,8 @@ class LinRegSignalGeneratorSettings:
                  use_rmse_for_close_thr=True,
                  use_rmse_for_max_thr=False,
                  tp_level=1.0,
-                 tp_strategy=LINREG__TP_STRATEGY_CLOSE_PRED_MULT):
+                 tp_strategy=LINREG__TP_STRATEGY_CLOSE_PRED_MULT,
+                 exclude_external=True):
         self.num_candles = num_candles
         self.candle_period = candle_period
         self.training_len = training_len
@@ -55,6 +57,7 @@ class LinRegSignalGeneratorSettings:
         self.use_rmse_for_max_thr = use_rmse_for_max_thr
         self.tp_level = tp_level
         self.tp_strategy = tp_strategy
+        self.exclude_external = exclude_external
 
 
 class LinRegSignalGenerator(BaseSignalGenerator):
@@ -81,6 +84,7 @@ class LinRegSignalGenerator(BaseSignalGenerator):
 
     TP_STRATEGY = LINREG__TP_STRATEGY_CLOSE_PRED_MULT
 
+    EXCLUDE_EXTERNAL_SIGNAL_PAIRS = True
 
     def __init__(self, market_info, live=False, silent=False,
                  settings:LinRegSignalGeneratorSettings=None, **kwargs):
@@ -92,6 +96,8 @@ class LinRegSignalGenerator(BaseSignalGenerator):
         self.max_rmses = {}
         self.min_rmses = {}
         self.close_rmses = {}
+
+        self.id = uuid.uuid1()
 
         if settings is not None:
             self.NUM_CANDLES = settings.num_candles
@@ -109,6 +115,7 @@ class LinRegSignalGenerator(BaseSignalGenerator):
             self.USE_RMSE_FOR_MAX_THR = settings.use_rmse_for_max_thr
             self.TP_LEVEL = settings.tp_level
             self.TP_STRATEGY = settings.tp_strategy
+            self.EXCLUDE_EXTERNAL_SIGNAL_PAIRS = settings.exclude_external
 
     def get_algo_descriptor(self):
         return {
@@ -127,7 +134,9 @@ class LinRegSignalGenerator(BaseSignalGenerator):
             'CLOSE_RMSE_THR': self.CLOSE_RMSE_THR,
             'TP_LEVEL': self.TP_LEVEL,
             'MAX_RMSE_MULT': self.MAX_RMSE_MULT,
-            'CLOSE_RMSE_MULT': self.CLOSE_RMSE_MULT
+            'CLOSE_RMSE_MULT': self.CLOSE_RMSE_MULT,
+            'TP_STRATEGY': self.TP_STRATEGY,
+            'EXCLUDE_EXTERNAL_SIGNAL_PAIRS': self.EXCLUDE_EXTERNAL_SIGNAL_PAIRS,
         }
 
     def get_allowed_pairs(self):
@@ -179,9 +188,16 @@ class LinRegSignalGenerator(BaseSignalGenerator):
 
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
 
-        if pair in [signal.pair for signal in tracked_signals]:
+        if self.EXCLUDE_EXTERNAL_SIGNAL_PAIRS:
+            signals_considered = tracked_signals
+        else:
+            signals_considered = filter(lambda s: 'origin' in s and s['origin'] == self.id,
+                                        tracked_signals)
+
+        if pair in [signal.pair for signal in signals_considered]:
             self.debug('pair_already_in_tracked_signals:%s', pair)
             return
+
 
         if pair not in self.predictors:
             return
@@ -257,7 +273,8 @@ class LinRegSignalGenerator(BaseSignalGenerator):
         failure_exit = TimeoutStopLossFailureExit(timeout=target_duration)
 
         trade_signal = TradeSignal(date=market_date, exchange=None, pair=pair, entry=entry,
-                                   success_exit=success_exit, failure_exit=failure_exit)
+                                   success_exit=success_exit, failure_exit=failure_exit,
+                                   meta={'origin': self.id})
 
         self.logger.debug('trade_signal:%s', str(trade_signal))
 

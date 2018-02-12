@@ -93,7 +93,7 @@ class PriceStopLossFailureExit(FailureExit):
 
 class TradeSignal:
     def __init__(self, date, exchange, pair, entry: Entry, success_exit: SuccessExit,
-                 failure_exit: FailureExit, good_for=FIVE_MINUTES, _id=None):
+                 failure_exit: FailureExit, good_for=FIVE_MINUTES, _id=None, meta=None):
         self.date = date
         self.exchange = exchange
         self.pair = pair
@@ -107,6 +107,11 @@ class TradeSignal:
             self.id = _id
         else:
             self.id = uuid1()
+
+        if meta is not None:
+            self.meta = meta
+        else:
+            self.meta = {}
 
     def cancel(self):
         self.is_cancelled = True
