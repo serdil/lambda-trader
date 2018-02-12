@@ -23,6 +23,40 @@ MODEL_UPDATE_INTERVAL = seconds(days=30)
 MAX_ALLOWED_TICK_CANDLE_DIFF = 0.005
 
 
+class LinRegSignalGeneratorSettings:
+    def __init__(self,
+                 num_candles=48,
+                 candle_period=M5,
+                 training_len=seconds(days=500),
+                 train_val_ratio=0.7,
+                 max_thr=0.00,
+                 close_thr=0.02,
+                 min_thr=-1.00,
+                 max_rmse_thr=0.03,
+                 close_rmse_thr=0.02,
+                 max_rmse_mult=1.0,
+                 close_rmse_mult=1.0,
+                 use_rmse_for_close_thr=True,
+                 use_rmse_for_max_thr=False,
+                 tp_level=1.0,
+                 tp_strategy=LINREG__TP_STRATEGY_CLOSE_PRED_MULT):
+        self.num_candles = num_candles
+        self.candle_period = candle_period
+        self.training_len = training_len
+        self.train_val_ratio = train_val_ratio
+        self.max_thr = max_thr
+        self.close_thr = close_thr
+        self.min_thr = min_thr
+        self.max_rmse_thr = max_rmse_thr
+        self.close_rmse_thr = close_rmse_thr
+        self.max_rmse_mult = max_rmse_mult
+        self.close_rmse_mult = close_rmse_mult
+        self.use_rmse_for_close_thr = use_rmse_for_close_thr
+        self.use_rmse_for_max_thr = use_rmse_for_max_thr
+        self.tp_level = tp_level
+        self.tp_strategy = tp_strategy
+
+
 class LinRegSignalGenerator(BaseSignalGenerator):
 
     NUM_CANDLES = 48
@@ -48,7 +82,8 @@ class LinRegSignalGenerator(BaseSignalGenerator):
     TP_STRATEGY = LINREG__TP_STRATEGY_CLOSE_PRED_MULT
 
 
-    def __init__(self, market_info, live=False, silent=False, **kwargs):
+    def __init__(self, market_info, live=False, silent=False,
+                 settings:LinRegSignalGeneratorSettings=None, **kwargs):
         super().__init__(market_info, live=live, silent=silent)
         self._dummy_market_info = BacktestingMarketInfo(candlestick_store=
                                                         CandlestickStore
@@ -57,6 +92,23 @@ class LinRegSignalGenerator(BaseSignalGenerator):
         self.max_rmses = {}
         self.min_rmses = {}
         self.close_rmses = {}
+
+        if settings is not None:
+            self.NUM_CANDLES = settings.num_candles
+            self.CANDLE_PERIOD = settings.candle_period
+            self.TRAINING_LEN = settings.training_len
+            self.TRAIN_VAL_RATIO = settings.train_val_ratio
+            self.MAX_THR = settings.max_thr
+            self.CLOSE_THR = settings.close_thr
+            self.MIN_THR = settings.min_thr
+            self.MAX_RMSE_THR = settings.max_rmse_thr
+            self.CLOSE_RMSE_THR = settings.close_rmse_thr
+            self.MAX_RMSE_MULT = settings.max_rmse_mult
+            self.CLOSE_RMSE_MULT = settings.close_rmse_mult
+            self.USE_RMSE_FOR_CLOSE_THR = settings.use_rmse_for_close_thr
+            self.USE_RMSE_FOR_MAX_THR = settings.use_rmse_for_max_thr
+            self.TP_LEVEL = settings.tp_level
+            self.TP_STRATEGY = settings.tp_strategy
 
     def get_algo_descriptor(self):
         return {
@@ -79,7 +131,7 @@ class LinRegSignalGenerator(BaseSignalGenerator):
         }
 
     def get_allowed_pairs(self):
-        return sorted(self.market_info.get_active_pairs())
+        # return sorted(self.market_info.get_active_pairs())
         # return ['BTC_LTC', 'BTC_ETH', 'BTC_ETC', 'BTC_XMR', 'BTC_SYS', 'BTC_VIA', 'BTC_SC']
         # return ['BTC_LTC']
         # return ['BTC_XMR']
@@ -88,7 +140,7 @@ class LinRegSignalGenerator(BaseSignalGenerator):
         # return ['BTC_ETC']
         # return ['BTC_VIA']
         # return ['BTC_RADS']
-        # return ['BTC_XRP']
+        return ['BTC_XRP']
         # return ['BTC_SC']
 
     def pre_analyze_market(self, tracked_signals):
