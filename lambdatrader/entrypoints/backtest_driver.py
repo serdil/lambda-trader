@@ -11,7 +11,6 @@ from lambdatrader.evaluation.utils import statistics_over_periods, period_statis
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.signals.generator_factories import LinRegSignalGeneratorFactory
-from lambdatrader.signals.generators.dynamic_retracement import DynamicRetracementSignalGenerator
 from lambdatrader.utilities.utils import date_floor
 
 ONE_DAY = 24 * 3600
@@ -31,7 +30,7 @@ end_date = market_info.get_max_pair_end_time() \
 lin_reg_sig_gen_factory = LinRegSignalGeneratorFactory(market_info, live=False, silent=False)
 
 signal_generators = [
-    # lin_reg_sig_gen_factory.get_excluding_first_conf_lin_reg_signal_generator(),
+    lin_reg_sig_gen_factory.get_excluding_first_conf_lin_reg_signal_generator(),
     lin_reg_sig_gen_factory.get_excluding_second_conf_lin_reg_signal_generator(),
 ]
 

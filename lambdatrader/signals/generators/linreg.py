@@ -16,9 +16,7 @@ from lambdatrader.signals.generators.base import BaseSignalGenerator
 from lambdatrader.signals.generators.constants import (
     LINREG__TP_STRATEGY_CLOSE_PRED_MULT, LINREG__TP_STRATEGY_MAX_PRED_MULT,
 )
-from lambdatrader.utilities.decorators import every_n_market_seconds
 from lambdatrader.utilities.utils import seconds
-
 
 MODEL_UPDATE_INTERVAL = seconds(days=30)
 MAX_ALLOWED_TICK_CANDLE_DIFF = 0.005
@@ -92,6 +90,9 @@ class LinRegSignalGenerator(BaseSignalGenerator):
         self._dummy_market_info = BacktestingMarketInfo(candlestick_store=
                                                         CandlestickStore
                                                         .get_for_exchange(ExchangeEnum.POLONIEX))
+
+        self.last_trained_date = 0
+
         self.predictors = {}
         self.max_rmses = {}
         self.min_rmses = {}
@@ -153,9 +154,11 @@ class LinRegSignalGenerator(BaseSignalGenerator):
         # return ['BTC_SC']
 
     def pre_analyze_market(self, tracked_signals):
-        self.update_predictors()
+        market_date = self.market_date
+        if market_date - self.last_trained_date > MODEL_UPDATE_INTERVAL:
+            self.update_predictors()
+            self.last_trained_date = market_date
 
-    @every_n_market_seconds(n=MODEL_UPDATE_INTERVAL)
     def update_predictors(self):
         self.logger.info('training predictors...')
         training_end_date = self.market_date - (self.NUM_CANDLES+1) * self.CANDLE_PERIOD.seconds()
