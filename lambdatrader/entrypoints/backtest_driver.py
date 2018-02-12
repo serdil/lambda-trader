@@ -31,8 +31,8 @@ end_date = market_info.get_max_pair_end_time() \
 lin_reg_sig_gen_factory = LinRegSignalGeneratorFactory(market_info, live=False, silent=False)
 
 signal_generators = [
-    lin_reg_sig_gen_factory.get_first_conf_lin_reg_signal_generator(),
-    # lin_reg_sig_gen_factory.get_second_conf_lin_reg_signal_generator(),
+    # lin_reg_sig_gen_factory.get_first_conf_lin_reg_signal_generator(),
+    lin_reg_sig_gen_factory.get_second_conf_lin_reg_signal_generator(),
 ]
 
 signal_executor = SignalExecutor(market_info=market_info, account=account)
