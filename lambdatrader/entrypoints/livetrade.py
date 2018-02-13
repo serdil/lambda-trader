@@ -9,9 +9,7 @@ from lambdatrader.exchanges.poloniex.account import PolxAccount
 from lambdatrader.exchanges.poloniex.marketinfo import PolxMarketInfo
 from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.loghandlers import get_logger_with_all_handlers
-from lambdatrader.signals.signals import (
-    LinRegSignalGenerator,
-)
+from lambdatrader.signals.generators.linreg import LinRegSignalGenerator
 
 logger = get_logger_with_all_handlers(__name__)
 

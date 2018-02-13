@@ -1,19 +1,16 @@
 from pprint import pprint
 
-from lambdatrader.candlestickstore import CandlestickStore
-
 from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
+from lambdatrader.candlestickstore import CandlestickStore
 from lambdatrader.config import (
-    BACKTESTING_NUM_DAYS, BACKTESTING_END_OFFSET_DAYS, ENABLE_DISABLE_TRADING,
+    BACKTESTING_NUM_DAYS, BACKTESTING_END_OFFSET_DAYS,
 )
 from lambdatrader.evaluation.utils import statistics_over_periods, period_statistics
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.executors.executors import SignalExecutor
-from lambdatrader.signals.signals import (
-    DynamicRetracementSignalGenerator, LinRegSignalGenerator,
-)
+from lambdatrader.signals.generator_factories import LinRegSignalGeneratorFactory
 from lambdatrader.utilities.utils import date_floor
 
 ONE_DAY = 24 * 3600
@@ -30,9 +27,13 @@ start_date = market_info.get_max_pair_end_time() \
 end_date = market_info.get_max_pair_end_time() \
            - BACKTEST_END_OFFSET_SECONDS
 
+lin_reg_sig_gen_factory = LinRegSignalGeneratorFactory(market_info, live=False, silent=False)
+
 signal_generators = [
-        LinRegSignalGenerator(market_info=market_info)
-    ]
+    lin_reg_sig_gen_factory.get_excluding_first_conf_lin_reg_signal_generator(),
+    lin_reg_sig_gen_factory.get_excluding_second_conf_lin_reg_signal_generator(),
+]
+
 signal_executor = SignalExecutor(market_info=market_info, account=account)
 
 print('Descriptor:')
@@ -42,7 +43,7 @@ backtest.backtest(account=account, market_info=market_info, signal_generators=si
                   signal_executor=signal_executor, start=start_date, end=end_date)
 
 print('Signal Generator Used:')
-pprint(DynamicRetracementSignalGenerator.__dict__)
+pprint(signal_generators[0].__class__.__dict__)
 pprint(signal_generators[0].__dict__)
 
 print()
