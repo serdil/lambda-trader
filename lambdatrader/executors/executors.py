@@ -284,7 +284,7 @@ class SignalExecutor(BaseSignalExecutor):
 
     def __log_estimated_balance(self):
         estimated_balance = self.__get_estimated_balance_with_retry()
-        self.logger.info('estimated_balance: %f', estimated_balance)
+        self.debug('estimated_balance: %f', estimated_balance)
 
     def __get_estimated_balance_with_retry(self):
         return self.retry_on_exception(
