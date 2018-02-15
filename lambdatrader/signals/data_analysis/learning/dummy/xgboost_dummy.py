@@ -1,25 +1,15 @@
-import time
 from operator import itemgetter
 
-import numpy as np
+import sklearn.metrics as sklearn_metrics
 import xgboost as xgb
 
-import sklearn.metrics as sklearn_metrics
-
-from sklearn.cross_validation import train_test_split
-from sklearn.metrics import precision_score
-from xgboost import XGBRegressor
-
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.shelve_cache import shelve_cache_save
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
 from lambdatrader.signals.data_analysis.feature_sets import (
-    get_large_feature_func_set, get_small_feature_func_set,
-)
-from lambdatrader.signals.data_analysis.learning.dummy.learning_utils_dummy import (
-    train_and_test_model, print_model_metrics,
+    get_small_feature_func_set,
 )
 from lambdatrader.signals.data_analysis.values import (
     make_cont_trade_return,

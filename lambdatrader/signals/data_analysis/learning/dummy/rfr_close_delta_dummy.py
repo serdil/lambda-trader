@@ -1,7 +1,7 @@
 from sklearn.ensemble import RandomForestRegressor
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.shelve_cache import shelve_cache_save
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history

@@ -1,9 +1,8 @@
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
 from lambdatrader.constants import M5, M5_SECONDS
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.indicator_functions import IndicatorEnum
-from lambdatrader.utilities.utils import seconds
 
 market_info = BacktestingMarketInfo(candlestick_store=
                                     CandlestickStore.get_for_exchange(ExchangeEnum.POLONIEX))

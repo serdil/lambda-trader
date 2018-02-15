@@ -5,23 +5,19 @@
 # determine trading gains for different
 # (max_price_threshold, min_price_threshold, close_price_threshold) pairs.
 
-import math
 from datetime import datetime
-
 from operator import itemgetter
 
-import numpy as np
 import xgboost as xgb
 from xgboost.core import XGBoostError
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
 from lambdatrader.constants import M5
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
 from lambdatrader.signals.data_analysis.feature_sets import (
-    get_small_feature_func_set, get_dummy_feature_func_set,
-    get_small_feature_func_set_with_indicators, get_all_periods_last_five_ohclv_feature_func_set,
+    get_dummy_feature_func_set, get_all_periods_last_five_ohclv_feature_func_set,
 )
 from lambdatrader.signals.data_analysis.learning.dummy.xgboost_analysis_utils_dummy import \
     analyze_output

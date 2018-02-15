@@ -1,17 +1,17 @@
-from functools import reduce
 import operator
+from functools import reduce
 
 import numpy as np
 from platypus import NSGAII, Problem, Real, Integer
 
-from lambdatrader.evaluation.utils import (
-    get_costs,
-)
 from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
+from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
+from lambdatrader.evaluation.utils import (
+    get_costs,
+)
 from lambdatrader.executors.executors import SignalExecutor
-from lambdatrader.candlestickstore import CandlestickStore
 from lambdatrader.signals.constants import ONE_DAY_SECONDS
 
 

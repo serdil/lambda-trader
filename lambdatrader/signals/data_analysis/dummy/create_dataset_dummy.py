@@ -1,5 +1,5 @@
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
 from lambdatrader.signals.data_analysis.feature_sets import get_large_feature_func_set

@@ -1,32 +1,14 @@
-import time
-from collections import defaultdict
-from operator import itemgetter
-from pprint import pprint
-
-import numpy as np
 import xgboost as xgb
 
-import sklearn.metrics as sklearn_metrics
-from matplotlib import pyplot
-
-from sklearn.cross_validation import train_test_split
-from sklearn.metrics import precision_score
-from xgboost import XGBRegressor
-
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.shelve_cache import shelve_cache_save
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
 from lambdatrader.signals.data_analysis.feature_sets import (
-    get_large_feature_func_set, get_small_feature_func_set, get_alt_small_feature_func_set,
     get_small_feature_func_set_with_indicators,
 )
-from lambdatrader.signals.data_analysis.learning.dummy.learning_utils_dummy import (
-    train_and_test_model, print_model_metrics,
-)
 from lambdatrader.signals.data_analysis.values import (
-    make_cont_trade_return, make_cont_close_price_in_future, make_cont_close_price_in_fifteen_mins,
     make_binary_max_price_in_future,
 )
 from lambdatrader.utilities.utils import seconds

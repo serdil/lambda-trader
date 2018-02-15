@@ -3,7 +3,7 @@ from pprint import pprint
 from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
 from lambdatrader.config import (
     BACKTESTING_NUM_DAYS, BACKTESTING_END_OFFSET_DAYS,
 )

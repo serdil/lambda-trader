@@ -1,7 +1,7 @@
 import time
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
 from lambdatrader.constants import M5
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.utilities.utils import seconds

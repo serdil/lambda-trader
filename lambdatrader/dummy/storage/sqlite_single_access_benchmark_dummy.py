@@ -1,10 +1,9 @@
 import os
+import sqlite3
 import time
 
-import sqlite3
-
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
 from lambdatrader.config import CANDLESTICK_DB_DIRECTORY
 from lambdatrader.constants import M5
 from lambdatrader.exchanges.enums import POLONIEX

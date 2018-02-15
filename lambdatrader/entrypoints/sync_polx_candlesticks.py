@@ -1,11 +1,9 @@
+import sys
 from time import sleep
 
-import sys
-
-from lambdatrader.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
 from lambdatrader.constants import M5, PeriodEnum
 from lambdatrader.exchanges.enums import POLONIEX
-
 from lambdatrader.exchanges.poloniex.marketinfo import PolxMarketInfo
 from lambdatrader.loghandlers import get_logger_with_all_handlers
 

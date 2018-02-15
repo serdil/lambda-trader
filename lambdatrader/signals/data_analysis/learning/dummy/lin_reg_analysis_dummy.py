@@ -7,13 +7,12 @@
 import xgboost as xgb
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
 from lambdatrader.constants import M5
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
 from lambdatrader.signals.data_analysis.feature_sets import (
-    get_small_feature_func_set, get_dummy_feature_func_set,
-    get_small_feature_func_set_with_indicators,
+    get_dummy_feature_func_set, get_small_feature_func_set_with_indicators,
 )
 from lambdatrader.signals.data_analysis.values import (
     make_cont_max_price_in_future, make_cont_close_price_in_future, make_cont_min_price_in_future,
