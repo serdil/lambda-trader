@@ -62,17 +62,11 @@ class SQLiteCandlestickStore:
 
         def get_pair_period_oldest_date(self, pair, period=M5):
             pair_period = self.pair_period_name(pair, period)
-            try:
-                return self._get_pair_period_oldest_date_from_db(pair_period)
-            except IndexError:
-                return None
+            return self._get_pair_period_oldest_date_from_db(pair_period)
 
         def get_pair_period_newest_date(self, pair, period=M5):
             pair_period = self.pair_period_name(pair, period)
-            try:
-                return self._get_pair_period_newest_date_from_db(pair_period)
-            except IndexError:
-                return None
+            return self._get_pair_period_newest_date_from_db(pair_period)
 
         def _get_pair_period_table_names(self):
             query = "SELECT name FROM sqlite_master WHERE type='table'"
@@ -83,11 +77,13 @@ class SQLiteCandlestickStore:
 
         def _get_pair_period_oldest_date_from_db(self, pair_period):
             query = "SELECT date FROM '{}' ORDER BY date ASC LIMIT 1".format(pair_period)
-            return self._cursor.execute(query).fetchone()[0]
+            fetched = self._cursor.execute(query).fetchone()
+            return None if fetched is None else fetched[0]
 
         def _get_pair_period_newest_date_from_db(self, pair_period):
             query = "SELECT date FROM '{}' ORDER BY date DESC LIMIT 1".format(pair_period)
-            return self._cursor.execute(query).fetchone()[0]
+            fetched = self._cursor.execute(query).fetchone()
+            return None if fetched is None else fetched[0]
 
         @staticmethod
         def _make_candlestick_from_row(row, period):
