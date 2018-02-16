@@ -19,6 +19,16 @@ from lambdatrader.signals.generators.retracement import RetracementSignalGenerat
 from lambdatrader.utilities.utils import date_floor, seconds
 
 
+def print_descriptors(signal_generators):
+    print()
+    print('Descriptors:')
+    for signal_generator in signal_generators:
+        try:
+            pprint(signal_generator.get_algo_descriptor())
+        except AttributeError:
+            print('Signal generator has no descriptor.')
+
+
 backtest_num_seconds = date_floor(int(seconds(days=BACKTESTING_NUM_DAYS)))
 backtest_end_offset_seconds = date_floor(int(seconds(days=BACKTESTING_END_OFFSET_DAYS)))
 
@@ -33,6 +43,7 @@ start_date = market_info.get_max_pair_end_time() \
              - backtest_num_seconds - backtest_end_offset_seconds
 end_date = market_info.get_max_pair_end_time() \
            - backtest_end_offset_seconds
+
 
 signal_generators = []
 
@@ -61,8 +72,7 @@ for strategy_name in backtest_strategies:
 
 signal_executor = SignalExecutor(market_info=market_info, account=account)
 
-print('Descriptor:')
-pprint(signal_generators[0].get_algo_descriptor())
+print_descriptors(signal_generators)
 
 backtest.backtest(account=account, market_info=market_info, signal_generators=signal_generators,
                   signal_executor=signal_executor, start=start_date, end=end_date)
@@ -79,13 +89,7 @@ print('Backtest Complete!')
 print()
 print('Estimated Balance:', account.get_estimated_balance())
 
-print()
-print('Descriptors:')
-for signal_generator in signal_generators:
-    try:
-        pprint(signal_generator.get_algo_descriptor())
-    except AttributeError:
-        print('Signal generator has no descriptor.')
+print_descriptors(signal_generators)
 
 trading_info = signal_executor.get_trading_info()
 
