@@ -63,6 +63,18 @@ class SQLiteCandlestickStore:
             candlestick = self._make_candlestick_from_row(row=row, period=period)
             return candlestick
 
+        def get_candlestick_range(self, pair, start_date, end_date, period=M5):
+            pair_period = self.pair_period_name(pair, period)
+
+            self._cursor.execute("SELECT * FROM '{}' "
+                                 "WHERE date >= ? AND date <= ? ORDER BY date ASC"
+                                 .format(pair_period), (start_date, end_date))
+
+            candlesticks = list(map(self._make_candlestick_from_row, self._cursor))
+            if len(candlesticks) != int((end_date - start_date) / period.seconds()) + 1:
+                raise KeyError('{}:{}-{}'.format(pair_period, start_date, end_date))
+            return candlesticks
+
         def get_pair_period_oldest_date(self, pair, period=M5):
             pair_period = self.pair_period_name(pair, period)
             return self._get_pair_period_oldest_date_from_db(pair_period)
