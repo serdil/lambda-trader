@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+from lambdatrader.constants import STRATEGY__LINREG
 from lambdatrader.utilities.utils import seconds
 
 
@@ -81,6 +82,14 @@ DEFAULT_BACKTESTING_END_OFFSET_DAYS = 0
 
 DEFAULT_LAMBDATRADER_HOME = os.path.join(HOME_DIRECTORY, '.lambdatrader')
 
+DEFAULT_BACKTESTING_STRATEGIES = STRATEGY__LINREG
+
+#
+#
+# ================================= DEFAULTS ABOVE =================================================
+#
+#
+
 POLONIEX_API_KEY = env('POLONIEX_API_KEY', DEFAULT_POLONIEX_API_KEY)
 POLONIEX_API_SECRET = env('POLONIEX_API_SECRET', DEFAULT_POLONIEX_API_SECRET)
 
@@ -156,3 +165,6 @@ SHELVE_CACHE_DIRECTORY = os.path.join(DATA_DIRECTORY, 'shelve_cache')
 
 BOT_DIRECTORY = os.path.join(LAMBDATRADER_HOME, BOT_IDENTIFIER)
 BOT_LOG_DIRECTORY = os.path.join(BOT_DIRECTORY, 'log')
+
+BACKTESTING_STRATEGIES = list(env('BACKTESTING_STRATEGIES',
+                                  DEFAULT_BACKTESTING_STRATEGIES).split(','))

@@ -43,3 +43,6 @@ H4_SECONDS = H4.seconds()
 D_SECONDS = D.seconds()
 
 
+STRATEGY__RETRACEMENT = 'retracement'
+STRATEGY__DYNAMIC_RETRACEMENT = 'dynamic_retracement'
+STRATEGY__LINREG = 'linreg'
