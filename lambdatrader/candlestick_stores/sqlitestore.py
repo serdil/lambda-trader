@@ -56,9 +56,12 @@ class SQLiteCandlestickStore:
             self._cursor.execute("SELECT * FROM '{}' WHERE date == ?"
                                  .format(pair_period), (date,))
 
-            for row in self._cursor:
-                candlestick = self._make_candlestick_from_row(row=row, period=period)
-                return candlestick
+            row = self._cursor.fetchone()
+            if row is None:
+                raise KeyError('{}:{}'.format(pair_period, date))
+
+            candlestick = self._make_candlestick_from_row(row=row, period=period)
+            return candlestick
 
         def get_pair_period_oldest_date(self, pair, period=M5):
             pair_period = self.pair_period_name(pair, period)
