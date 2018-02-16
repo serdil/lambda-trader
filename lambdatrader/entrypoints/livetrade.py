@@ -2,7 +2,7 @@ from time import sleep
 
 from poloniex import PoloniexError
 
-from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
 from lambdatrader.config import ASYNC_FETCH_POLX_CANDLESTICKS
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.exchanges.poloniex.account import PolxAccount
@@ -13,7 +13,7 @@ from lambdatrader.signals.generators.linreg import LinRegSignalGenerator
 
 logger = get_logger_with_all_handlers(__name__)
 
-market_info = PolxMarketInfo(candlestick_store=CandlestickStore.get_for_exchange(POLONIEX),
+market_info = PolxMarketInfo(candlestick_store=ChunkCachingCandlestickStore.get_for_exchange(POLONIEX),
                              async_fetch_ticker=False,
                              async_fetch_candlesticks=ASYNC_FETCH_POLX_CANDLESTICKS)
 account = PolxAccount()

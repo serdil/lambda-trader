@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
 from lambdatrader.constants import M5
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.models.tradesignal import (
@@ -88,7 +88,7 @@ class LinRegSignalGenerator(BaseSignalGenerator):
                  settings:LinRegSignalGeneratorSettings=None, **kwargs):
         super().__init__(market_info, live=live, silent=silent)
         self._dummy_market_info = BacktestingMarketInfo(candlestick_store=
-                                                        CandlestickStore
+                                                        ChunkCachingCandlestickStore
                                                         .get_for_exchange(ExchangeEnum.POLONIEX))
 
         self.last_trained_date = 0

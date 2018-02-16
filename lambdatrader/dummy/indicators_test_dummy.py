@@ -1,11 +1,11 @@
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
 from lambdatrader.constants import H4, D
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.indicator_functions import IndicatorEnum
 from lambdatrader.utilities.utils import seconds
 
-market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_for_exchange(POLONIEX))
+market_info = BacktestingMarketInfo(candlestick_store=ChunkCachingCandlestickStore.get_for_exchange(POLONIEX))
 
 market_date = market_info.get_max_pair_end_time() - seconds(days=7)
 

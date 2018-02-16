@@ -128,10 +128,10 @@ class SQLiteCandlestickStore:
         def period_from_pair_period(pair_period):
             return PeriodEnum.from_name(pair_period[pair_period.index(':')+1:])
 
-    __instances = {}
+    _instances = {}
 
     @classmethod
     def get_for_exchange(cls, exchange: ExchangeEnum=ExchangeEnum.POLONIEX):
-        if exchange not in cls.__instances:
-            cls.__instances[exchange] = cls.__SQLiteCandlestickStore(exchange=exchange)
-        return cls.__instances[exchange]
+        if exchange not in cls._instances:
+            cls._instances[exchange] = cls.__SQLiteCandlestickStore(exchange=exchange)
+        return cls._instances[exchange]

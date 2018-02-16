@@ -1,7 +1,7 @@
 from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
 from lambdatrader.constants import M5
 from lambdatrader.evaluation.utils import period_statistics
 from lambdatrader.exchanges.enums import POLONIEX
@@ -287,7 +287,7 @@ class Analysis:
 
     def get_backtesting_trading_info(self, backtesting_time, signal_generator_class):
         market_info = BacktestingMarketInfo(candlestick_store=
-                                            CandlestickStore.get_for_exchange(exchange=POLONIEX))
+                                            ChunkCachingCandlestickStore.get_for_exchange(exchange=POLONIEX))
 
         account = BacktestingAccount(market_info=market_info, balances={'BTC': 100})
 

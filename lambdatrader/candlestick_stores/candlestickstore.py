@@ -26,9 +26,9 @@ def rlock(method):
     return wrapper
 
 
-class CandlestickStore:  # TODO make thread safe
+class ChunkCachingCandlestickStore:  # TODO make thread safe
 
-    class __CandlestickStore:
+    class __ChunkCachingCandlestickStore:
 
         ONE_CHUNK_SECONDS = seconds(days=2)
 
@@ -253,5 +253,5 @@ class CandlestickStore:  # TODO make thread safe
     @rlock
     def get_for_exchange(cls, exchange: ExchangeEnum=ExchangeEnum.POLONIEX):
         if exchange not in cls.__instances:
-            cls.__instances[exchange] = cls.__CandlestickStore(exchange=exchange)
+            cls.__instances[exchange] = cls.__ChunkCachingCandlestickStore(exchange=exchange)
         return cls.__instances[exchange]

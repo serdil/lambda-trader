@@ -1,13 +1,13 @@
 import time
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
 from lambdatrader.constants import M5
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.utilities.utils import seconds
 
 market_info = BacktestingMarketInfo(candlestick_store=
-                                    CandlestickStore.get_for_exchange(ExchangeEnum.POLONIEX))
+                                    ChunkCachingCandlestickStore.get_for_exchange(ExchangeEnum.POLONIEX))
 
 market_info.set_market_date(market_info.get_min_pair_start_time() + seconds(years=1))
 

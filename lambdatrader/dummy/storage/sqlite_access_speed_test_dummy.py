@@ -3,7 +3,7 @@ import sqlite3
 import time
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
 from lambdatrader.config import CANDLESTICK_DB_DIRECTORY
 from lambdatrader.constants import M5
 from lambdatrader.exchanges.enums import POLONIEX
@@ -12,7 +12,7 @@ from lambdatrader.utilities.utils import seconds
 
 def get_latest_market_date():
     market_info = BacktestingMarketInfo(
-        candlestick_store=CandlestickStore.get_for_exchange(POLONIEX))
+        candlestick_store=ChunkCachingCandlestickStore.get_for_exchange(POLONIEX))
 
     return market_info.get_max_pair_end_time()
 

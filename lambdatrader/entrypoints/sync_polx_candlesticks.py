@@ -1,7 +1,7 @@
 import sys
 from time import sleep
 
-from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
 from lambdatrader.constants import M5, PeriodEnum
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.exchanges.poloniex.marketinfo import PolxMarketInfo
@@ -16,7 +16,7 @@ print('periods:',periods)
 
 logger = get_logger_with_all_handlers('sync_polx_candlesticks')
 
-market_info = PolxMarketInfo(candlestick_store=CandlestickStore.get_for_exchange(POLONIEX),
+market_info = PolxMarketInfo(candlestick_store=ChunkCachingCandlestickStore.get_for_exchange(POLONIEX),
                              async_fetch_ticker=False, async_fetch_candlesticks=False)
 
 first_fetch = True

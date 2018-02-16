@@ -3,7 +3,7 @@ from xgboost import XGBClassifier
 from xgboost import XGBClassifier
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
 from lambdatrader.constants import M5
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.shelve_cache import shelve_cache_save
@@ -26,7 +26,7 @@ def save(model_name, model):
     shelve_cache_save(cache_key(model_name), model)
 
 market_info = BacktestingMarketInfo(candlestick_store=
-                                    CandlestickStore.get_for_exchange(ExchangeEnum.POLONIEX))
+                                    ChunkCachingCandlestickStore.get_for_exchange(ExchangeEnum.POLONIEX))
 
 
 latest_market_date = market_info.get_max_pair_end_time()

@@ -1,5 +1,5 @@
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
 from lambdatrader.signals.data_analysis.feature_sets import get_large_feature_func_set
@@ -9,7 +9,7 @@ from lambdatrader.signals.data_analysis.values import (
 from lambdatrader.utilities.utils import get_now_timestamp, date_floor, seconds
 
 market_info = BacktestingMarketInfo(candlestick_store=
-                                    CandlestickStore.get_for_exchange(ExchangeEnum.POLONIEX))
+                                    ChunkCachingCandlestickStore.get_for_exchange(ExchangeEnum.POLONIEX))
 
 print(market_info)
 

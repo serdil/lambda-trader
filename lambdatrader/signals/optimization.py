@@ -7,7 +7,7 @@ from platypus import NSGAII, Problem, Real, Integer
 from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
 from lambdatrader.evaluation.utils import (
     get_costs,
 )
@@ -27,7 +27,7 @@ class ObjectiveFunction:
         self.max_costs = max_costs
         self.costs_functions = costs_functions
 
-        self.market_info = BacktestingMarketInfo(candlestick_store=CandlestickStore.get_instance())
+        self.market_info = BacktestingMarketInfo(candlestick_store=ChunkCachingCandlestickStore.get_instance())
 
     def __call__(self, *args, **kwargs):
         solution = args[0]

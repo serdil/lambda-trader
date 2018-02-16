@@ -10,7 +10,7 @@ from datetime import datetime
 import xgboost as xgb
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
 from lambdatrader.constants import M5
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
@@ -25,7 +25,7 @@ from lambdatrader.signals.data_analysis.values import (
 from lambdatrader.utilities.utils import seconds
 
 market_info = BacktestingMarketInfo(candlestick_store=
-                                    CandlestickStore.get_for_exchange(ExchangeEnum.POLONIEX))
+                                    ChunkCachingCandlestickStore.get_for_exchange(ExchangeEnum.POLONIEX))
 
 
 latest_market_date = market_info.get_max_pair_end_time()

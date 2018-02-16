@@ -2,14 +2,14 @@ import csv
 import glob
 import os
 
-from lambdatrader.candlestick_stores.candlestickstore import CandlestickStore
+from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.models.candlestick import Candlestick
 from lambdatrader.utilities.utils import pair_from, get_project_directory
 
 files = glob.glob(os.path.join(os.path.abspath(get_project_directory()), 'data/') + '*.csv')
 
-store = CandlestickStore.get_for_exchange(POLONIEX)
+store = ChunkCachingCandlestickStore.get_for_exchange(POLONIEX)
 
 for file_path in files:
     currency_name = file_path[file_path.index('BTC_') + 4: file_path.index('.csv')]
