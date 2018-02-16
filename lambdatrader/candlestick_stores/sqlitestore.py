@@ -1,6 +1,8 @@
 import os
 import sqlite3
 
+import pandas as pd
+
 from lambdatrader.config import CANDLESTICK_DB_DIRECTORY
 from lambdatrader.constants import PeriodEnum, M5
 from lambdatrader.exchanges.enums import ExchangeEnum
@@ -74,6 +76,25 @@ class SQLiteCandlestickStore:
             if len(candlesticks) != int((end_date - start_date) / period.seconds()) + 1:
                 raise KeyError('{}:{}-{}'.format(pair_period, start_date, end_date))
             return candlesticks
+
+        def get_df(self, pair, start_date=None, end_date=None, period=M5):
+            query = self._get_df_sql_query(pair, start_date, end_date, period)
+            return pd.read_sql_query(query, index_col='date', con=self._conn)
+
+        def _get_df_sql_query(self, pair, start_date, end_date, period):
+            pair_period = self.pair_period_name(pair, period)
+
+            if start_date is not None and end_date is not None:
+                return ("SELECT * FROM '{}' WHERE date >= {} AND date <= {} ORDER BY date ASC"
+                        .format(pair_period, start_date, end_date))
+            elif start_date is None and end_date is not None:
+                return ("SELECT * FROM '{}' WHERE date <= {} ORDER BY date ASC"
+                        .format(pair_period, end_date))
+            elif start_date is not None and end_date is None:
+                return ("SELECT * FROM '{}' WHERE date >= {} ORDER BY date ASC"
+                        .format(pair_period, start_date))
+            else:
+                return "SELECT * FROM '{}' ORDER BY date ASC".format(pair_period)
 
         def get_pair_period_oldest_date(self, pair, period=M5):
             pair_period = self.pair_period_name(pair, period)
