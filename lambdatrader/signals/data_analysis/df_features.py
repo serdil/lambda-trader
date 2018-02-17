@@ -1,6 +1,7 @@
 from operator import attrgetter
 
 from lambdatrader.constants import M5
+from lambdatrader.signals.data_analysis.constants import OHLCV_CLOSE
 from lambdatrader.signals.data_analysis.utils import join_list
 
 
@@ -42,7 +43,7 @@ class OHLCVValue(BaseFeature):
                                                                 self.offset)
 
     def compute(self, df):
-        pass
+        return df[self.mode].shift(self.offset)
 
 
 class OHLCVSelfDelta(BaseFeature):
@@ -58,7 +59,7 @@ class OHLCVSelfDelta(BaseFeature):
                                                                      self.offset)
 
     def compute(self, df):
-        pass
+        return df[self.mode].diff(self.offset)
 
 
 class OHLCVCloseDelta(BaseFeature):
@@ -75,7 +76,7 @@ class OHLCVCloseDelta(BaseFeature):
                                                                       self.offset)
 
     def compute(self, df):
-        pass
+        return df[OHLCV_CLOSE] - df[self.mode].shift(self.offset)
 
 
 class IndicatorValue(BaseFeature):
@@ -92,7 +93,7 @@ class IndicatorValue(BaseFeature):
                 .format(self.period.name, self.indicator.name, join_list(self.args), self.offset))
 
     def compute(self, df):
-        pass
+        return self.indicator.function()(df, *self.args).shift(self.offset)
 
 
 class IndicatorSelfDelta(BaseFeature):
@@ -109,7 +110,7 @@ class IndicatorSelfDelta(BaseFeature):
                 .format(self.period.name, self.indicator.name, join_list(self.args), self.offset))
 
     def compute(self, df):
-        pass
+        self.indicator.function()(df, *self.args).diff(self.offset)
 
 
 class IndicatorCloseDelta(BaseFeature):
@@ -126,4 +127,5 @@ class IndicatorCloseDelta(BaseFeature):
                 .format(self.period.name, self.indicator.name, join_list(self.args), self.offset))
 
     def compute(self, df):
-        pass
+        return self.indicator.function()(df, *self.args).shift(self.offset)\
+            .rsub(df[OHLCV_CLOSE], axis=0)
