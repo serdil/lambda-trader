@@ -1,0 +1,5 @@
+OHLCV_OPEN = 'open'
+OHLCV_HIGH = 'high'
+OHLCV_LOW = 'low'
+OHLCV_CLOSE = 'close'
+OHLCV_VOLUME = 'volume'

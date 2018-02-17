@@ -4,6 +4,7 @@ from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.constants import PeriodEnum
 from lambdatrader.indicator_functions import IndicatorEnum
 from lambdatrader.signals.data_analysis.datasets import Feature
+from lambdatrader.signals.data_analysis.utils import join_list
 from lambdatrader.signals.utils import get_candle, get_indicator
 
 
@@ -74,6 +75,3 @@ def make_indicator_delta(num_candles, candle_period: PeriodEnum,
                               value=(current_vals[val_ind] - value) / current_vals[val_ind])
     return feature_indicator_delta
 
-
-def join_list(lst):
-    return ','.join([str(elem) for elem in lst])
