@@ -1,3 +1,4 @@
+import functools
 import os
 import sqlite3
 
@@ -62,7 +63,7 @@ class SQLiteCandlestickStore:
             if row is None:
                 raise KeyError('{}:{}'.format(pair_period, date))
 
-            candlestick = self._make_candlestick_from_row(row=row, period=period)
+            candlestick = self._make_candlestick_from_row(period=period, row=row)
             return candlestick
 
         def get_candlestick_range(self, pair, start_date, end_date, period=M5):
@@ -72,7 +73,8 @@ class SQLiteCandlestickStore:
                                  "WHERE date >= ? AND date <= ? ORDER BY date ASC"
                                  .format(pair_period), (start_date, end_date))
 
-            candlesticks = list(map(self._make_candlestick_from_row, self._cursor))
+            make_candlestick_func = functools.partial(self._make_candlestick_from_row, period)
+            candlesticks = list(map(make_candlestick_func, self._cursor))
             if len(candlesticks) != int((end_date - start_date) / period.seconds()) + 1:
                 raise KeyError('{}:{}-{}'.format(pair_period, start_date, end_date))
             return candlesticks
@@ -122,7 +124,7 @@ class SQLiteCandlestickStore:
             return None if fetched is None else fetched[0]
 
         @staticmethod
-        def _make_candlestick_from_row(row, period):
+        def _make_candlestick_from_row(period, row):
             return Candlestick(period=period, date=row[0], high=row[1], low=row[2],
                                _open=row[3], close=row[4], base_volume=row[5],
                                quote_volume=row[6], weighted_average=row[7])
