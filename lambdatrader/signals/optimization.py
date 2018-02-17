@@ -7,7 +7,7 @@ from platypus import NSGAII, Problem, Real, Integer
 from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
+from lambdatrader.candlestick_stores.cachingstore import ChunkCachingCandlestickStore
 from lambdatrader.evaluation.utils import (
     get_costs,
 )

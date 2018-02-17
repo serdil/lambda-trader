@@ -3,7 +3,7 @@ from pprint import pprint
 from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
+from lambdatrader.candlestick_stores.cachingstore import ChunkCachingCandlestickStore
 from lambdatrader.config import (
     BACKTESTING_NUM_DAYS, BACKTESTING_END_OFFSET_DAYS, BACKTESTING_STRATEGIES,
 )
@@ -13,7 +13,7 @@ from lambdatrader.constants import (
 from lambdatrader.evaluation.utils import statistics_over_periods, period_statistics
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.executors.executors import SignalExecutor
-from lambdatrader.signals.generator_factories import LinRegSignalGeneratorFactory
+from lambdatrader.signals.factories import LinRegSignalGeneratorFactory
 from lambdatrader.signals.generators.dynamic_retracement import DynamicRetracementSignalGenerator
 from lambdatrader.signals.generators.retracement import RetracementSignalGenerator
 from lambdatrader.utilities.utils import date_floor, seconds

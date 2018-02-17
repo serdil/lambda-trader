@@ -2,7 +2,7 @@ import csv
 import glob
 import os
 
-from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
+from lambdatrader.candlestick_stores.cachingstore import ChunkCachingCandlestickStore
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.models.candlestick import Candlestick
 from lambdatrader.utilities.utils import pair_from, get_project_directory

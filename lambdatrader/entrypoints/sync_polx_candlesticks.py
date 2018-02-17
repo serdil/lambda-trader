@@ -1,7 +1,7 @@
 import sys
 from time import sleep
 
-from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
+from lambdatrader.candlestick_stores.cachingstore import ChunkCachingCandlestickStore
 from lambdatrader.constants import M5, PeriodEnum
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.exchanges.poloniex.marketinfo import PolxMarketInfo

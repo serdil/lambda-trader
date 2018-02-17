@@ -2,7 +2,7 @@ from time import sleep
 
 from poloniex import PoloniexError
 
-from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
+from lambdatrader.candlestick_stores.cachingstore import ChunkCachingCandlestickStore
 from lambdatrader.config import ASYNC_FETCH_POLX_CANDLESTICKS
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.exchanges.poloniex.account import PolxAccount

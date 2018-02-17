@@ -1,5 +1,5 @@
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
+from lambdatrader.candlestick_stores.cachingstore import ChunkCachingCandlestickStore
 from lambdatrader.constants import H4, D
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.indicator_functions import IndicatorEnum

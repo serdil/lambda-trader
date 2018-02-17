@@ -1,5 +1,5 @@
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestick_stores.candlestickstore import ChunkCachingCandlestickStore
+from lambdatrader.candlestick_stores.cachingstore import ChunkCachingCandlestickStore
 from lambdatrader.constants import M5, M5_SECONDS
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.indicator_functions import IndicatorEnum
