@@ -5,7 +5,7 @@ import sqlite3
 import pandas as pd
 
 from lambdatrader.config import CANDLESTICK_DB_DIRECTORY
-from lambdatrader.constants import PeriodEnum, M5
+from lambdatrader.constants import PeriodEnum, M5, M15, H, H4, D
 from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.models.candlestick import Candlestick
 
@@ -81,7 +81,42 @@ class SQLiteCandlestickStore:
 
         def get_df(self, pair, start_date=None, end_date=None, period=M5):
             query = self._get_df_sql_query(pair, start_date, end_date, period)
-            return pd.read_sql_query(query, index_col='date', con=self._conn)
+            return pd.read_sql_query(query, index_col='date', parse_dates=['date'], con=self._conn)
+
+        def get_agg_period_df(self, pair, start_date=None, end_date=None, period=M5):
+            return self.get_agg_period_dfs(pair, start_date=start_date, end_date=end_date,
+                                           periods=[period])[period]
+
+        def get_agg_period_dfs(self, pair, start_date=None, end_date=None, periods=(M5,)):
+            m5_df = self.get_df(pair, start_date=start_date, end_date=end_date, period=M5)
+            period_df_dict = {}
+            for period in periods:
+                if period is M5:
+                    period_df_dict[M5] = m5_df
+                else:
+                    period_df_dict[period] = self._agg_period_df(m5_df, period)
+            return period_df_dict
+
+        @staticmethod
+        def _agg_period_df(m5_df, period):
+            pd_offset_mapping = {
+                M15: '15T',
+                H: 'H',
+                H4: '4H',
+                D: 'D',
+            }
+            ohlc_dict = {
+                'open': 'first',
+                'high': 'max',
+                'low': 'min',
+                'close': 'last',
+                'base_volume': 'sum',
+                'quote_volume': 'sum',
+                'weighted_average': 'mean',
+            }
+            cols = m5_df.columns.values.tolist()
+            return (m5_df.resample(pd_offset_mapping[period], closed='right', label='right')
+                    .agg(ohlc_dict)[cols])
 
         def _get_df_sql_query(self, pair, start_date, end_date, period):
             pair_period = self.pair_period_name(pair, period)
