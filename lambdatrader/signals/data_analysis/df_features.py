@@ -1,6 +1,7 @@
 from operator import attrgetter
 
 from lambdatrader.constants import M5
+from lambdatrader.indicator_functions import IndicatorEnum
 from lambdatrader.signals.data_analysis.constants import OHLCV_CLOSE
 from lambdatrader.signals.data_analysis.utils import join_list
 
@@ -129,3 +130,19 @@ class IndicatorCloseDelta(BaseFeature):
     def compute(self, df):
         return self.indicator.function()(df, *self.args).shift(self.offset)\
             .rsub(df[OHLCV_CLOSE], axis=0)
+
+
+class MACDValue(IndicatorValue):
+    def __init__(self, fastperiod=12, slowperiod=26, signalperiod=9, offset=0, period=M5):
+        super().__init__(IndicatorEnum.MACD, [fastperiod, slowperiod, signalperiod], offset, period)
+
+
+class RSIValue(IndicatorValue):
+    def __init__(self, timeperiod=14, offset=0, period=M5):
+        super().__init__(IndicatorEnum.RSI, [timeperiod], offset, period)
+
+
+class BBandsCloseDelta(IndicatorCloseDelta):
+    def __init__(self, timeperiod=5, nbdevup=2, nbdevdn=2, matype=0, offset=0, period=M5):
+        super().__init__(IndicatorEnum.BBANDS, [timeperiod, nbdevup, nbdevdn, matype],
+                         offset, period)
