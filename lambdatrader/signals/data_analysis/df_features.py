@@ -8,11 +8,13 @@ from lambdatrader.signals.data_analysis.constants import OHLCV_CLOSE
 from lambdatrader.signals.data_analysis.utils import join_list
 
 
-def to_df_with_name(series_or_df, name):
+def to_ffilled_df_with_name(index, series_or_df, name):
     if isinstance(series_or_df, pd.Series):
-        return series_or_df.to_frame(name=name)
+        df = series_or_df.to_frame(name=name)
     else:
-        return prefix_df_col_names(series_or_df, prefix=name)
+        df = prefix_df_col_names(series_or_df, prefix=name)
+    return df.reindex(index=index).fillna(method='ffill')
+
 
 def prefix_df_col_names(df, prefix):
     df.rename(columns=lambda name: '{}:{}'.format(prefix, name), inplace=True)
@@ -40,7 +42,7 @@ class BaseFeature:
     def name(self):
         raise NotImplementedError
 
-    def compute(self, df):
+    def compute(self, dfs):
         raise NotImplementedError
 
 
@@ -56,8 +58,9 @@ class OHLCVValue(BaseFeature):
                                                                 self.mode,
                                                                 self.offset)
 
-    def compute(self, df):
-        return to_df_with_name(df[self.mode].shift(self.offset), self.name)
+    def compute(self, dfs):
+        df = dfs[self.period]
+        return to_ffilled_df_with_name(dfs[M5].index, df[self.mode].shift(self.offset), self.name)
 
 
 class OHLCVSelfDelta(BaseFeature):
@@ -72,8 +75,9 @@ class OHLCVSelfDelta(BaseFeature):
                                                                      self.mode,
                                                                      self.offset)
 
-    def compute(self, df):
-        return to_df_with_name(df[self.mode].diff(self.offset), self.name)
+    def compute(self, dfs):
+        df = dfs[self.period]
+        return to_ffilled_df_with_name(dfs[M5].index, df[self.mode].diff(self.offset), self.name)
 
 
 class OHLCVCloseDelta(BaseFeature):
@@ -89,8 +93,10 @@ class OHLCVCloseDelta(BaseFeature):
                                                                       self.mode,
                                                                       self.offset)
 
-    def compute(self, df):
-        return to_df_with_name(df[OHLCV_CLOSE] - df[self.mode].shift(self.offset), self.name)
+    def compute(self, dfs):
+        df = dfs[self.period]
+        return to_ffilled_df_with_name(dfs[M5].index,
+                                       df[OHLCV_CLOSE] - df[self.mode].shift(self.offset), self.name)
 
 
 class IndicatorValue(BaseFeature):
@@ -106,9 +112,11 @@ class IndicatorValue(BaseFeature):
         return ('indicator_value_period_{}_indicator_{}_args_{}_offset_{}'
                 .format(self.period.name, self.indicator.name, join_list(self.args), self.offset))
 
-    def compute(self, df):
-        return to_df_with_name(self.indicator.function()(df, *self.args).shift(self.offset),
-                               self.name)
+    def compute(self, dfs):
+        df = dfs[self.period]
+        return to_ffilled_df_with_name(dfs[M5].index,
+                                       self.indicator.function()(df, *self.args).shift(self.offset),
+                                       self.name)
 
 
 class IndicatorSelfDelta(BaseFeature):
@@ -124,9 +132,11 @@ class IndicatorSelfDelta(BaseFeature):
         return ('indicator_self_delta_period_{}_indicator_{}_args_{}_offset_{}'
                 .format(self.period.name, self.indicator.name, join_list(self.args), self.offset))
 
-    def compute(self, df):
-        return to_df_with_name(self.indicator.function()(df, *self.args).diff(self.offset),
-                               self.name)
+    def compute(self, dfs):
+        df = dfs[self.period]
+        return to_ffilled_df_with_name(dfs[M5].index,
+                                       self.indicator.function()(df, *self.args).diff(self.offset),
+                                       self.name)
 
 
 class IndicatorCloseDelta(BaseFeature):
@@ -142,9 +152,11 @@ class IndicatorCloseDelta(BaseFeature):
         return ('indicator_close_delta_period_{}_indicator_{}_args_{}_offset_{}'
                 .format(self.period.name, self.indicator.name, join_list(self.args), self.offset))
 
-    def compute(self, df):
-        return to_df_with_name(self.indicator.function()(df, *self.args).shift(self.offset)
-                               .rsub(df[OHLCV_CLOSE], axis=0), self.name)
+    def compute(self, dfs):
+        df = dfs[self.period]
+        return to_ffilled_df_with_name(dfs[M5].index,
+                                       self.indicator.function()(df, *self.args).shift(self.offset)
+                                       .rsub(df[OHLCV_CLOSE], axis=0), self.name)
 
 
 class MACDValue(IndicatorValue):
