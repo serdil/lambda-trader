@@ -87,7 +87,8 @@ class SQLiteCandlestickStore:
             return self.get_agg_period_dfs(pair, start_date=start_date, end_date=end_date,
                                            periods=[period])[period]
 
-        def get_agg_period_dfs(self, pair, start_date=None, end_date=None, periods=(M5,)):
+        def get_agg_period_dfs(self, pair,
+                               start_date=None, end_date=None, periods=(M5, M15, H, H4, D)):
             m5_df = self.get_df(pair, start_date=start_date, end_date=end_date, period=M5)
             period_df_dict = {}
             for period in periods:
