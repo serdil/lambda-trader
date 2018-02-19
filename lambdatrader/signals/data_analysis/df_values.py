@@ -24,6 +24,7 @@ class MaxReturn(ValueFeature):
         return 'max_price_period_{}_n_candles_{}'.format(self.period.name, self.n_candles)
 
     def compute(self, dfs):
-        max_returns = (dfs[self.period][OHLCV_HIGH].rolling(window=self.n_candles)
-                       .max().shift(-self.n_candles) / dfs[self.period][OHLCV_CLOSE])
+        df = dfs[self.period]
+        max_returns = (df[OHLCV_HIGH].rolling(window=self.n_candles).max().shift(-self.n_candles) /
+                       df[OHLCV_CLOSE])
         return to_ffilled_df_with_name(dfs[M5].index, max_returns, self.name)

@@ -77,7 +77,8 @@ class OHLCVSelfDelta(BaseFeature):
 
     def compute(self, dfs):
         df = dfs[self.period]
-        return to_ffilled_df_with_name(dfs[M5].index, df[self.mode].diff(self.offset), self.name)
+        self_delta = df[self.mode].diff(self.offset) / df[self.mode]
+        return to_ffilled_df_with_name(dfs[M5].index, self_delta, self.name)
 
 
 class OHLCVCloseDelta(BaseFeature):
@@ -95,8 +96,8 @@ class OHLCVCloseDelta(BaseFeature):
 
     def compute(self, dfs):
         df = dfs[self.period]
-        return to_ffilled_df_with_name(dfs[M5].index,
-                                       df[OHLCV_CLOSE] - df[self.mode].shift(self.offset), self.name)
+        close_delta = (df[OHLCV_CLOSE] - df[self.mode].shift(self.offset)) / df[OHLCV_CLOSE]
+        return to_ffilled_df_with_name(dfs[M5].index, close_delta, self.name)
 
 
 class IndicatorValue(BaseFeature):
@@ -134,9 +135,9 @@ class IndicatorSelfDelta(BaseFeature):
 
     def compute(self, dfs):
         df = dfs[self.period]
-        return to_ffilled_df_with_name(dfs[M5].index,
-                                       self.indicator.function()(df, *self.args).diff(self.offset),
-                                       self.name)
+        ind_values = self.indicator.function()(df, *self.args)
+        self_delta = (ind_values.diff(self.offset) / ind_values)
+        return to_ffilled_df_with_name(dfs[M5].index, self_delta, self.name)
 
 
 class IndicatorCloseDelta(BaseFeature):
@@ -154,9 +155,9 @@ class IndicatorCloseDelta(BaseFeature):
 
     def compute(self, dfs):
         df = dfs[self.period]
-        return to_ffilled_df_with_name(dfs[M5].index,
-                                       self.indicator.function()(df, *self.args).shift(self.offset)
-                                       .rsub(df[OHLCV_CLOSE], axis=0), self.name)
+        close_delta = (self.indicator.function()(df, *self.args)
+                       .shift(self.offset).rsub(df[OHLCV_CLOSE], axis=0) / df[OHLCV_CLOSE])
+        return to_ffilled_df_with_name(dfs[M5].index, close_delta, self.name)
 
 
 class MACDValue(IndicatorValue):
