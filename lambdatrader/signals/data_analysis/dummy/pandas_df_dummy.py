@@ -17,15 +17,23 @@ df_small = store.get_df(symbol, start_date=small_start_date)
 
 
 # print(df_small)
+#
+# close = df_small['close']
+#
+# print(close)
+#
+# print()
+# print(close.diff(1))
+#
+#
+# print()
+# print(close - close.shift(1))
+
 
 close = df_small['close']
 
 print(close)
 
-print()
 print(close.diff(1))
 
-
-print()
-print(close - close.shift(1))
-
+print(close.diff(1).shift(-1) / close)

@@ -24,9 +24,10 @@ def prefix_df_col_names(df, prefix):
 
 class DFFeatureSet:
 
-    def __init__(self, features):
+    def __init__(self, features, sort=True):
         self.features = []
         self.features.extend(features)
+        self.sort = sort
         self._sort_features()
 
     def add_features(self, features):
@@ -34,7 +35,8 @@ class DFFeatureSet:
         self._sort_features()
 
     def _sort_features(self):
-        self.features.sort(key=attrgetter('name'))
+        if self.sort:
+            self.features.sort(key=attrgetter('name'))
 
 
 class BaseFeature:
