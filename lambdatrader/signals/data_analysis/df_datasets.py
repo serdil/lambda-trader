@@ -17,7 +17,10 @@ class Dataset:
         if cs_store is None:
             cs_store = SQLiteCandlestickStore.get_for_exchange(POLONIEX)
 
-        dfs = cs_store.get_agg_period_dfs(pair, periods=[M5, M15, H, H4, D])
+        dfs = cs_store.get_agg_period_dfs(pair,
+                                          start_date=start_date,
+                                          end_date=end_date,
+                                          periods=[M5, M15, H, H4, D])
 
         start_time = time.time()
         feature_dfs = [f.compute(dfs) for f in feature_set.features]
