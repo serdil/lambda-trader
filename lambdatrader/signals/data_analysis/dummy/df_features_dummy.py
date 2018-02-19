@@ -6,7 +6,8 @@ from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.indicator_functions import IndicatorEnum
 from lambdatrader.signals.data_analysis.constants import OHLCV_CLOSE
 from lambdatrader.signals.data_analysis.df_features import (
-    OHLCVCloseDelta, IndicatorValue, RSIValue, BBandsCloseDelta, MACDValue,
+    OHLCVCloseDelta, IndicatorValue, RSIValue, BBandsCloseDelta, MACDValue, DummyFeature,
+    RandomFeature,
 )
 from lambdatrader.utilities.utils import seconds
 
@@ -51,3 +52,13 @@ print(macd_feature.compute(dfs))
 bbands_h = BBandsCloseDelta(period=H)
 print('bbands H')
 print(bbands_h.compute(dfs))
+
+
+dummy = DummyFeature()
+print('dummy')
+print(dummy.compute(dfs))
+
+
+random = RandomFeature()
+print('random')
+print(random.compute(dfs))

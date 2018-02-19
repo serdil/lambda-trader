@@ -1,5 +1,6 @@
 from operator import attrgetter
 
+import numpy as np
 import pandas as pd
 
 from lambdatrader.constants import M5
@@ -44,6 +45,28 @@ class BaseFeature:
 
     def compute(self, dfs):
         raise NotImplementedError
+
+
+class DummyFeature(BaseFeature):
+
+    @property
+    def name(self):
+        return 'dummy_feature'
+
+    def compute(self, dfs):
+        zero_series = pd.Series(np.zeros(len(dfs[M5])), index=dfs[M5].index)
+        return to_ffilled_df_with_name(dfs[M5].index, zero_series, self.name)
+
+
+class RandomFeature(BaseFeature):
+
+    @property
+    def name(self):
+        return 'random_feature'
+
+    def compute(self, dfs):
+        random_series = pd.Series(np.random.rand(len(dfs[M5])), index=dfs[M5].index)
+        return to_ffilled_df_with_name(dfs[M5].index, random_series, self.name)
 
 
 class OHLCVValue(BaseFeature):

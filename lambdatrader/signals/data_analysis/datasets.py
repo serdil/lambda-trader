@@ -5,6 +5,7 @@ import numpy as np
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 
+
 class Feature:
     def __init__(self, name: str, value):
         self.name = name
