@@ -155,8 +155,8 @@ class IndicatorCloseDelta(BaseFeature):
 
     def compute(self, dfs):
         df = dfs[self.period]
-        close_delta = (self.indicator.function()(df, *self.args)
-                       .shift(self.offset).rsub(df[OHLCV_CLOSE], axis=0) / df[OHLCV_CLOSE])
+        close_delta = (self.indicator.function()(df, *self.args).shift(self.offset)
+                       .rsub(df[OHLCV_CLOSE], axis=0).div(df[OHLCV_CLOSE], axis=0))
         return to_ffilled_df_with_name(dfs[M5].index, close_delta, self.name)
 
 
