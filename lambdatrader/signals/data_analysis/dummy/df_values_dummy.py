@@ -3,7 +3,7 @@ import pandas
 from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.constants import M5, H, H4, D
 from lambdatrader.exchanges.enums import POLONIEX
-from lambdatrader.signals.data_analysis.df_values import MaxReturn
+from lambdatrader.signals.data_analysis.df_values import MaxReturn, CloseReturn, MinReturn
 from lambdatrader.utilities.utils import seconds
 
 pandas.set_option('display.max_rows', 20)
@@ -20,7 +20,15 @@ dfs = store.get_agg_period_dfs(symbol, start_date=start_date, periods=[M5, H, H4
 
 print(dfs[M5])
 
-mpv = MaxReturn(n_candles=3)
+mrv = MaxReturn(n_candles=3)
+crv = CloseReturn(n_candles=3)
+minrv = MinReturn(n_candles=3)
 
 print()
-print(mpv.compute(dfs))
+print(mrv.compute(dfs))
+
+print()
+print(crv.compute(dfs))
+
+print()
+print(minrv.compute(dfs))
