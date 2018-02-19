@@ -3,7 +3,7 @@ from lambdatrader.signals.data_analysis.constants import (
     OHLCV_OPEN, OHLCV_HIGH, OHLCV_LOW, OHLCV_CLOSE, OHLCV_VOLUME,
 )
 from lambdatrader.signals.data_analysis.df_features import (
-    OHLCVCloseDelta, OHLCVValue, OHLCVSelfDelta, DFFeatureSet,
+    OHLCVCloseDelta, OHLCVValue, OHLCVSelfDelta, DFFeatureSet, DummyFeature, RandomFeature,
 )
 
 
@@ -92,6 +92,14 @@ class DFFeatureSetFactory:
         periods = [M5, M15, H, H4, D]
         return cls._get_ohlc_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
                                                                           periods=periods)
+
+    @classmethod
+    def get_dummy(cls):
+        return DFFeatureSet(features=[DummyFeature()])
+
+    @classmethod
+    def get_random(cls):
+        return DFFeatureSet(features=[RandomFeature()])
 
     @classmethod
     def _get_ohlc_close_delta_volume_value_num_offsets_periods(cls, num_offsets, periods):
