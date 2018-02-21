@@ -31,9 +31,10 @@ latest_market_date = market_info.get_max_pair_end_time()
 
 day_offset = 120
 
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*500)
+# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*1000)
+dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*500)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
-dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
+# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*120)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*90)
 # dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*60)
@@ -83,12 +84,6 @@ y_max_s = ds.value_df[max_return_v.name]
 y_min_s = ds.value_df[min_return_v.name]
 y_close_s = ds.value_df[close_return_v.name]
 
-
-print(ds.value_df)
-print(y_max_s)
-print(y_min_s)
-print(y_close_s)
-
 X = X_df.values
 y_max = y_max_s.values
 y_min = y_min_s.values
@@ -96,8 +91,8 @@ y_close = y_close_s.values
 
 print('created/loaded dataset\n')
 
-train_ratio = 0.8
-validation_ratio = 0.9
+train_ratio = 0.6
+validation_ratio = 0.8
 gap = num_candles
 
 n_samples = len(X)
@@ -182,7 +177,7 @@ watchlist_close = [(dtrain_close, 'train_close'),
 
 
 num_round = 10000
-early_stopping_rounds = 100
+early_stopping_rounds = 10
 
 bst_max = xgb.train(params=params,
                     dtrain=dtrain_max,
