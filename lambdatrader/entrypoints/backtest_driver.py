@@ -14,8 +14,9 @@ from lambdatrader.evaluation.utils import statistics_over_periods, period_statis
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.signals.factories import LinRegSignalGeneratorFactory
-from lambdatrader.signals.generators.dynamic_retracement import DynamicRetracementSignalGenerator
-from lambdatrader.signals.generators.retracement import RetracementSignalGenerator
+from lambdatrader.signals.generators.generators.dynamic_retracement import \
+    DynamicRetracementSignalGenerator
+from lambdatrader.signals.generators.generators.retracement import RetracementSignalGenerator
 from lambdatrader.utilities.utils import date_floor, seconds
 
 

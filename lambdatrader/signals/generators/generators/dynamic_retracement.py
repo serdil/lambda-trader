@@ -10,7 +10,7 @@ from lambdatrader.config import (
 from lambdatrader.models.tradesignal import (
     TradeSignal, PriceEntry, PriceTakeProfitSuccessExit, TimeoutStopLossFailureExit,
 )
-from lambdatrader.signals.generators.base import BaseSignalGenerator
+from lambdatrader.signals.generators.generators.base import BaseSignalGenerator
 from lambdatrader.utilities.decorators import every_n_market_seconds
 from lambdatrader.utilities.utils import seconds
 

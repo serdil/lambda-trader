@@ -2,7 +2,7 @@ from lambdatrader.constants import M5
 from lambdatrader.signals.generators.constants import (
     LINREG__TP_STRATEGY_CLOSE_PRED_MULT, LINREG__TP_STRATEGY_MAX_PRED_MULT,
 )
-from lambdatrader.signals.generators.linreg import (
+from lambdatrader.signals.generators.generators.linreg import (
     LinRegSignalGeneratorSettings, LinRegSignalGenerator,
 )
 from lambdatrader.utilities.utils import seconds

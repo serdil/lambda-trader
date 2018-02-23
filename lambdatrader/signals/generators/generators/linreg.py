@@ -12,10 +12,10 @@ from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from
 from lambdatrader.signals.data_analysis.feature_sets import get_small_feature_func_set
 from lambdatrader.signals.data_analysis.learning.utils import train_max_min_close_pred_lin_reg_model
 from lambdatrader.signals.data_analysis.values import value_dummy
-from lambdatrader.signals.generators.base import BaseSignalGenerator
 from lambdatrader.signals.generators.constants import (
     LINREG__TP_STRATEGY_CLOSE_PRED_MULT, LINREG__TP_STRATEGY_MAX_PRED_MULT,
 )
+from lambdatrader.signals.generators.generators.base import BaseSignalGenerator
 from lambdatrader.utilities.utils import seconds
 
 MODEL_UPDATE_INTERVAL = seconds(days=30)

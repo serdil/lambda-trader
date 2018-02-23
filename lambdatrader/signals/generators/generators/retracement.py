@@ -8,7 +8,7 @@ from lambdatrader.models.tradesignal import (
     TradeSignal, PriceEntry, PriceTakeProfitSuccessExit, TimeoutStopLossFailureExit,
 )
 from lambdatrader.signals.constants import ONE_DAY_SECONDS
-from lambdatrader.signals.generators.base import BaseSignalGenerator
+from lambdatrader.signals.generators.generators.base import BaseSignalGenerator
 from lambdatrader.signals.optimization import OptimizationMixin
 
 
