@@ -5,7 +5,7 @@ from lambdatrader.constants import M5, M15, H, H4, D
 from lambdatrader.exchanges.enums import POLONIEX
 
 
-class Dataset:
+class DFDataset:
 
     def __init__(self, dfs, feature_df, value_df):
         self.dfs = dfs

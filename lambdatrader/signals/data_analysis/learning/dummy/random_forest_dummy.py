@@ -6,7 +6,7 @@ from sklearn.metrics import mean_squared_error
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.candlestick_stores.cachingstore import ChunkCachingCandlestickStore
 from lambdatrader.exchanges.enums import ExchangeEnum
-from lambdatrader.signals.data_analysis.df_datasets import Dataset
+from lambdatrader.signals.data_analysis.df_datasets import DFDataset
 from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
 from lambdatrader.signals.data_analysis.df_values import MaxReturn, CloseReturn, MinReturn
 from lambdatrader.signals.data_analysis.factories import DFFeatureSetFactory
@@ -59,11 +59,11 @@ value_set = DFFeatureSet(features=[MaxReturn(num_candles),
                                    MinReturn(num_candles),
                                    CloseReturn(num_candles)])
 
-ds = Dataset.compute(pair=dataset_symbol,
-                     feature_set=feature_set,
-                     value_set=value_set,
-                     start_date=dataset_start_date,
-                     end_date=dataset_end_date)
+ds = DFDataset.compute(pair=dataset_symbol,
+                       feature_set=feature_set,
+                       value_set=value_set,
+                       start_date=dataset_start_date,
+                       end_date=dataset_end_date)
 
 
 # ================================= DATASET CREATION UP TILL HERE ==================================
