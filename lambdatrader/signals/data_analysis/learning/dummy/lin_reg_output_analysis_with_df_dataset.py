@@ -52,7 +52,7 @@ print('start_date: {} end_date: {}'.format(datetime.utcfromtimestamp(dataset_sta
 print()
 
 
-dataset_symbol = 'BTC_VIA'
+dataset_symbol = 'BTC_ETH'
 
 fsf = DFFeatureSetFactory
 
@@ -91,8 +91,8 @@ y_close = y_close_s.values
 
 print('created/loaded dataset\n')
 
-train_ratio = 0.6
-validation_ratio = 0.8
+train_ratio = 0.7
+validation_ratio = 0.99
 gap = num_candles
 
 n_samples = len(X)
@@ -177,7 +177,7 @@ watchlist_close = [(dtrain_close, 'train_close'),
 
 
 num_round = 10000
-early_stopping_rounds = 10
+early_stopping_rounds = 100
 
 bst_max = xgb.train(params=params,
                     dtrain=dtrain_max,

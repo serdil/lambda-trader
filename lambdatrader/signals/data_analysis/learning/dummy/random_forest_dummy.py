@@ -116,9 +116,9 @@ kwargs = {
     'max_depth': 20
 }
 
-rf_close = RandomForestRegressor(n_estimators=n_estimators, n_jobs=8, verbose=True, **kwargs)
-rf_max = RandomForestRegressor(n_estimators=n_estimators, n_jobs=8, verbose=True, **kwargs)
-rf_min = RandomForestRegressor(n_estimators=n_estimators, n_jobs=8, verbose=True, **kwargs)
+rf_close = RandomForestRegressor(n_estimators=n_estimators, n_jobs=-1, verbose=True, **kwargs)
+rf_max = RandomForestRegressor(n_estimators=n_estimators, n_jobs=-1, verbose=True, **kwargs)
+rf_min = RandomForestRegressor(n_estimators=n_estimators, n_jobs=-1, verbose=True, **kwargs)
 
 print('starting training')
 rf_close.fit(X_train, y_close_train)
