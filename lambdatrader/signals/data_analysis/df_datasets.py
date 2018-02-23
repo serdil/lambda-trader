@@ -51,8 +51,7 @@ class DFDataset:
     def feature_values(self):
         return self.feature_df.values
 
-    @property
-    def value_values(self, value_name=None):
+    def get_value_values(self, value_name=None):
         if value_name is None:
             return self.value_df.values
         else:

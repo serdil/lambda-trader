@@ -43,9 +43,9 @@ def get_x_and_y_close_max_min(symbol='BTC_ETH', day_offset=120, days=500, featur
                            start_date=dataset_start_date,
                            end_date=dataset_end_date)
 
-    X = ds.feature_values()
-    y_close = ds.value_values(close_return_v.name)
-    y_max = ds.value_values(max_return_v.name)
-    y_min = ds.value_values(min_return_v.name)
+    X = ds.feature_values
+    y_close = ds.get_value_values(close_return_v.name)
+    y_max = ds.get_value_values(max_return_v.name)
+    y_min = ds.get_value_values(min_return_v.name)
 
     return X, y_close, y_max, y_min
