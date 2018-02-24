@@ -82,8 +82,10 @@ class SQLiteCandlestickStore:
         def get_df(self, pair, start_date=None, end_date=None, period=M5, error_on_missing=False):
             query = self._get_df_sql_query(pair, start_date, end_date, period)
             df = pd.read_sql_query(query, index_col='date', parse_dates=['date'], con=self._conn)
+            df_start = int(df.index[0].timestamp())
+            df_end = int(df.index[-1].timestamp())
             if (error_on_missing
-                    and df.iloc[0]['date'] != start_date or df.iloc[-1]['date'] != end_date):
+                    and df_start != start_date or df_end != end_date):
                 raise KeyError('Missing Data')
             return df
 

@@ -1,8 +1,5 @@
 import uuid
-from collections import namedtuple
 from typing import Optional
-
-from sklearn.ensemble import RandomForestRegressor
 
 from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.constants import M5
@@ -10,140 +7,12 @@ from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.models.tradesignal import (
     TradeSignal, PriceEntry, PriceTakeProfitSuccessExit, TimeoutStopLossFailureExit,
 )
-from lambdatrader.signals.data_analysis.df_datasets import DFDataset
-from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
-from lambdatrader.signals.data_analysis.df_values import MaxReturn, MinReturn, CloseReturn
-from lambdatrader.signals.data_analysis.factories import DFFeatureSetFactory
 from lambdatrader.signals.generators.constants import (
     CMM__TP_STRATEGY_CLOSE_PRED_MULT, CMM__TP_STRATEGY_MAX_PRED_MULT,
 )
 from lambdatrader.signals.generators.generators.base import BaseSignalGenerator
 from lambdatrader.signals.generators.generators.linreg import MAX_ALLOWED_TICK_CANDLE_DIFF
 from lambdatrader.utilities.utils import seconds
-
-
-class CMMModelPredictorFactories:
-
-    @classmethod
-    def get_default_random_forest(cls):
-        num_candles = 48
-        candle_period = M5
-        n_estimators = 300
-
-        n_jobs = -1
-        verbose = True
-
-        rfr_class = RandomForestRegressor
-        rfr_args = []
-        rfr_kwargs = {'n_estimators': n_estimators, 'n_jobs': n_jobs, 'verbose': verbose}
-        model_factory = ScikitModelFactory(model_class=rfr_class,
-                                           model_args=rfr_args,
-                                           model_kwargs=rfr_kwargs)
-        cmm_model = CMMModel(model_factory=model_factory, num_candles=48, candle_period=M5)
-
-        feature_set = DFFeatureSetFactory.get_all_periods_last_five_ohlcv()
-        cmm_df_dataset_factory = CMMDFDatasetFactory(feature_set=feature_set,
-                                                     num_candles=num_candles,
-                                                     candle_period=M5)
-
-        trainer = CMMModelPredictorFactory(feature_set=feature_set,
-                                           num_candles=num_candles,
-                                           candle_period=candle_period,
-                                           cmm_df_dataset_factory=cmm_df_dataset_factory,
-                                           cmm_model=cmm_model)
-        return trainer
-
-
-CloseMaxMinPred = namedtuple('CloseMaxMinPred', ['close_pred', 'max_pred', 'min_pred'])
-
-
-class CMMModelPredictorFactory:
-    def __init__(self, feature_set, num_candles, candle_period,
-                 cmm_df_dataset_factory, cmm_model):
-        self.feature_set = feature_set
-        self.num_candles = num_candles
-        self.candle_period = candle_period
-        self.cmm_df_dataset_factory = cmm_df_dataset_factory
-        self.cmm_model = cmm_model
-
-    def get_predictor(self, cs_store, pair, start_date=None, end_date=None):
-        dataset_factory = self.cmm_df_dataset_factory
-        ds = dataset_factory.create_dataset(cs_store=cs_store,
-                                            pair=pair,
-                                            start_date=start_date,
-                                            end_date=end_date)
-        X = ds.feature_values
-        y_close = ds.value_values(value_name=dataset_factory.y_close_name)
-        y_max = ds.value_values(value_name=dataset_factory.y_max_name)
-        y_min = ds.value_values(value_name=dataset_factory.y_min_name)
-
-        model_close, model_max, model_min = self.cmm_model.train(X, y_close, y_max, y_min)
-        return model_close, model_max, model_min
-
-    def _get_predictor(self, model_close, model_max, model_min):
-        def _predictor(cs_store, pair, market_date):
-            lookback_days = 7
-
-            start_date = market_date - seconds(days=lookback_days)
-            end_date = market_date
-
-            input_dataset = self.cmm_df_dataset_factory.create_dataset(cs_store=cs_store,
-                                                                       pair=pair,
-                                                                       start_date=start_date,
-                                                                       end_date=end_date)
-
-            close_pred = model_close.predict(input_dataset.feature_values)
-            max_pred = model_max.predict(input_dataset.feature_values)
-            min_pred = model_min.predict(input_dataset.feature_values)
-
-            return close_pred, max_pred, min_pred
-        return _predictor
-
-
-class CMMDFDatasetFactory:
-    def __init__(self, feature_set, num_candles, candle_period):
-        self.feature_set = feature_set
-        self.num_candles = num_candles
-        self.candle_period = candle_period
-
-        self.close_return_v = CloseReturn(self.num_candles)
-        self.max_return_v = MaxReturn(self.num_candles)
-        self.min_return_v = MinReturn(self.num_candles)
-
-        self.value_set = DFFeatureSet([self.close_return_v, self.max_return_v, self.min_return_v],
-                                      sort=False)
-
-    def create_dataset(self, cs_store, pair, start_date=None, end_date=None, error_on_missing=True):
-        return DFDataset.compute(pair=pair,
-                                 feature_set=self.feature_set,
-                                 value_set=self.value_set,
-                                 start_date=start_date,
-                                 end_date=end_date,
-                                 cs_store=cs_store,
-                                 normalize=True,
-                                 error_on_missing=error_on_missing)
-
-    @property
-    def y_close_name(self):
-        return self.close_return_v.name
-
-    @property
-    def y_max_name(self):
-        return self.max_return_v.name
-
-    @property
-    def y_min_name(self):
-        return self.y_min_name
-
-
-class ScikitModelFactory:
-    def __init__(self, model_class, model_args, model_kwargs):
-        self.model_class = model_class
-        self.model_args = model_args
-        self.model_kwargs = model_kwargs
-
-    def create_model(self):
-        return self.model_class(*self.model_args, **self.model_kwargs)
 
 
 class CMMModel:
@@ -225,8 +94,7 @@ class CMMModelSignalGenerator(BaseSignalGenerator):
         self.id = uuid.uuid1()
 
         if settings is None:
-            settings = CMMModelSignalGeneratorSettings(cmm_model_predictor_factory=
-                                                       CMMModelPredictorFactories.get_default_random_forest())
+            raise ValueError('settings field is mandatory.')
 
         self.NUM_CANDLES = settings.num_candles
         self.CANDLE_PERIOD = settings.candle_period
@@ -274,12 +142,12 @@ class CMMModelSignalGenerator(BaseSignalGenerator):
         }
 
     def get_allowed_pairs(self):
-        return sorted(self.market_info.get_active_pairs())
+        # return sorted(self.market_info.get_active_pairs())
         # return ['BTC_LTC', 'BTC_ETH', 'BTC_ETC', 'BTC_XMR', 'BTC_SYS', 'BTC_VIA', 'BTC_SC']
         # return ['BTC_LTC']
         # return ['BTC_XMR']
         # return ['BTC_SYS']
-        # return ['BTC_ETH']
+        return ['BTC_ETH']
         # return ['BTC_ETC']
         # return ['BTC_VIA']
         # return ['BTC_RADS']
@@ -307,6 +175,7 @@ class CMMModelSignalGenerator(BaseSignalGenerator):
                                                             start_date=training_start_date,
                                                             end_date=training_end_date)
             except KeyError:
+                self.logger.error('KeyError while training {}'.format(pair))
                 if pair in self.predictors:
                     del self.predictors[pair]
             else:
@@ -337,6 +206,7 @@ class CMMModelSignalGenerator(BaseSignalGenerator):
                                           pair=pair,
                                           market_date=latest_candle_date)
             close_pred, max_pred, min_pred = preds.close_pred, preds.max_pred, preds.min_pred
+            print('preds:', close_pred, max_pred, min_pred)
         except KeyError:
             self.logger.error('KeyError: %s', pair)
             return
