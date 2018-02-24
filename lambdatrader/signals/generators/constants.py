@@ -1,2 +1,5 @@
 LINREG__TP_STRATEGY_MAX_PRED_MULT = 'max_pred_mult'
 LINREG__TP_STRATEGY_CLOSE_PRED_MULT = 'close_pred_mult'
+
+CMM__TP_STRATEGY_MAX_PRED_MULT = 'max_pred_mult'
+CMM__TP_STRATEGY_CLOSE_PRED_MULT = 'close_pred_mult'

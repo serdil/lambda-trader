@@ -5,7 +5,7 @@ from lambdatrader.constants import M5, M15, H, H4, D
 from lambdatrader.exchanges.enums import POLONIEX
 
 
-class Dataset:
+class DFDataset:
 
     def __init__(self, dfs, feature_df, value_df):
         self.dfs = dfs
@@ -13,14 +13,16 @@ class Dataset:
         self.value_df = value_df
 
     @classmethod
-    def compute(cls, pair, feature_set, value_set, start_date=None, end_date=None, cs_store=None):
+    def compute(cls, pair, feature_set, value_set, start_date=None,
+                end_date=None, cs_store=None, normalize=True, error_on_missing=True):
         if cs_store is None:
             cs_store = SQLiteCandlestickStore.get_for_exchange(POLONIEX)
 
         dfs = cs_store.get_agg_period_dfs(pair,
                                           start_date=start_date,
                                           end_date=end_date,
-                                          periods=[M5, M15, H, H4, D])
+                                          periods=[M5, M15, H, H4, D],
+                                          error_on_missing=error_on_missing)
 
         start_time = time.time()
         feature_dfs = [f.compute(dfs) for f in feature_set.features]
@@ -29,9 +31,14 @@ class Dataset:
 
         feature_df = feature_dfs[0].join(feature_dfs[1:], how='inner')
         value_df = value_dfs[0].join(value_dfs[1:], how='inner')
+
+        if normalize:
+            feature_df = feature_df.dropna()
+            value_df = value_df.reindex(feature_df.index)
+
         print('dataset comp time: {:.3f}s'.format(time.time() - start_time))
 
-        return Dataset(dfs, feature_df, value_df)
+        return DFDataset(dfs, feature_df, value_df)
 
     @property
     def feature_names(self):
@@ -40,3 +47,13 @@ class Dataset:
     @property
     def value_names(self):
         return self.value_df.columns.values.tolist()
+
+    @property
+    def feature_values(self):
+        return self.feature_df.values
+
+    def get_value_values(self, value_name=None):
+        if value_name is None:
+            return self.value_df.values
+        else:
+            return self.value_df[value_name].values
