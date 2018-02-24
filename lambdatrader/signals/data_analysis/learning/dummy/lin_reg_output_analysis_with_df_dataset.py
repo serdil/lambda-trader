@@ -5,94 +5,36 @@
 # determine trading gains for different
 # (max_price_threshold, min_price_threshold, close_price_threshold) pairs.
 
-from datetime import datetime
 from operator import itemgetter
 
 import xgboost as xgb
 from xgboost.core import XGBoostError
 
-from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestick_stores.cachingstore import ChunkCachingCandlestickStore
-from lambdatrader.exchanges.enums import ExchangeEnum
-from lambdatrader.signals.data_analysis.datasets import create_pair_dataset_from_history
-from lambdatrader.signals.data_analysis.df_datasets import DFDataset
-from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
-from lambdatrader.signals.data_analysis.df_values import MaxReturn, CloseReturn, MinReturn
 from lambdatrader.signals.data_analysis.factories import DFFeatureSetFactory
+from lambdatrader.signals.data_analysis.learning.dummy.dummy_utils_dummy import (
+    get_dataset_info,
+)
 from lambdatrader.signals.data_analysis.learning.dummy.xgboost_analysis_utils_dummy import \
     analyze_output
-from lambdatrader.utilities.utils import seconds
 
-market_info = BacktestingMarketInfo(candlestick_store=
-                                    ChunkCachingCandlestickStore.get_for_exchange(ExchangeEnum.POLONIEX))
-
-
-latest_market_date = market_info.get_max_pair_end_time()
-
-day_offset = 120
-
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*1000)
-dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*500)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*365)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*200)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*120)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*90)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*60)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*30)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24*7)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, hours=24)
-# dataset_start_date = latest_market_date - seconds(days=day_offset, minutes=30)
-
-dataset_end_date = latest_market_date - seconds(days=day_offset)
-
-dataset_len = dataset_end_date - dataset_start_date
-
-print('start_date: {} end_date: {}'.format(datetime.utcfromtimestamp(dataset_start_date),
-                                           datetime.utcfromtimestamp(dataset_end_date)))
-print()
-
-
-dataset_symbol = 'BTC_ETH'
-
-fsf = DFFeatureSetFactory
+symbol = 'BTC_ETH'
 
 num_candles = 48
 
-feature_set = fsf.get_small()
+day_offset = 120
+days = 500
 
-max_return_v = MaxReturn(num_candles)
-min_return_v = MinReturn(num_candles)
-close_return_v = CloseReturn(num_candles)
+feature_set = DFFeatureSetFactory.get_small()
 
-value_set = DFFeatureSet(features=[MaxReturn(num_candles),
-                                   MinReturn(num_candles),
-                                   CloseReturn(num_candles)])
+ds_info = get_dataset_info(symbol=symbol, day_offset=day_offset, days=days, feature_set=feature_set)
 
-ds = DFDataset.compute(pair=dataset_symbol,
-                       feature_set=feature_set,
-                       value_set=value_set,
-                       start_date=dataset_start_date,
-                       end_date=dataset_end_date)
-
-
-# ================================= DATASET CREATION UP TILL HERE ==================================
-
-feature_names = ds.feature_names
-
-X_df = ds.feature_df
-y_max_s = ds.value_df[max_return_v.name]
-y_min_s = ds.value_df[min_return_v.name]
-y_close_s = ds.value_df[close_return_v.name]
-
-X = X_df.values
-y_max = y_max_s.values
-y_min = y_min_s.values
-y_close = y_close_s.values
+X, y_close, y_max, y_min, feature_names = ds_info.x, ds_info.y_close, \
+                                          ds_info.y_max, ds_info.y_min, ds_info.feature_names
 
 print('created/loaded dataset\n')
 
 train_ratio = 0.7
-validation_ratio = 0.99
+validation_ratio = 0.85
 gap = num_candles
 
 n_samples = len(X)

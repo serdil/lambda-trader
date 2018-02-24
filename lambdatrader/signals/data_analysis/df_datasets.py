@@ -33,7 +33,7 @@ class DFDataset:
 
         if normalize:
             feature_df = feature_df.dropna()
-            value_df.reindex(feature_df.index)
+            value_df = value_df.reindex(feature_df.index)
 
         print('dataset comp time: {:.3f}s'.format(time.time() - start_time))
 

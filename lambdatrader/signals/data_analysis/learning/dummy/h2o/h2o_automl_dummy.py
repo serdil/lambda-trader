@@ -1,10 +1,9 @@
 from h2o import H2OFrame, h2o
 from h2o.automl import H2OAutoML
 
-from lambdatrader.signals.data_analysis.df_values import MaxReturn, MinReturn, CloseReturn
 from lambdatrader.signals.data_analysis.factories import DFFeatureSetFactory
 from lambdatrader.signals.data_analysis.learning.dummy.dummy_utils_dummy import (
-    get_x_and_y_close_max_min, get_feature_df_value_df,
+    get_dataset_info,
 )
 from lambdatrader.utilities.utils import seconds
 
@@ -12,16 +11,15 @@ h2o.init()
 
 num_candles = 48
 
-close_return_name = CloseReturn(num_candles).name
-max_return_name = MaxReturn(num_candles).name
-min_return_name = MinReturn(num_candles).name
-
 feature_set = DFFeatureSetFactory.get_all_periods_last_five_ohlcv()
 num_days = 500
 
-feature_df, value_df = get_feature_df_value_df(num_candles=num_candles,
-                                               days=num_days,
-                                               feature_set=feature_set)
+ds_info = get_dataset_info(num_candles=num_candles, days=num_days, feature_set=feature_set)
+feature_df, value_df, close_return_name, max_return_name, min_return_name = (ds_info.feature_df,
+                                                                             ds_info.value_df,
+                                                                             ds_info.close_value_name,
+                                                                             ds_info.max_value_name,
+                                                                             ds_info.min_return_name)
 
 close_df = feature_df.join(value_df[close_return_name])
 
