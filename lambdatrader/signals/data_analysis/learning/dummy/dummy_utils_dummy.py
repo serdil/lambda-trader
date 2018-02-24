@@ -13,7 +13,7 @@ from lambdatrader.utilities.utils import seconds
 fsf = DFFeatureSetFactory
 
 DatasetInfo = namedtuple('DatasetInfo', ['ds', 'feature_df', 'feature_names', 'value_df',
-                                         'close_value_name', 'max_value_name', 'min_value_name',
+                                         'close_return_name', 'max_return_name', 'min_return_name',
                                          'x', 'y_close', 'y_max', 'y_min'])
 
 def get_dataset_info(symbol='BTC_ETH', day_offset=120, days=500, feature_set=fsf.get_small(), num_candles=48):
@@ -50,9 +50,9 @@ def get_dataset_info(symbol='BTC_ETH', day_offset=120, days=500, feature_set=fsf
                        feature_df=ds_feature_df,
                        feature_names=ds.feature_names,
                        value_df=ds_value_df,
-                       close_value_name=max_return_v.name,
-                       max_value_name=max_return_v.name,
-                       min_value_name=min_return_v.name,
+                       close_return_name=max_return_v.name,
+                       max_return_name=max_return_v.name,
+                       min_return_name=min_return_v.name,
                        x=X, y_close=y_close,
                        y_max=y_max,
                        y_min=y_min)

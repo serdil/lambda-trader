@@ -17,8 +17,8 @@ num_days = 500
 ds_info = get_dataset_info(num_candles=num_candles, days=num_days, feature_set=feature_set)
 feature_df, value_df, close_return_name, max_return_name, min_return_name = (ds_info.feature_df,
                                                                              ds_info.value_df,
-                                                                             ds_info.close_value_name,
-                                                                             ds_info.max_value_name,
+                                                                             ds_info.close_return_name,
+                                                                             ds_info.max_return_name,
                                                                              ds_info.min_return_name)
 
 close_df = feature_df.join(value_df[close_return_name])
