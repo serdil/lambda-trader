@@ -12,8 +12,9 @@ from lambdatrader.signals.generators.constants import (
     LINREG__TP_STRATEGY_MAX_PRED_MULT, LINREG__TP_STRATEGY_CLOSE_PRED_MULT,
 )
 from lambdatrader.signals.generators.generators.cmm_pred import (
-    SklearnCMMModel, CMMModelSignalGeneratorSettings, CMMModelSignalGenerator, XGBCMMModel,
+    CMMModelSignalGeneratorSettings, CMMModelSignalGenerator,
 )
+from lambdatrader.signals.generators.cmm_models import SklearnCMMModel, XGBCMMModel
 from lambdatrader.signals.generators.generators.linreg import (
     LinRegSignalGeneratorSettings, LinRegSignalGenerator,
 )
