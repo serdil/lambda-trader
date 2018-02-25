@@ -1,5 +1,7 @@
 import time
 
+import pandas as pd
+
 from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.constants import M5, M15, H, H4, D
 from lambdatrader.exchanges.enums import POLONIEX
@@ -41,6 +43,35 @@ class DFDataset:
         print('dataset comp time: {:.3f}s'.format(time.time() - start_time))
 
         return DFDataset(dfs, feature_df, value_df)
+
+    @classmethod
+    def compute_interleaved(cls, pairs, feature_set, value_set,
+                            start_date=None, end_date=None, cs_store=None,
+                            normalize=True, error_on_missing=True):
+        if cs_store is None:
+            cs_store = SQLiteCandlestickStore.get_for_exchange(POLONIEX)
+        if pairs is None:
+            pairs = cs_store.get_pairs()
+
+        return cls._interleave_datasets([
+            cls.compute(pair=pair,
+                        feature_set=feature_set,
+                        value_set=value_set,
+                        start_date=start_date,
+                        end_date=end_date,
+                        cs_store=cs_store,
+                        normalize=normalize,
+                        error_on_missing=error_on_missing)
+            for pair in pairs
+        ])
+
+    @classmethod
+    def _interleave_datasets(cls, datasets):
+        feature_dfs = [ds.feature_df for ds in datasets]
+        value_dfs = [ds.value_df for ds in datasets]
+        feature_df = pd.concat(feature_dfs).sort_index()
+        value_df = pd.concat(value_dfs).sort_index()
+        return DFDataset(dfs=None, feature_df=feature_df, value_df=value_df)
 
     @property
     def feature_names(self):

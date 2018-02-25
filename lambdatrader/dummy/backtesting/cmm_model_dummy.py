@@ -52,7 +52,7 @@ cmm_sig_gen_factory = CMMModelSignalGeneratorFactory(cs_store=cs_store,
                                                      pc_end_date=end_date)
 
 rf_sig_gen = cmm_sig_gen_factory.get_random_forest_n_days_n_estimators(n_days=7)
-xgb_lin_reg_sig_gen = cmm_sig_gen_factory.get_xgb_lin_reg_n_days(n_days=500)
+xgb_lin_reg_sig_gen = cmm_sig_gen_factory.get_xgb_lin_reg_n_days(n_days=7)
 
 signal_generators = [xgb_lin_reg_sig_gen]
 
