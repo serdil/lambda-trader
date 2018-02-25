@@ -45,10 +45,10 @@ y_closes = [ds_info.y_close for ds_info in ds_infos]
 y_maxs = [ds_info.y_max for ds_info in ds_infos]
 y_mins = [ds_info.y_min for ds_info in ds_infos]
 
-X = interleave_2d(xs)
-y_close = interleave_1d(y_closes)
-y_max = interleave_1d(y_maxs)
-y_min = interleave_1d(y_mins)
+X = interleave_2d(xs, num_rows=num_candles)
+y_close = interleave_1d(y_closes, num_rows=num_candles)
+y_max = interleave_1d(y_maxs, num_rows=num_candles)
+y_min = interleave_1d(y_mins, num_rows=num_candles)
 
 feature_names = ds_infos[0].feature_names
 
