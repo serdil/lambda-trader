@@ -1,7 +1,6 @@
 from collections import namedtuple
 
 import pandas as pd
-import time
 from sklearn.ensemble import RandomForestRegressor
 
 from lambdatrader.constants import M5
@@ -13,7 +12,7 @@ from lambdatrader.signals.generators.constants import (
     LINREG__TP_STRATEGY_MAX_PRED_MULT, LINREG__TP_STRATEGY_CLOSE_PRED_MULT,
 )
 from lambdatrader.signals.generators.generators.cmm_pred import (
-    CMMModel, CMMModelSignalGeneratorSettings, CMMModelSignalGenerator,
+    SklearnCMMModel, CMMModelSignalGeneratorSettings, CMMModelSignalGenerator, XGBCMMModel,
 )
 from lambdatrader.signals.generators.generators.linreg import (
     LinRegSignalGeneratorSettings, LinRegSignalGenerator,
@@ -117,12 +116,75 @@ class CMMModelPredictorFactoryFactory:
         model_factory = ScikitModelFactory(model_class=rfr_class,
                                            model_args=rfr_args,
                                            model_kwargs=rfr_kwargs)
-        cmm_model = CMMModel(model_factory=model_factory, num_candles=48, candle_period=M5)
+        cmm_model = SklearnCMMModel(model_factory=model_factory, num_candles=48, candle_period=M5)
 
         feature_set = DFFeatureSetFactory.get_all_periods_last_five_ohlcv()
         cmm_df_dataset_factory = CMMDFDatasetFactory(feature_set=feature_set,
                                                      num_candles=num_candles,
                                                      candle_period=M5)
+
+        predictor_factory = CMMModelPredictorFactory(feature_set=feature_set,
+                                                     num_candles=num_candles,
+                                                     candle_period=candle_period,
+                                                     cmm_df_dataset_factory=cmm_df_dataset_factory,
+                                                     cmm_model=cmm_model,
+                                                     precompute=self.precompute,
+                                                     pc_pairs=self.pc_pairs,
+                                                     pc_start_date=self.pc_start_date,
+                                                     pc_end_date=self.pc_end_date,
+                                                     pc_cs_store=self.pc_cs_store)
+        return predictor_factory
+
+    def get_xgb_lin_reg(self):
+        num_candles = 48
+        candle_period = M5
+
+        train_val_ratio = 0.7
+        n_rounds = 10000
+        early_stopping_rounds = 100
+
+        booster_params = {
+            'silent': 1,
+            'booster': 'gblinear',
+
+            'objective': 'reg:linear',
+            'base_score': 0,
+            'eval_metric': 'rmse',
+
+            'eta': 0.01,
+            'gamma': 0,
+            'max_depth': 3,
+            'min_child_weight': 2,
+            'max_delta_step': 0,
+            'subsample': 1,
+            'colsample_bytree': 1,
+            'colsample_bylevel': 1,
+            'lambda': 0,
+            'alpha': 0,
+            'tree_method': 'auto',
+            'sketch_eps': 0.03,
+            'scale_pos_weight': 1,
+            'updater': 'grow_colmaker,prune',
+            'refresh_leaf': 1,
+            'process_type': 'default',
+            'grow_policy': 'depthwise',
+            'max_leaves': 0,
+            'max_bin': 256,
+
+            'sample_type': 'weighted',
+            'rate_drop': 0.01,
+        }
+
+        cmm_model = XGBCMMModel(num_candles=num_candles,
+                                candle_period=M5,
+                                booster_params=booster_params,
+                                train_ratio=train_val_ratio,
+                                num_rounds=n_rounds,
+                                early_stopping_rounds=early_stopping_rounds)
+
+        feature_set = DFFeatureSetFactory.get_small()
+        cmm_df_dataset_factory = CMMDFDatasetFactory(feature_set=feature_set,
+                                                     num_candles=num_candles, candle_period=M5)
 
         predictor_factory = CMMModelPredictorFactory(feature_set=feature_set,
                                                      num_candles=num_candles,
@@ -299,6 +361,17 @@ class CMMModelSignalGeneratorFactory:
                                                               pc_end_date=self.pc_end_date,
                                                               pc_cs_store=self.cs_store)
         predictor_factory = predictor_fact_fact.get_default_random_forest(n_estimators=n_estimators)
+        settings = CMMModelSignalGeneratorSettings(training_len=seconds(days=n_days),
+                                                   cmm_model_predictor_factory=predictor_factory)
+        return self._create_with_settings(settings)
+
+    def get_xgb_lin_reg_n_days(self, n_days):
+        predictor_fact_fact = CMMModelPredictorFactoryFactory(precompute=self.precompute,
+                                                              pc_pairs=self.pairs,
+                                                              pc_start_date=self.pc_start_date,
+                                                              pc_end_date=self.pc_end_date,
+                                                              pc_cs_store=self.cs_store)
+        predictor_factory = predictor_fact_fact.get_xgb_lin_reg()
         settings = CMMModelSignalGeneratorSettings(training_len=seconds(days=n_days),
                                                    cmm_model_predictor_factory=predictor_factory)
         return self._create_with_settings(settings)
