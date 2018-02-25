@@ -4,6 +4,7 @@ from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.candlestick_stores.cachingstore import ChunkCachingCandlestickStore
+from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.config import (
     BACKTESTING_NUM_DAYS, BACKTESTING_END_OFFSET_DAYS, BACKTESTING_STRATEGIES,
 )
@@ -13,7 +14,9 @@ from lambdatrader.constants import (
 from lambdatrader.evaluation.utils import statistics_over_periods, period_statistics
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.executors.executors import SignalExecutor
-from lambdatrader.signals.generators.factories import LinRegSignalGeneratorFactory
+from lambdatrader.signals.generators.factories import (
+    LinRegSignalGeneratorFactory, CMMModelSignalGeneratorFactory,
+)
 from lambdatrader.signals.generators.generators.dynamic_retracement import \
     DynamicRetracementSignalGenerator
 from lambdatrader.signals.generators.generators.retracement import RetracementSignalGenerator
@@ -35,8 +38,9 @@ backtest_end_offset_seconds = date_floor(int(seconds(days=BACKTESTING_END_OFFSET
 
 backtest_strategies = BACKTESTING_STRATEGIES
 
-market_info = BacktestingMarketInfo(candlestick_store=
-                                    ChunkCachingCandlestickStore.get_for_exchange(POLONIEX))
+cs_store = SQLiteCandlestickStore.get_for_exchange(POLONIEX)
+
+market_info = BacktestingMarketInfo(candlestick_store=cs_store)
 
 account = BacktestingAccount(market_info=market_info, balances={'BTC': 100})
 
@@ -45,30 +49,9 @@ start_date = market_info.get_max_pair_end_time() \
 end_date = market_info.get_max_pair_end_time() \
            - backtest_end_offset_seconds
 
+cmm_sig_gen_factory = CMMModelSignalGeneratorFactory(cs_store=cs_store, market_info=market_info)
 
-signal_generators = []
-
-for strategy_name in backtest_strategies:
-    if strategy_name == STRATEGY__RETRACEMENT:
-        signal_generators.append(RetracementSignalGenerator(market_info=market_info,
-                                                            live=False,
-                                                            silent=False,
-                                                            optimize=False))
-    elif strategy_name == STRATEGY__DYNAMIC_RETRACEMENT:
-        signal_generators.append(DynamicRetracementSignalGenerator(market_info=market_info,
-                                                                   live=False,
-                                                                   silent=False,
-                                                                   enable_disable=True))
-    elif strategy_name == STRATEGY__LINREG:
-        lin_reg_sig_gen_factory = LinRegSignalGeneratorFactory(market_info,
-                                                               live=False,
-                                                               silent=False)
-        signal_generators.extend([
-            lin_reg_sig_gen_factory.get_excluding_first_conf_lin_reg_signal_generator(),
-            lin_reg_sig_gen_factory.get_excluding_second_conf_lin_reg_signal_generator()
-        ])
-    else:
-        raise ValueError('Invalid strategy name: {}'.format(strategy_name))
+signal_generators = [cmm_sig_gen_factory.get_random_forest_n_days(7)]
 
 
 signal_executor = SignalExecutor(market_info=market_info, account=account)

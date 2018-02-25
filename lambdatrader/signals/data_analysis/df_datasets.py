@@ -13,15 +13,16 @@ class DFDataset:
         self.value_df = value_df
 
     @classmethod
-    def compute(cls, pair, feature_set, value_set,
-                start_date=None, end_date=None, cs_store=None, normalize=True):
+    def compute(cls, pair, feature_set, value_set, start_date=None,
+                end_date=None, cs_store=None, normalize=True, error_on_missing=True):
         if cs_store is None:
             cs_store = SQLiteCandlestickStore.get_for_exchange(POLONIEX)
 
         dfs = cs_store.get_agg_period_dfs(pair,
                                           start_date=start_date,
                                           end_date=end_date,
-                                          periods=[M5, M15, H, H4, D])
+                                          periods=[M5, M15, H, H4, D],
+                                          error_on_missing=error_on_missing)
 
         start_time = time.time()
         feature_dfs = [f.compute(dfs) for f in feature_set.features]

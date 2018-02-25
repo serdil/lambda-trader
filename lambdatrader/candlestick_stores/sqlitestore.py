@@ -79,17 +79,29 @@ class SQLiteCandlestickStore:
                 raise KeyError('{}:{}-{}'.format(pair_period, start_date, end_date))
             return candlesticks
 
-        def get_df(self, pair, start_date=None, end_date=None, period=M5):
+        def get_df(self, pair, start_date=None, end_date=None, period=M5, error_on_missing=False):
             query = self._get_df_sql_query(pair, start_date, end_date, period)
-            return pd.read_sql_query(query, index_col='date', parse_dates=['date'], con=self._conn)
+            df = pd.read_sql_query(query, index_col='date', parse_dates=['date'], con=self._conn)
+            df_start = int(df.index[0].timestamp())
+            df_end = int(df.index[-1].timestamp())
+            if (error_on_missing
+                    and df_start != start_date or df_end != end_date):
+                raise KeyError('Missing Data')
+            return df
 
-        def get_agg_period_df(self, pair, start_date=None, end_date=None, period=M5):
-            return self.get_agg_period_dfs(pair, start_date=start_date, end_date=end_date,
-                                           periods=[period])[period]
+        def get_agg_period_df(self, pair,
+                              start_date=None, end_date=None, period=M5, error_on_missing=False):
+            return self.get_agg_period_dfs(pair,
+                                           start_date=start_date,
+                                           end_date=end_date,
+                                           periods=[period],
+                                           error_on_missing=error_on_missing)[period]
 
         def get_agg_period_dfs(self, pair,
-                               start_date=None, end_date=None, periods=(M5, M15, H, H4, D)):
-            m5_df = self.get_df(pair, start_date=start_date, end_date=end_date, period=M5)
+                               start_date=None, end_date=None, periods=(M5, M15, H, H4, D),
+                               error_on_missing=False):
+            m5_df = self.get_df(pair, start_date=start_date,
+                                end_date=end_date, period=M5, error_on_missing=error_on_missing)
             period_df_dict = {}
             for period in periods:
                 if period is M5:
