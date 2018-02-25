@@ -12,6 +12,8 @@ class DFDataset:
         self.feature_df = feature_df
         self.value_df = value_df
 
+        self.return_values = []
+
     @classmethod
     def compute(cls, pair, feature_set, value_set, start_date=None,
                 end_date=None, cs_store=None, normalize=True, error_on_missing=True):
@@ -48,12 +50,50 @@ class DFDataset:
     def value_names(self):
         return self.value_df.columns.values.tolist()
 
-    @property
-    def feature_values(self):
-        return self.feature_df.values
-
-    def get_value_values(self, value_name=None):
-        if value_name is None:
-            return self.value_df.values
+    def get_feature_values(self, start_date=None, end_date=None):
+        if start_date or end_date:
+            return self.feature_df.loc[start_date:end_date].values
         else:
-            return self.value_df[value_name].values
+            return self.feature_df.values
+
+    def get_feature_row(self, date):
+        return self.get_feature_values(start_date=date, end_date=date).reshape(1, -1)
+
+    def get_value_values(self, value_name=None, start_date=None, end_date=None):
+        if value_name is None:
+            if start_date or end_date:
+                return self.value_df.loc[start_date:end_date].values
+            else:
+                return self.value_df.values
+        else:
+            if start_date or end_date:
+                return self.value_df[value_name].loc[start_date:end_date].values
+            else:
+                return self.value_df[value_name].values
+
+    def get_value_row(self, date, value_name=None):
+        return (self.get_value_values(value_name=value_name, start_date=date, end_date=date)
+                .reshape(1, -1))
+
+    def add_feature_names(self):
+        self.return_values.append(self.feature_names)
+
+    def add_value_names(self):
+        self.return_values.append(self.value_names)
+
+    def add_feature_df(self):
+        self.return_values.append(self.feature_df)
+
+    def add_value_df(self):
+        self.return_values.append(self.value_df)
+
+    def add_feature_values(self, start_date=None, end_date=None):
+        self.return_values.append(self.get_feature_values(start_date, end_date))
+
+    def add_value_values(self, value_name=None, start_date=None, end_date=None):
+        self.return_values.append(self.get_value_values(value_name, start_date, end_date))
+
+    def get(self):
+        return_values = tuple(self.return_values)
+        self.return_values = []
+        return return_values

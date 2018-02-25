@@ -87,10 +87,21 @@ class LinRegSignalGeneratorFactory:
                                      live=self.live, silent=self.silent, settings=settings)
 
 
-class CMMModelPredictorFactories:
+class CMMModelPredictorFactoryFactory:
 
-    @classmethod
-    def get_default_random_forest(cls):
+    def __init__(self,
+                 precompute=False,
+                 pc_pairs=None,
+                 pc_start_date=None,
+                 pc_end_date=None,
+                 pc_cs_store=None):
+        self.precompute = precompute
+        self.pc_pairs = pc_pairs
+        self.pc_start_date = pc_start_date
+        self.pc_end_date = pc_end_date
+        self.pc_cs_store = pc_cs_store
+
+    def get_default_random_forest(self):
         num_candles = 48
         candle_period = M5
         n_estimators = 300
@@ -115,7 +126,12 @@ class CMMModelPredictorFactories:
                                                      num_candles=num_candles,
                                                      candle_period=candle_period,
                                                      cmm_df_dataset_factory=cmm_df_dataset_factory,
-                                                     cmm_model=cmm_model)
+                                                     cmm_model=cmm_model,
+                                                     precompute=self.precompute,
+                                                     pc_pairs=self.pc_pairs,
+                                                     pc_start_date=self.pc_start_date,
+                                                     pc_end_date=self.pc_end_date,
+                                                     pc_cs_store=self.pc_cs_store)
         return predictor_factory
 
 
@@ -123,13 +139,32 @@ CloseMaxMinPred = namedtuple('CloseMaxMinPred', ['close_pred', 'max_pred', 'min_
 
 
 class CMMModelPredictorFactory:
-    def __init__(self, feature_set, num_candles, candle_period,
-                 cmm_df_dataset_factory, cmm_model):
+    LOOKBACK_DAYS = 7
+
+    def __init__(self,
+                 feature_set,
+                 num_candles,
+                 candle_period,
+                 cmm_df_dataset_factory,
+                 cmm_model,
+                 precompute=False,
+                 pc_pairs=None,
+                 pc_start_date=None,
+                 pc_end_date=None,
+                 pc_cs_store=None):
         self.feature_set = feature_set
         self.num_candles = num_candles
         self.candle_period = candle_period
         self.cmm_df_dataset_factory = cmm_df_dataset_factory
         self.cmm_model = cmm_model
+        self.precompute = precompute
+
+        if precompute:
+            pc_start_date = pc_start_date - seconds(days=self.LOOKBACK_DAYS)
+            self.cmm_df_dataset_factory.precompute_for_pairs(cs_store=pc_cs_store,
+                                                             pairs=pc_pairs,
+                                                             start_date=pc_start_date,
+                                                             end_date=pc_end_date)
 
     def get_predictor(self, cs_store, pair, start_date=None, end_date=None):
         dataset_factory = self.cmm_df_dataset_factory
@@ -137,7 +172,7 @@ class CMMModelPredictorFactory:
                                             pair=pair,
                                             start_date=start_date,
                                             end_date=end_date)
-        X = ds.feature_values
+        X = ds.get_feature_values()
         y_close = ds.get_value_values(value_name=dataset_factory.y_close_name)
         y_max = ds.get_value_values(value_name=dataset_factory.y_max_name)
         y_min = ds.get_value_values(value_name=dataset_factory.y_min_name)
@@ -148,20 +183,22 @@ class CMMModelPredictorFactory:
                                    model_min=model_min)
 
     def _get_predictor(self, model_close, model_max, model_min):
-        def _predictor(cs_store, pair, market_date):
-            lookback_days = 7
+        def _predictor(cs_store, pair, date):
+            if self.precompute:
+                input_dataset = self.cmm_df_dataset_factory.get_precomputed(pair)
+            else:
+                start_date = date - seconds(days=self.LOOKBACK_DAYS)
+                end_date = date
 
-            start_date = market_date - seconds(days=lookback_days)
-            end_date = market_date
+                input_dataset = self.cmm_df_dataset_factory.create_dataset(cs_store=cs_store,
+                                                                           pair=pair,
+                                                                           start_date=start_date,
+                                                                           end_date=end_date)
 
-            input_dataset = self.cmm_df_dataset_factory.create_dataset(cs_store=cs_store,
-                                                                       pair=pair,
-                                                                       start_date=start_date,
-                                                                       end_date=end_date)
-
-            close_pred = model_close.predict(input_dataset.feature_values[-1].reshape(1, -1))[-1]
-            max_pred = model_max.predict(input_dataset.feature_values[-1].reshape(1, -1))[-1]
-            min_pred = model_min.predict(input_dataset.feature_values[-1].reshape(1, -1))[-1]
+            feature_row = input_dataset.get_feature_row(date)
+            close_pred = model_close.predict(feature_row)[-1]
+            max_pred = model_max.predict(feature_row)[-1]
+            min_pred = model_min.predict(feature_row)[-1]
 
             return CloseMaxMinPred(close_pred=close_pred, max_pred=max_pred, min_pred=min_pred)
         return _predictor
@@ -180,6 +217,19 @@ class CMMDFDatasetFactory:
         self.value_set = DFFeatureSet([self.close_return_v, self.max_return_v, self.min_return_v],
                                       sort=False)
 
+        self._precomputed = {}
+
+    def precompute_for_pair(self, cs_store, pair, start_date, end_date):
+        self._precomputed[pair] = self.create_dataset(cs_store=cs_store,
+                                                      pair=pair,
+                                                      start_date=start_date,
+                                                      end_date=end_date,
+                                                      error_on_missing=False)
+
+    def precompute_for_pairs(self, cs_store, pairs, start_date, end_date):
+        for pair in pairs:
+            self.precompute_for_pair(cs_store, pair, start_date, end_date)
+
     def create_dataset(self, cs_store, pair, start_date=None, end_date=None, error_on_missing=True):
         return DFDataset.compute(pair=pair,
                                  feature_set=self.feature_set,
@@ -189,6 +239,9 @@ class CMMDFDatasetFactory:
                                  cs_store=cs_store,
                                  normalize=True,
                                  error_on_missing=error_on_missing)
+
+    def get_precomputed(self, pair):
+        return self._precomputed[pair]
 
     @property
     def y_close_name(self):
@@ -215,14 +268,25 @@ class ScikitModelFactory:
 
 class CMMModelSignalGeneratorFactory:
 
-    def __init__(self, cs_store, market_info, live=False, silent=False):
+    def __init__(self, cs_store, market_info, live=False, silent=False, pairs=None,
+                 precompute=False, pc_start_date=None, pc_end_date=None):
         self.cs_store = cs_store
         self.market_info = market_info
         self.live = live
         self.silent = silent
+        self.pairs = pairs
+
+        self.precompute = precompute
+        self.pc_start_date = pc_start_date
+        self.pc_end_date = pc_end_date
 
     def get_random_forest_n_days(self, n=500):
-        predictor_factory = CMMModelPredictorFactories.get_default_random_forest()
+        predictor_fact_fact = CMMModelPredictorFactoryFactory(precompute=self.precompute,
+                                                              pc_pairs=self.pairs,
+                                                              pc_start_date=self.pc_start_date,
+                                                              pc_end_date=self.pc_end_date,
+                                                              pc_cs_store=self.cs_store)
+        predictor_factory = predictor_fact_fact.get_default_random_forest()
         settings = CMMModelSignalGeneratorSettings(training_len=seconds(days=n),
                                                    cmm_model_predictor_factory=predictor_factory)
         return self._create_with_settings(settings)
@@ -230,4 +294,48 @@ class CMMModelSignalGeneratorFactory:
     def _create_with_settings(self, settings):
         return CMMModelSignalGenerator(market_info=self.market_info,
                                        live=self.live, silent=self.silent,
-                                       settings=settings, cs_store=self.cs_store)
+                                       settings=settings, cs_store=self.cs_store, pairs=self.pairs)
+
+
+class Pairs:
+
+    @classmethod
+    def n_pairs(cls, n=None):
+        pair_list = ['BTC_LTC', 'BTC_ETH', 'BTC_ETC', 'BTC_XMR',
+                     'BTC_SYS', 'BTC_VIA', 'BTC_SC', 'BTC_RADS', 'BTC_XRP']
+        if n:
+            return pair_list[:n]
+        else:
+            return pair_list
+
+    @classmethod
+    def eth(cls):
+        return ['BTC_ETH']
+
+    @classmethod
+    def ltc(cls):
+        return ['BTC_LTC']
+
+    @classmethod
+    def xmr(cls):
+        return ['BTC_XMR']
+
+    @classmethod
+    def sys(cls):
+        return ['BTC_SYS']
+
+    @classmethod
+    def etc(cls):
+        return ['BTC_ETC']
+
+    @classmethod
+    def via(cls):
+        return ['BTC_VIA']
+
+    @classmethod
+    def rads(cls):
+        return ['BTC_RADS']
+
+    @classmethod
+    def xrp(cls):
+        return ['BTC_XRP']

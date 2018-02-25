@@ -84,7 +84,7 @@ class CMMModelSignalGenerator(BaseSignalGenerator):
     def __init__(self, market_info, live=False, silent=False,
                  settings:CMMModelSignalGeneratorSettings=None,
                  cs_store=SQLiteCandlestickStore.get_for_exchange(POLONIEX),
-                 **kwargs):
+                 pairs=None, **kwargs):
         super().__init__(market_info, live=live, silent=silent)
         self.cs_store = cs_store
 
@@ -118,6 +118,8 @@ class CMMModelSignalGenerator(BaseSignalGenerator):
         if self.USE_RMSE_FOR_MAX_THR or self.USE_RMSE_FOR_CLOSE_THR:
             raise NotImplementedError('rmse based threshold setting not implemented.')
 
+        self.__allowed_pairs = pairs
+
     def get_algo_descriptor(self):
         return {
             'CLASS_NAME': self.__class__.__name__,
@@ -142,17 +144,24 @@ class CMMModelSignalGenerator(BaseSignalGenerator):
         }
 
     def get_allowed_pairs(self):
+        return self._get_allowed_pairs()
         # return sorted(self.market_info.get_active_pairs())
         # return ['BTC_LTC', 'BTC_ETH', 'BTC_ETC', 'BTC_XMR', 'BTC_SYS', 'BTC_VIA', 'BTC_SC']
         # return ['BTC_LTC']
         # return ['BTC_XMR']
         # return ['BTC_SYS']
-        return ['BTC_ETH']
+        # return ['BTC_ETH']
         # return ['BTC_ETC']
         # return ['BTC_VIA']
         # return ['BTC_RADS']
         # return ['BTC_XRP']
         # return ['BTC_SC']
+
+    def _get_allowed_pairs(self):
+        if self.__allowed_pairs:
+            return sorted(set(self.market_info.get_active_pairs) | set(self.__allowed_pairs))
+        else:
+            return sorted(self.market_info.get_active_pairs)
 
     def pre_analyze_market(self, tracked_signals):
         market_date = self.market_date
