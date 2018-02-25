@@ -1,5 +1,7 @@
 from collections import namedtuple
 
+import pandas as pd
+import time
 from sklearn.ensemble import RandomForestRegressor
 
 from lambdatrader.constants import M5
@@ -101,13 +103,13 @@ class CMMModelPredictorFactoryFactory:
         self.pc_end_date = pc_end_date
         self.pc_cs_store = pc_cs_store
 
-    def get_default_random_forest(self):
+    def get_default_random_forest(self, n_estimators=300):
         num_candles = 48
         candle_period = M5
-        n_estimators = 300
+        n_estimators = n_estimators
 
-        n_jobs = -1
-        verbose = True
+        n_jobs = 1
+        verbose = False
 
         rfr_class = RandomForestRegressor
         rfr_args = []
@@ -184,6 +186,8 @@ class CMMModelPredictorFactory:
 
     def _get_predictor(self, model_close, model_max, model_min):
         def _predictor(cs_store, pair, date):
+            # start = time.time()
+
             if self.precompute:
                 input_dataset = self.cmm_df_dataset_factory.get_precomputed(pair)
             else:
@@ -194,11 +198,19 @@ class CMMModelPredictorFactory:
                                                                            pair=pair,
                                                                            start_date=start_date,
                                                                            end_date=end_date)
+            # print('dataset get/creation:', time.time() - start)
+            # start = time.time()
 
-            feature_row = input_dataset.get_feature_row(date)
+            feature_row = input_dataset.get_feature_row(pd.Timestamp(date, unit='s'))
+
+            # print('row get:', time.time() - start)
+            # start = time.time()
+
             close_pred = model_close.predict(feature_row)[-1]
             max_pred = model_max.predict(feature_row)[-1]
             min_pred = model_min.predict(feature_row)[-1]
+
+            # print('prediction:', time.time() - start)
 
             return CloseMaxMinPred(close_pred=close_pred, max_pred=max_pred, min_pred=min_pred)
         return _predictor
@@ -280,14 +292,14 @@ class CMMModelSignalGeneratorFactory:
         self.pc_start_date = pc_start_date
         self.pc_end_date = pc_end_date
 
-    def get_random_forest_n_days(self, n=500):
+    def get_random_forest_n_days_n_estimators(self, n_days=500, n_estimators=300):
         predictor_fact_fact = CMMModelPredictorFactoryFactory(precompute=self.precompute,
                                                               pc_pairs=self.pairs,
                                                               pc_start_date=self.pc_start_date,
                                                               pc_end_date=self.pc_end_date,
                                                               pc_cs_store=self.cs_store)
-        predictor_factory = predictor_fact_fact.get_default_random_forest()
-        settings = CMMModelSignalGeneratorSettings(training_len=seconds(days=n),
+        predictor_factory = predictor_fact_fact.get_default_random_forest(n_estimators=n_estimators)
+        settings = CMMModelSignalGeneratorSettings(training_len=seconds(days=n_days),
                                                    cmm_model_predictor_factory=predictor_factory)
         return self._create_with_settings(settings)
 

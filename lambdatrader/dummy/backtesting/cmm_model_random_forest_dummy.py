@@ -3,23 +3,16 @@ from pprint import pprint
 from lambdatrader.backtesting import backtest
 from lambdatrader.backtesting.account import BacktestingAccount
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
-from lambdatrader.candlestick_stores.cachingstore import ChunkCachingCandlestickStore
 from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.config import (
     BACKTESTING_NUM_DAYS, BACKTESTING_END_OFFSET_DAYS, BACKTESTING_STRATEGIES,
-)
-from lambdatrader.constants import (
-    STRATEGY__RETRACEMENT, STRATEGY__DYNAMIC_RETRACEMENT, STRATEGY__LINREG,
 )
 from lambdatrader.evaluation.utils import statistics_over_periods, period_statistics
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.signals.generators.factories import (
-    LinRegSignalGeneratorFactory, CMMModelSignalGeneratorFactory,
+    CMMModelSignalGeneratorFactory, Pairs,
 )
-from lambdatrader.signals.generators.generators.dynamic_retracement import \
-    DynamicRetracementSignalGenerator
-from lambdatrader.signals.generators.generators.retracement import RetracementSignalGenerator
 from lambdatrader.utilities.utils import date_floor, seconds
 
 
@@ -49,9 +42,16 @@ start_date = market_info.get_max_pair_end_time() \
 end_date = market_info.get_max_pair_end_time() \
            - backtest_end_offset_seconds
 
-cmm_sig_gen_factory = CMMModelSignalGeneratorFactory(cs_store=cs_store, market_info=market_info)
+pairs = Pairs.eth()
 
-signal_generators = [cmm_sig_gen_factory.get_random_forest_n_days(7)]
+cmm_sig_gen_factory = CMMModelSignalGeneratorFactory(cs_store=cs_store,
+                                                     market_info=market_info,
+                                                     pairs=pairs,
+                                                     precompute=True,
+                                                     pc_start_date=start_date,
+                                                     pc_end_date=end_date)
+
+signal_generators = [cmm_sig_gen_factory.get_random_forest_n_days_n_estimators(7)]
 
 
 signal_executor = SignalExecutor(market_info=market_info, account=account)

@@ -159,9 +159,9 @@ class CMMModelSignalGenerator(BaseSignalGenerator):
 
     def _get_allowed_pairs(self):
         if self.__allowed_pairs:
-            return sorted(set(self.market_info.get_active_pairs) | set(self.__allowed_pairs))
+            return sorted(set(self.market_info.get_active_pairs()) & set(self.__allowed_pairs))
         else:
-            return sorted(self.market_info.get_active_pairs)
+            return sorted(self.market_info.get_active_pairs())
 
     def pre_analyze_market(self, tracked_signals):
         market_date = self.market_date
@@ -213,9 +213,8 @@ class CMMModelSignalGenerator(BaseSignalGenerator):
 
             preds = self.predictors[pair](cs_store=self.cs_store,
                                           pair=pair,
-                                          market_date=latest_candle_date)
+                                          date=latest_candle_date)
             close_pred, max_pred, min_pred = preds.close_pred, preds.max_pred, preds.min_pred
-            print('preds:', close_pred, max_pred, min_pred)
         except KeyError:
             self.logger.error('KeyError: %s', pair)
             return
