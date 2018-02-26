@@ -144,9 +144,9 @@ class CMMModelPredictorFactoryFactory:
         num_candles = 48
         candle_period = M5
 
-        train_val_ratio = 0.7
+        train_val_ratio = 0.9
         n_rounds = 10000
-        early_stopping_rounds = 100
+        early_stopping_rounds = 10
 
         booster_params = {
             'silent': 1,
@@ -410,7 +410,11 @@ class CMMModelSignalGeneratorFactory:
                                                    cmm_model_predictor_factory=predictor_factory)
         return self._create_with_settings(settings)
 
-    def get_xgb_lin_reg_n_days_one_model_max_pred(self, n_days, training_pairs=None):
+    def get_xgb_lin_reg_n_days_one_model_max_pred(self,
+                                                  n_days,
+                                                  training_pairs=None,
+                                                  close_thr=0.03,
+                                                  retrain_interval_days=30):
         if training_pairs is None:
             training_pairs = Pairs.all_pairs()
 
@@ -420,12 +424,15 @@ class CMMModelSignalGeneratorFactory:
                                                               pc_end_date=self.pc_end_date,
                                                               pc_cs_store=self.cs_store)
         predictor_factory = predictor_fact_fact.get_xgb_lin_reg()
+
+        model_update_interval = seconds(days=retrain_interval_days)
         settings = CMMModelSignalGeneratorSettings(training_len=seconds(days=n_days),
                                                    cmm_model_predictor_factory=predictor_factory,
                                                    one_model_to_rule_them_all=True,
                                                    one_model_training_pairs=training_pairs,
                                                    tp_strategy=CMM__TP_STRATEGY_MAX_PRED_MULT,
-                                                   close_thr=0.02)
+                                                   close_thr=close_thr,
+                                                   model_update_interval=model_update_interval)
         return self._create_with_settings(settings)
 
     def _create_with_settings(self, settings):
