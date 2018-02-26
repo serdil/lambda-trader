@@ -1,6 +1,7 @@
 import time
 
 import pandas as pd
+from pandas.core.base import DataError
 
 from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.constants import M5, M15, H, H4, D
@@ -53,8 +54,10 @@ class DFDataset:
         if pairs is None:
             pairs = cs_store.get_pairs()
 
-        return cls._interleave_datasets([
-            cls.compute(pair=pair,
+        datasets = []
+        for pair in pairs:
+            try:
+                ds = cls.compute(pair=pair,
                         feature_set=feature_set,
                         value_set=value_set,
                         start_date=start_date,
@@ -62,8 +65,12 @@ class DFDataset:
                         cs_store=cs_store,
                         normalize=normalize,
                         error_on_missing=error_on_missing)
-            for pair in pairs
-        ])
+                datasets.append(ds)
+            except DataError as e:
+                if error_on_missing:
+                    raise e
+
+        return cls._interleave_datasets(datasets)
 
     @classmethod
     def _interleave_datasets(cls, datasets):

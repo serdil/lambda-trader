@@ -33,7 +33,9 @@ class CMMModelSignalGeneratorSettings:
                  tp_strategy=CMM__TP_STRATEGY_CLOSE_PRED_MULT,
                  exclude_external=True,
                  model_update_interval=seconds(days=30),
-                 cmm_model_predictor_factory=None):
+                 cmm_model_predictor_factory=None,
+                 one_model_to_rule_them_all=False,
+                 one_model_training_pairs=None):
         self.num_candles = num_candles
         self.candle_period = candle_period
         self.training_len = training_len
@@ -50,11 +52,16 @@ class CMMModelSignalGeneratorSettings:
         self.tp_strategy = tp_strategy
         self.exclude_external = exclude_external
         self.model_update_interval = model_update_interval
+        self.one_model_to_rule_them_all=one_model_to_rule_them_all
+        self.one_model_training_pairs=one_model_training_pairs
 
         if cmm_model_predictor_factory is not None:
             self.cmm_model_predictor_factory = cmm_model_predictor_factory
         else:
             raise ValueError('cmm_model_trainer cannot be empty.')
+
+        if self.one_model_to_rule_them_all and one_model_training_pairs is None:
+            raise ValueError('one_model_training_pairs cannot be empty with the given parameters.')
 
 
 class CMMModelSignalGenerator(BaseSignalGenerator):
@@ -69,6 +76,7 @@ class CMMModelSignalGenerator(BaseSignalGenerator):
         self.last_trained_date = 0
 
         self.predictors = {}
+        self.one_predictor = None
         self.id = uuid.uuid1()
 
         if settings is None:
@@ -91,6 +99,8 @@ class CMMModelSignalGenerator(BaseSignalGenerator):
         self.EXCLUDE_EXTERNAL_SIGNAL_PAIRS = settings.exclude_external
         self.MODEL_UPDATE_INTERVAL = settings.model_update_interval
         self.MODEL_PREDICTOR_FACTORY = settings.cmm_model_predictor_factory
+        self.ONE_MODEL_TO_RULE_THEM_ALL = settings.one_model_to_rule_them_all,
+        self.ONE_MODEL_TRAINING_PAIRS = settings.one_model_training_pairs
 
         if self.USE_RMSE_FOR_MAX_THR or self.USE_RMSE_FOR_CLOSE_THR:
             raise NotImplementedError('rmse based threshold setting not implemented.')
@@ -142,7 +152,10 @@ class CMMModelSignalGenerator(BaseSignalGenerator):
     def pre_analyze_market(self, tracked_signals):
         market_date = self.market_date
         if market_date - self.last_trained_date > self.MODEL_UPDATE_INTERVAL:
-            self.update_predictors()
+            if self.ONE_MODEL_TO_RULE_THEM_ALL:
+                self.update_the_predictor()
+            else:
+                self.update_predictors()
             self.last_trained_date = market_date
 
     def update_predictors(self):
@@ -168,6 +181,24 @@ class CMMModelSignalGenerator(BaseSignalGenerator):
         self.backtest_print('=================training complete!==================')
         self.logger.info('training complete!')
 
+    def update_the_predictor(self):
+        self.logger.info('training the predictor...')
+        self.backtest_print('training the predictor...')
+        training_end_date = self.market_date - (self.NUM_CANDLES+1) * self.CANDLE_PERIOD.seconds()
+        training_start_date = training_end_date - self.TRAINING_LEN
+        try:
+            predictor_factory = self.MODEL_PREDICTOR_FACTORY
+            predictor = (predictor_factory.
+                         get_predictor_interleaved(cs_store=self.cs_store,
+                                                   pairs=self.ONE_MODEL_TRAINING_PAIRS,
+                                                   start_date=training_start_date,
+                                                   end_date=training_end_date))
+        except KeyError:
+            self.logger.error('KeyError while training the predictor.')
+            self.one_predictor = None
+        else:
+            self.one_predictor = predictor
+
     def analyze_pair(self, pair, tracked_signals) -> Optional[TradeSignal]:
 
         if self.EXCLUDE_EXTERNAL_SIGNAL_PAIRS:
@@ -180,16 +211,20 @@ class CMMModelSignalGenerator(BaseSignalGenerator):
             self.debug('pair_already_in_tracked_signals:%s', pair)
             return
 
-        if pair not in self.predictors:
+        if self.ONE_MODEL_TO_RULE_THEM_ALL:
+            if self.one_predictor is None:
+                return
+            predictor = self.one_predictor
+        elif pair not in self.predictors:
             return
+        else:
+            predictor = self.predictors[pair]
 
         try:
             latest_candle = self.market_info.get_pair_candlestick(pair=pair)
             latest_candle_date = latest_candle.date
 
-            preds = self.predictors[pair](cs_store=self.cs_store,
-                                          pair=pair,
-                                          date=latest_candle_date)
+            preds = predictor(cs_store=self.cs_store, pair=pair, date=latest_candle_date)
             close_pred, max_pred, min_pred = preds.close_pred, preds.max_pred, preds.min_pred
         except KeyError:
             self.logger.error('KeyError: %s', pair)

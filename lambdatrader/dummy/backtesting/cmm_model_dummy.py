@@ -25,7 +25,6 @@ def print_descriptors(signal_generators):
         except AttributeError:
             print('Signal generator has no descriptor.')
 
-
 backtest_num_seconds = date_floor(int(seconds(days=BACKTESTING_NUM_DAYS)))
 backtest_end_offset_seconds = date_floor(int(seconds(days=BACKTESTING_END_OFFSET_DAYS)))
 
@@ -42,19 +41,23 @@ start_date = market_info.get_max_pair_end_time() \
 end_date = market_info.get_max_pair_end_time() \
            - backtest_end_offset_seconds
 
-pairs = Pairs.n_pairs()
+# pairs = Pairs.n_pairs()
+pairs = Pairs.all_pairs()
 
-cmm_sig_gen_factory = CMMModelSignalGeneratorFactory(cs_store=cs_store,
-                                                     market_info=market_info,
-                                                     pairs=pairs,
-                                                     precompute=True,
-                                                     pc_start_date=start_date,
-                                                     pc_end_date=end_date)
+sig_gen_fact = CMMModelSignalGeneratorFactory(cs_store=cs_store,
+                                              market_info=market_info,
+                                              pairs=pairs,
+                                              precompute=True,
+                                              pc_start_date=start_date,
+                                              pc_end_date=end_date)
 
-rf_sig_gen = cmm_sig_gen_factory.get_random_forest_n_days_n_estimators(n_days=7)
-xgb_lin_reg_sig_gen = cmm_sig_gen_factory.get_xgb_lin_reg_n_days(n_days=7)
+# rf_sig_gen = sig_gen_fact.get_random_forest_n_days_n_estimators(n_days=7)
+# xgb_lin_reg_sig_gen = sig_gen_fact.get_xgb_lin_reg_n_days(n_days=7)
+xgb_lin_reg_one_model_sig_gen = (sig_gen_fact.
+                                 get_xgb_lin_reg_n_days_one_model_max_pred(n_days=120,
+                                                                           training_pairs=None))
 
-signal_generators = [xgb_lin_reg_sig_gen]
+signal_generators = [xgb_lin_reg_one_model_sig_gen]
 
 
 signal_executor = SignalExecutor(market_info=market_info, account=account)
