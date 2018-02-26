@@ -156,7 +156,7 @@ class CMMModelPredictorFactoryFactory:
             'base_score': 0,
             'eval_metric': 'rmse',
 
-            'eta': 0.01,
+            'eta': 0.03,
             'gamma': 0,
             'max_depth': 3,
             'min_child_weight': 2,
