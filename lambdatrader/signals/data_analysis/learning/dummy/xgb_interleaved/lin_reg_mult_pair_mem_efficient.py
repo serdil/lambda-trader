@@ -140,7 +140,7 @@ params = {
 
     'eta': 0.01,
     'gamma': 0,
-    'max_depth': 2,
+    'max_depth': 3,
     'min_child_weight': 1,
     'max_delta_step': 0,
     'subsample': 1,
