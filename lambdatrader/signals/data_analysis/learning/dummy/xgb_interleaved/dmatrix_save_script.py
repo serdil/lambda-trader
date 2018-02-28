@@ -18,7 +18,7 @@ test_ratio = 0.9
 feature_set = fsf.get_small()
 
 
-valr = int(val_ratio * 10)
-testr = int(test_ratio * 10)
+valr = int(val_ratio * 100)
+testr = int(test_ratio * 100)
 save_close_dmatrix(num_candles=num_candles, candle_period=M5, feature_set=feature_set,
                    num_days=days, days_offset=day_offset, symbols=symbols, valr=valr, testr=testr)

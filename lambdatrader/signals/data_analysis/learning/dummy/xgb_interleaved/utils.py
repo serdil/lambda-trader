@@ -120,8 +120,8 @@ def train_close(params, num_rounds, early_stopping_rounds, symbols, feature_set,
 
 def train_close_from_saved(params, num_rounds, early_stopping_rounds, symbols, feature_set,
                            val_ratio, test_ratio, num_candles, day_offset, days):
-    valr = int(val_ratio * 10)
-    testr = int(test_ratio * 10)
+    valr = int(val_ratio * 100)
+    testr = int(test_ratio * 100)
     from lambdatrader.signals.data_analysis.learning.dummy.xgb_interleaved.dmatrix_save_load_util\
         import \
         load_close_dmatrix
@@ -167,8 +167,8 @@ def train_max(params, num_rounds, early_stopping_rounds, symbols, feature_set, v
 
 def train_max_from_saved(params, num_rounds, early_stopping_rounds, symbols, feature_set, val_ratio,
                          test_ratio, num_candles, day_offset, days):
-    valr = int(val_ratio * 10)
-    testr = int(test_ratio * 10)
+    valr = int(val_ratio * 100)
+    testr = int(test_ratio * 100)
     from lambdatrader.signals.data_analysis.learning.dummy.xgb_interleaved.dmatrix_save_load_util\
         import \
         load_max_dmatrix

@@ -72,8 +72,8 @@ def load_close_dmatrix(num_candles, candle_period, feature_set, num_days, days_o
 
 def save_close_dmatrix(num_candles, candle_period, feature_set, num_days, days_offset, symbols,
                        valr, testr):
-    dt, dv, dtt = get_close_dmatrix(symbols=symbols, feature_set=feature_set, val_ratio=valr / 10,
-                                    test_ratio=testr / 10, day_offset=days_offset, days=num_days,
+    dt, dv, dtt = get_close_dmatrix(symbols=symbols, feature_set=feature_set, val_ratio=valr/100,
+                                    test_ratio=testr/100, day_offset=days_offset, days=num_days,
                                     num_candles=num_candles)
     nt, nv, ntt = _close_dmatrix_fpath(num_candles, candle_period, feature_set, num_days,
                                        days_offset, symbols, valr, testr)
@@ -91,8 +91,8 @@ def load_max_dmatrix(num_candles, candle_period, feature_set, num_days, days_off
 
 def save_max_dmatrix(num_candles, candle_period, feature_set, num_days, days_offset, symbols, valr,
                      testr):
-    dt, dv, dtt = get_max_dmatrix(symbols=symbols, feature_set=feature_set, val_ratio=valr / 10,
-                                  test_ratio=testr / 10, day_offset=days_offset, days=num_days,
+    dt, dv, dtt = get_max_dmatrix(symbols=symbols, feature_set=feature_set, val_ratio=valr/100,
+                                  test_ratio=testr/100, day_offset=days_offset, days=num_days,
                                   num_candles=num_candles)
     nt, nv, ntt = _max_dmatrix_fpath(num_candles, candle_period, feature_set, num_days, days_offset,
                                      symbols, valr, testr)
