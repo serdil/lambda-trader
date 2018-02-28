@@ -4,13 +4,14 @@ from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.signals.data_analysis.factories import DFFeatureSetFactory as fsf
 from lambdatrader.signals.data_analysis.learning.dummy.xgb_interleaved.utils import (
-    train_close, train_max, get_test_X_ys,
+    get_test_X_ys, train_close_from_saved, train_max_from_saved,
 )
 from lambdatrader.signals.data_analysis.learning.dummy.xgboost_analysis_utils_dummy import \
     analyze_output
 
 all_symbols = set(SQLiteCandlestickStore.get_for_exchange(POLONIEX).get_pairs())
 
+# symbols = ['BTC_ETH']
 symbols = sorted(list(all_symbols))
 
 num_candles = 48
@@ -67,7 +68,7 @@ close_params = params.copy()
 
 max_params = params.copy()
 max_params.update({
-    'eta': 0.1
+    'eta': 0.2
 })
 
 num_rounds = 1000
@@ -85,8 +86,8 @@ common_args = {
     'val_ratio': val_ratio
 }
 
-pred_close = train_close(params=close_params, **common_args)
-pred_max = train_max(params=max_params, **common_args)
+pred_close = train_close_from_saved(params=close_params, **common_args)
+pred_max = train_max_from_saved(params=max_params, **common_args)
 
 print()
 print('++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++')
