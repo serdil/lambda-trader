@@ -10,14 +10,29 @@ from lambdatrader.signals.data_analysis.learning.dummy.xgb_interleaved.dmatrix_s
 all_symbols = set(SQLiteCandlestickStore.get_for_exchange(POLONIEX).get_pairs())
 
 
+# symbols = sorted(list(all_symbols))
+# num_candles = 48
+# day_offset = 12
+# days = 200
+# val_ratio = 0.8
+# test_ratio = 0.9
+# feature_set = fsf.get_small()
+
+# symbols = sorted(list(all_symbols))
+# num_candles = 48
+# day_offset = 12
+# days = 400
+# val_ratio = 0.90
+# test_ratio = 0.95
+# feature_set = fsf.get_small()
+
 symbols = sorted(list(all_symbols))
 num_candles = 48
 day_offset = 12
 days = 200
 val_ratio = 0.8
 test_ratio = 0.9
-feature_set = fsf.get_small()
-
+feature_set = fsf.get_all_periods_last_five_ohlcv()
 
 valr = int(val_ratio * 100)
 testr = int(test_ratio * 100)

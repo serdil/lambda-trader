@@ -4,7 +4,7 @@ from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.signals.data_analysis.factories import DFFeatureSetFactory as fsf
 from lambdatrader.signals.data_analysis.learning.dummy.xgb_interleaved.utils import (
-    get_test_X_ys, train_close_from_saved, train_max_from_saved,
+    get_test_X_ys, train_close_from_saved, train_max_from_saved, train_close, train_max,
 )
 from lambdatrader.signals.data_analysis.learning.dummy.xgboost_analysis_utils_dummy import \
     analyze_output
@@ -22,7 +22,10 @@ days = 200
 val_ratio = 0.8
 test_ratio = 0.9
 
-feature_set = fsf.get_small()
+feature_set = fsf.get_all_periods_last_five_ohlcv()
+
+use_saved = True
+# use_saved = False
 
 params = {
     'silent': 1,
@@ -68,7 +71,7 @@ close_params = params.copy()
 
 max_params = params.copy()
 max_params.update({
-    'eta': 0.1
+    'eta': 0.2
 })
 
 num_rounds = 1000
@@ -86,8 +89,12 @@ common_args = {
     'val_ratio': val_ratio
 }
 
-pred_close = train_close_from_saved(params=close_params, **common_args)
-pred_max = train_max_from_saved(params=max_params, **common_args)
+if use_saved:
+    pred_close = train_close_from_saved(params=close_params, **common_args)
+    pred_max = train_max_from_saved(params=max_params, **common_args)
+else:
+    pred_close = train_close(params=close_params, **common_args)
+    pred_max = train_max(params=max_params, **common_args)
 
 print()
 print('++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++')
