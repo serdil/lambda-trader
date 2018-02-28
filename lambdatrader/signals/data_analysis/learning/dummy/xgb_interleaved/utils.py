@@ -79,7 +79,8 @@ def get_train_val_test_Xs_ys_feature_names(symbols, feature_set,
            X_test, y_close_test, y_max_test, f_names
 
 
-def get_test_X_ys(symbols, feature_set, val_ratio, test_ratio, num_candles, day_offset, days):
+def get_test_X_ys(symbols, feature_set, val_ratio, test_ratio, num_candles, day_offset, days,
+                  **kwargs):
     X_train, y_close_train, y_max_train,\
     X_val, y_close_val, y_max_val, \
     X_test, y_close_test, y_max_test, f_names = get_train_val_test_Xs_ys_feature_names(
