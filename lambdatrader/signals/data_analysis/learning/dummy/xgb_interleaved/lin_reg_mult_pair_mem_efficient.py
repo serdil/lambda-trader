@@ -26,7 +26,7 @@ feature_set = fsf.get_small()
 
 params = {
     'silent': 1,
-    'booster': 'gbtree',
+    'booster': 'gblinear',
 
     'objective': 'reg:linear',
     'base_score': 0,
@@ -49,9 +49,9 @@ params = {
     'max_leaves': 0,
     'max_bin': 256,
 
-    'lambda': 1,
-    'alpha': 0,
-    'updater': 'grow_colmaker,prune',
+    # 'lambda': 1,
+    # 'alpha': 0,
+    # 'updater': 'grow_colmaker,prune',
 
     # 'sample_type': 'uniform',
     # 'normalize_type': 'tree',
@@ -59,8 +59,8 @@ params = {
     # 'one_drop': 0,
     # 'skip_drop': 0.00,
 
-    # 'reg_lambda': 0,
-    # 'reg_alpha': 0,
+    'reg_lambda': 0,
+    'reg_alpha': 0,
     # 'updater': 'shotgun'
 }
 
@@ -68,7 +68,7 @@ close_params = params.copy()
 
 max_params = params.copy()
 max_params.update({
-    'eta': 0.2
+    'eta': 0.1
 })
 
 num_rounds = 1000
