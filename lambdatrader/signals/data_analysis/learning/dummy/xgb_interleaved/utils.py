@@ -128,7 +128,7 @@ def train_close_from_saved(params, num_rounds, early_stopping_rounds, symbols, f
     dmatrices = load_close_dmatrix(num_candles=num_candles, candle_period=M5,
                                    feature_set=feature_set, num_days=days, days_offset=day_offset,
                                    symbols=symbols, valr=valr, testr=testr)
-    _train_close_with_dmatrices(params, num_rounds, early_stopping_rounds, dmatrices)
+    return _train_close_with_dmatrices(params, num_rounds, early_stopping_rounds, dmatrices)
 
 
 def _train_close_with_dmatrices(params, num_rounds, early_stopping_rounds, dmatrices):
@@ -175,7 +175,7 @@ def train_max_from_saved(params, num_rounds, early_stopping_rounds, symbols, fea
     dmatrices = load_max_dmatrix(num_candles=num_candles, candle_period=M5, feature_set=feature_set,
                                  num_days=days, days_offset=day_offset, symbols=symbols, valr=valr,
                                  testr=testr)
-    _train_max_with_dmatrices(params, num_rounds, early_stopping_rounds, dmatrices)
+    return _train_max_with_dmatrices(params, num_rounds, early_stopping_rounds, dmatrices)
 
 
 def _train_max_with_dmatrices(params, num_rounds, early_stopping_rounds, dmatrices):
