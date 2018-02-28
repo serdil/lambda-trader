@@ -84,7 +84,7 @@ def save_close_dmatrix(num_candles, candle_period, feature_set, num_days, days_o
 
 def load_max_dmatrix(num_candles, candle_period, feature_set, num_days, days_offset, symbols, valr,
                      testr):
-    t, v, tt = _close_dmatrix_fpath(num_candles, candle_period, feature_set, num_days, days_offset,
+    t, v, tt = _max_dmatrix_fpath(num_candles, candle_period, feature_set, num_days, days_offset,
                                     symbols, valr, testr)
     return xgb.DMatrix(t), xgb.DMatrix(v), xgb.DMatrix(tt)
 
