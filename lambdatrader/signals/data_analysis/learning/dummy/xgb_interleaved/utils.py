@@ -13,10 +13,6 @@ from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.signals.data_analysis.df_datasets import DFDataset
 from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
 from lambdatrader.signals.data_analysis.df_values import CloseReturn, MaxReturn, MinReturn
-from lambdatrader.signals.data_analysis.learning.dummy.xgb_interleaved.dmatrix_save_load_util \
-    import (
-    load_close_dmatrix, load_max_dmatrix,
-)
 from lambdatrader.utilities.utils import seconds
 
 CMMValueSet = namedtuple('CMMValueSet', ['value_set', 'close_name', 'max_name', 'min_name'])
@@ -126,6 +122,9 @@ def train_close_from_saved(params, num_rounds, early_stopping_rounds, symbols, f
                            val_ratio, test_ratio, num_candles, day_offset, days):
     valr = int(val_ratio * 10)
     testr = int(test_ratio * 10)
+    from lambdatrader.signals.data_analysis.learning.dummy.xgb_interleaved.dmatrix_save_load_util\
+        import \
+        load_close_dmatrix
     dmatrices = load_close_dmatrix(num_candles=num_candles, candle_period=M5,
                                    feature_set=feature_set, num_days=days, days_offset=day_offset,
                                    symbols=symbols, valr=valr, testr=testr)
@@ -170,6 +169,9 @@ def train_max_from_saved(params, num_rounds, early_stopping_rounds, symbols, fea
                          test_ratio, num_candles, day_offset, days):
     valr = int(val_ratio * 10)
     testr = int(test_ratio * 10)
+    from lambdatrader.signals.data_analysis.learning.dummy.xgb_interleaved.dmatrix_save_load_util\
+        import \
+        load_max_dmatrix
     dmatrices = load_max_dmatrix(num_candles=num_candles, candle_period=M5, feature_set=feature_set,
                                  num_days=days, days_offset=day_offset, symbols=symbols, valr=valr,
                                  testr=testr)

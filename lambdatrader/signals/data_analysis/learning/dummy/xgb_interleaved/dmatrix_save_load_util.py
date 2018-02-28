@@ -10,7 +10,7 @@ from lambdatrader.utilities.utils import get_project_directory
 
 
 def _md5(string):
-    return hashlib.md5(string).hexdigest()
+    return hashlib.md5(string.encode('utf-8')).hexdigest()
 
 
 def _close_dmatrix_name(num_candles, candle_period, feature_set, num_days, days_offset, symbols,
@@ -18,7 +18,7 @@ def _close_dmatrix_name(num_candles, candle_period, feature_set, num_days, days_
     n = _dmatrix_name(num_candles, candle_period, feature_set, num_days, days_offset, symbols, valr,
                       testr, 'close')
     n_t = '{}_{}.buffer'.format(n, 't')
-    n_v = '{}_{}.buffer'.format(n, 't')
+    n_v = '{}_{}.buffer'.format(n, 'v')
     n_tt = '{}_{}.buffer'.format(n, 'tt')
     return n_t, n_v, n_tt
 
@@ -28,7 +28,7 @@ def _max_dmatrix_name(num_candles, candle_period, feature_set, num_days, days_of
     n = _dmatrix_name(num_candles, candle_period, feature_set, num_days, days_offset, symbols, valr,
                       testr, 'max')
     n_t = '{}_{}.buffer'.format(n, 't')
-    n_v = '{}_{}.buffer'.format(n, 't')
+    n_v = '{}_{}.buffer'.format(n, 'v')
     n_tt = '{}_{}.buffer'.format(n, 'tt')
     return n_t, n_v, n_tt
 
@@ -79,7 +79,7 @@ def save_close_dmatrix(num_candles, candle_period, feature_set, num_days, days_o
                                        days_offset, symbols, valr, testr)
     dt.save_binary(nt)
     dv.save_binary(nv)
-    dt.save_binary(ntt)
+    dtt.save_binary(ntt)
 
 
 def load_max_dmatrix(num_candles, candle_period, feature_set, num_days, days_offset, symbols, valr,
@@ -98,4 +98,4 @@ def save_max_dmatrix(num_candles, candle_period, feature_set, num_days, days_off
                                      symbols, valr, testr)
     dt.save_binary(nt)
     dv.save_binary(nv)
-    dt.save_binary(ntt)
+    dtt.save_binary(ntt)
