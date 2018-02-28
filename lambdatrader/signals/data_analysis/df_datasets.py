@@ -115,21 +115,27 @@ class DFDataset:
 
     def add_feature_names(self):
         self.return_values.append(self.feature_names)
+        return self
 
     def add_value_names(self):
         self.return_values.append(self.value_names)
+        return self
 
     def add_feature_df(self):
         self.return_values.append(self.feature_df)
+        return self
 
     def add_value_df(self):
         self.return_values.append(self.value_df)
+        return self
 
     def add_feature_values(self, start_date=None, end_date=None):
         self.return_values.append(self.get_feature_values(start_date, end_date))
+        return self
 
     def add_value_values(self, value_name=None, start_date=None, end_date=None):
         self.return_values.append(self.get_value_values(value_name, start_date, end_date))
+        return self
 
     def get(self):
         return_values = tuple(self.return_values)
