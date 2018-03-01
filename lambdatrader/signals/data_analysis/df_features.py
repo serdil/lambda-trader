@@ -42,10 +42,6 @@ class DFFeatureSet:
 class BaseFeature:
 
     @property
-    def lookback(self):
-        raise NotImplementedError
-
-    @property
     def name(self):
         raise NotImplementedError
 
@@ -53,7 +49,21 @@ class BaseFeature:
         raise NotImplementedError
 
 
-class DummyFeature(BaseFeature):
+class LookbackFeature(BaseFeature):
+
+    @property
+    def name(self):
+        raise NotImplementedError
+
+    @property
+    def lookback(self):
+        raise NotImplementedError
+
+    def compute(self, dfs):
+        raise NotImplementedError
+
+
+class DummyFeature(LookbackFeature):
 
     @property
     def lookback(self):
@@ -68,7 +78,7 @@ class DummyFeature(BaseFeature):
         return to_ffilled_df_with_name(dfs[M5].index, zero_series, self.name)
 
 
-class RandomFeature(BaseFeature):
+class RandomFeature(LookbackFeature):
 
     @property
     def name(self):
@@ -83,7 +93,7 @@ class RandomFeature(BaseFeature):
         return to_ffilled_df_with_name(dfs[M5].index, random_series, self.name)
 
 
-class OHLCVValue(BaseFeature):
+class OHLCVValue(LookbackFeature):
     def __init__(self, mode, offset, period=M5):
         self.mode = mode
         self.offset = offset
@@ -104,7 +114,7 @@ class OHLCVValue(BaseFeature):
         return to_ffilled_df_with_name(dfs[M5].index, df[self.mode].shift(self.offset), self.name)
 
 
-class OHLCVSelfDelta(BaseFeature):
+class OHLCVSelfDelta(LookbackFeature):
     def __init__(self, mode, offset, period=M5):
         self.mode = mode
         self.offset = offset
@@ -126,7 +136,7 @@ class OHLCVSelfDelta(BaseFeature):
         return to_ffilled_df_with_name(dfs[M5].index, self_delta, self.name)
 
 
-class OHLCVCloseDelta(BaseFeature):
+class OHLCVCloseDelta(LookbackFeature):
 
     def __init__(self, mode, offset, period=M5):
         self.mode = mode
@@ -149,7 +159,7 @@ class OHLCVCloseDelta(BaseFeature):
         return to_ffilled_df_with_name(dfs[M5].index, close_delta, self.name)
 
 
-class IndicatorValue(BaseFeature):
+class IndicatorValue(LookbackFeature):
 
     def __init__(self, indicator, args, offset, longest_timeperiod, period=M5):
         self.indicator = indicator
@@ -174,7 +184,7 @@ class IndicatorValue(BaseFeature):
                                        self.name)
 
 
-class IndicatorSelfDelta(BaseFeature):
+class IndicatorSelfDelta(LookbackFeature):
 
     def __init__(self, indicator, args, offset, longest_timeperiod, period=M5):
         self.indicator = indicator
@@ -199,7 +209,7 @@ class IndicatorSelfDelta(BaseFeature):
         return to_ffilled_df_with_name(dfs[M5].index, self_delta, self.name)
 
 
-class IndicatorCloseDelta(BaseFeature):
+class IndicatorCloseDelta(LookbackFeature):
 
     def __init__(self, indicator, args, offset, longest_timeperiod, period=M5):
         self.indicator = indicator

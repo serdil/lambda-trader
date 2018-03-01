@@ -3,10 +3,28 @@ from lambdatrader.signals.data_analysis.constants import OHLCV_HIGH, OHLCV_CLOSE
 from lambdatrader.signals.data_analysis.df_features import BaseFeature, to_ffilled_df_with_name
 
 
-class ValueFeature(BaseFeature):
+class LookforwardFeature(BaseFeature):
 
     @property
     def name(self):
+        raise NotImplementedError
+
+    @property
+    def lookforward(self):
+        raise NotImplementedError
+
+    def compute(self, dfs):
+        raise NotImplementedError
+
+
+class ValueFeature(LookforwardFeature):
+
+    @property
+    def name(self):
+        raise NotImplementedError
+
+    @property
+    def lookforward(self):
         raise NotImplementedError
 
     def compute(self, dfs):
@@ -22,6 +40,10 @@ class MaxReturn(ValueFeature):
     @property
     def name(self):
         return 'max_return_period_{}_n_candles_{}'.format(self.period.name, self.n_candles)
+
+    @property
+    def lookforward(self):
+        return self.n_candles * self.period.seconds()
 
     def compute(self, dfs):
         df = dfs[self.period]
@@ -40,6 +62,10 @@ class CloseReturn(ValueFeature):
     def name(self):
         return 'close_return_period_{}_n_candles_{}'.format(self.period.name, self.n_candles)
 
+    @property
+    def lookforward(self):
+        return self.n_candles * self.period.seconds()
+
     def compute(self, dfs):
         df = dfs[self.period]
         close_returns = (df[OHLCV_CLOSE].diff(self.n_candles).shift(-self.n_candles) /
@@ -56,6 +82,10 @@ class MinReturn(ValueFeature):
     @property
     def name(self):
         return 'min_return_period_{}_n_candles_{}'.format(self.period.name, self.n_candles)
+
+    @property
+    def lookforward(self):
+        return self.n_candles * self.period.seconds()
 
     def compute(self, dfs):
         df = dfs[self.period]
