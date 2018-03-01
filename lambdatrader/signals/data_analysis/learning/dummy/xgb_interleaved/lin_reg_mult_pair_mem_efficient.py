@@ -22,7 +22,7 @@ days = 200
 val_ratio = 0.8
 test_ratio = 0.9
 
-feature_set = fsf.get_all_periods_last_five_ohlcv()
+feature_set = fsf.get_all_periods_last_ten_ohlcv()
 
 use_saved = True
 # use_saved = False
@@ -74,7 +74,7 @@ max_params.update({
     'eta': 0.2
 })
 
-num_rounds = 1000
+num_rounds = 100
 early_stopping_rounds = 10
 
 common_args = {
