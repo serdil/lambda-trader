@@ -94,6 +94,20 @@ class DFFeatureSetFactory:
                                                                           periods=periods)
 
     @classmethod
+    def get_all_periods_last_ten_ohlcv(cls):
+        num_offsets = 10
+        periods = [M5, M15, H, H4, D]
+        return cls._get_ohlc_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
+                                                                          periods=periods)
+
+    @classmethod
+    def get_all_periods_last_n_ohlcv(cls, n):
+        num_offsets = n
+        periods = [M5, M15, H, H4, D]
+        return cls._get_ohlc_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
+                                                                          periods=periods)
+
+    @classmethod
     def get_dummy(cls):
         return DFFeatureSet(features=[DummyFeature()])
 
