@@ -145,9 +145,36 @@ class CMMModelPredictorFactoryFactory:
         candle_period = M5
 
         train_val_ratio = 0.9
-        n_rounds = 10000
+        n_rounds = 1000
         early_stopping_rounds = 10
 
+        booster_params = self._xgb_lin_reg_params_2()
+
+        cmm_model = XGBCMMModel(num_candles=num_candles,
+                                candle_period=M5,
+                                booster_params=booster_params,
+                                train_ratio=train_val_ratio,
+                                num_rounds=n_rounds,
+                                early_stopping_rounds=early_stopping_rounds)
+
+        feature_set = DFFeatureSetFactory.get_all_periods_last_ten_ohlcv()
+        cmm_df_dataset_factory = CMMDFDatasetFactory(feature_set=feature_set,
+                                                     num_candles=num_candles, candle_period=M5)
+
+        predictor_factory = CMMModelPredictorFactory(feature_set=feature_set,
+                                                     num_candles=num_candles,
+                                                     candle_period=candle_period,
+                                                     cmm_df_dataset_factory=cmm_df_dataset_factory,
+                                                     cmm_model=cmm_model,
+                                                     precompute=self.precompute,
+                                                     pc_pairs=self.pc_pairs,
+                                                     pc_start_date=self.pc_start_date,
+                                                     pc_end_date=self.pc_end_date,
+                                                     pc_cs_store=self.pc_cs_store)
+        return predictor_factory
+
+    @staticmethod
+    def _xgb_lin_reg_params_1():
         booster_params = {
             'silent': 1,
             'booster': 'gblinear',
@@ -180,35 +207,40 @@ class CMMModelPredictorFactoryFactory:
             'rate_drop': 0.01,
         }
 
-        cmm_model = XGBCMMModel(num_candles=num_candles,
-                                candle_period=M5,
-                                booster_params=booster_params,
-                                train_ratio=train_val_ratio,
-                                num_rounds=n_rounds,
-                                early_stopping_rounds=early_stopping_rounds)
+    @staticmethod
+    def _xgb_lin_reg_params_2():
+        booster_params = {
+            'silent': 1, 'booster': 'gblinear',
 
-        feature_set = DFFeatureSetFactory.get_small()
-        cmm_df_dataset_factory = CMMDFDatasetFactory(feature_set=feature_set,
-                                                     num_candles=num_candles, candle_period=M5)
+            'objective': 'reg:linear', 'base_score': 0, 'eval_metric': 'rmse',
 
-        predictor_factory = CMMModelPredictorFactory(feature_set=feature_set,
-                                                     num_candles=num_candles,
-                                                     candle_period=candle_period,
-                                                     cmm_df_dataset_factory=cmm_df_dataset_factory,
-                                                     cmm_model=cmm_model,
-                                                     precompute=self.precompute,
-                                                     pc_pairs=self.pc_pairs,
-                                                     pc_start_date=self.pc_start_date,
-                                                     pc_end_date=self.pc_end_date,
-                                                     pc_cs_store=self.pc_cs_store)
-        return predictor_factory
+            'eta': 0.1, 'gamma': 0, 'max_depth': 3, 'min_child_weight': 1, 'max_delta_step': 0,
+            'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'tree_method': 'exact',
+            'sketch_eps': 0.03, 'scale_pos_weight': 1, 'refresh_leaf': 1, 'process_type': 'default',
+            'grow_policy': 'depthwise', 'max_leaves': 0, 'max_bin': 256,
+
+            # 'lambda': 1,
+            # 'alpha': 0,
+            # 'updater': 'grow_colmaker,prune',
+
+            # 'sample_type': 'uniform',
+            # 'normalize_type': 'tree',
+            # 'rate_drop': 0.00,
+            # 'one_drop': 0,
+            # 'skip_drop': 0.00,
+
+            'reg_lambda': 0, 'reg_alpha': 0,
+            # 'updater': 'shotgun'
+        }
+
+        return booster_params
 
 
 CloseMaxMinPred = namedtuple('CloseMaxMinPred', ['close_pred', 'max_pred', 'min_pred'])
 
 
 class CMMModelPredictorFactory:
-    LOOKBACK_DAYS = 7
+    LOOKBACK_DAYS = 20
 
     def __init__(self,
                  feature_set,
