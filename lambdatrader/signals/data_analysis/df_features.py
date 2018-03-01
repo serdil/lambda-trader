@@ -42,6 +42,10 @@ class DFFeatureSet:
 class BaseFeature:
 
     @property
+    def lookback(self):
+        raise NotImplementedError
+
+    @property
     def name(self):
         raise NotImplementedError
 
@@ -50,6 +54,10 @@ class BaseFeature:
 
 
 class DummyFeature(BaseFeature):
+
+    @property
+    def lookback(self):
+        return 0
 
     @property
     def name(self):
@@ -65,6 +73,10 @@ class RandomFeature(BaseFeature):
     @property
     def name(self):
         return 'random_feature'
+
+    @property
+    def lookback(self):
+        return 0
 
     def compute(self, dfs):
         random_series = pd.Series(np.random.rand(len(dfs[M5])), index=dfs[M5].index)
@@ -83,6 +95,10 @@ class OHLCVValue(BaseFeature):
                                                                 self.mode,
                                                                 self.offset)
 
+    @property
+    def lookback(self):
+        return self.period.seconds() * self.offset
+
     def compute(self, dfs):
         df = dfs[self.period]
         return to_ffilled_df_with_name(dfs[M5].index, df[self.mode].shift(self.offset), self.name)
@@ -99,6 +115,10 @@ class OHLCVSelfDelta(BaseFeature):
         return 'ohlcv_self_delta_period_{}_mode_{}_offset_{}'.format(self.period.name,
                                                                      self.mode,
                                                                      self.offset)
+
+    @property
+    def lookback(self):
+        return self.period.seconds() * self.offset
 
     def compute(self, dfs):
         df = dfs[self.period]
@@ -119,6 +139,10 @@ class OHLCVCloseDelta(BaseFeature):
                                                                       self.mode,
                                                                       self.offset)
 
+    @property
+    def lookback(self):
+        return self.period.seconds() * self.offset
+
     def compute(self, dfs):
         df = dfs[self.period]
         close_delta = (df[OHLCV_CLOSE] - df[self.mode].shift(self.offset)) / df[OHLCV_CLOSE]
@@ -127,16 +151,21 @@ class OHLCVCloseDelta(BaseFeature):
 
 class IndicatorValue(BaseFeature):
 
-    def __init__(self, indicator, args, offset, period=M5):
+    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5):
         self.indicator = indicator
         self.args = args
         self.offset = offset
         self.period = period
+        self.longest_timeperiod = longest_timeperiod
 
     @property
     def name(self):
         return ('indicator_value_period_{}_indicator_{}_args_{}_offset_{}'
                 .format(self.period.name, self.indicator.name, join_list(self.args), self.offset))
+
+    @property
+    def lookback(self):
+        return (self.longest_timeperiod + self.offset) * self.period.seconds()
 
     def compute(self, dfs):
         df = dfs[self.period]
@@ -147,16 +176,21 @@ class IndicatorValue(BaseFeature):
 
 class IndicatorSelfDelta(BaseFeature):
 
-    def __init__(self, indicator, args, offset, period=M5):
+    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5):
         self.indicator = indicator
         self.args = args
         self.offset = offset
         self.period = period
+        self.longest_timeperiod = longest_timeperiod
 
     @property
     def name(self):
         return ('indicator_self_delta_period_{}_indicator_{}_args_{}_offset_{}'
                 .format(self.period.name, self.indicator.name, join_list(self.args), self.offset))
+
+    @property
+    def lookback(self):
+        return (self.longest_timeperiod + self.offset) * self.period.seconds()
 
     def compute(self, dfs):
         df = dfs[self.period]
@@ -167,16 +201,21 @@ class IndicatorSelfDelta(BaseFeature):
 
 class IndicatorCloseDelta(BaseFeature):
 
-    def __init__(self, indicator, args, offset, period=M5):
+    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5):
         self.indicator = indicator
         self.args = args
         self.offset = offset
         self.period = period
+        self.longest_timeperiod = longest_timeperiod
 
     @property
     def name(self):
         return ('indicator_close_delta_period_{}_indicator_{}_args_{}_offset_{}'
                 .format(self.period.name, self.indicator.name, join_list(self.args), self.offset))
+
+    @property
+    def lookback(self):
+        return (self.longest_timeperiod + self.offset) * self.period.seconds()
 
     def compute(self, dfs):
         df = dfs[self.period]
@@ -187,15 +226,20 @@ class IndicatorCloseDelta(BaseFeature):
 
 class MACDValue(IndicatorValue):
     def __init__(self, fastperiod=12, slowperiod=26, signalperiod=9, offset=0, period=M5):
-        super().__init__(IndicatorEnum.MACD, [fastperiod, slowperiod, signalperiod], offset, period)
+        longest_timeperiod = max(fastperiod, slowperiod, signalperiod)
+        super().__init__(IndicatorEnum.MACD,
+                         [fastperiod, slowperiod, signalperiod],
+                         offset, longest_timeperiod, period)
 
 
 class RSIValue(IndicatorValue):
     def __init__(self, timeperiod=14, offset=0, period=M5):
-        super().__init__(IndicatorEnum.RSI, [timeperiod], offset, period)
+        longest_timeperiod = timeperiod
+        super().__init__(IndicatorEnum.RSI, [timeperiod], offset, longest_timeperiod, period)
 
 
 class BBandsCloseDelta(IndicatorCloseDelta):
     def __init__(self, timeperiod=5, nbdevup=2, nbdevdn=2, matype=0, offset=0, period=M5):
+        longest_timeperiod = timeperiod
         super().__init__(IndicatorEnum.BBANDS, [timeperiod, nbdevup, nbdevdn, matype],
-                         offset, period)
+                         offset, longest_timeperiod, period)
