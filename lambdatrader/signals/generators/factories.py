@@ -241,7 +241,6 @@ CloseMaxMinPred = namedtuple('CloseMaxMinPred', ['close_pred', 'max_pred', 'min_
 
 
 class CMMModelPredictorFactory:
-    LOOKBACK_DAYS = 20
 
     def __init__(self,
                  feature_set,
@@ -262,7 +261,6 @@ class CMMModelPredictorFactory:
         self.precompute = precompute
 
         if precompute:
-            pc_start_date = pc_start_date - seconds(days=self.LOOKBACK_DAYS)
             self.cmm_df_dataset_factory.precompute_for_pairs(cs_store=pc_cs_store,
                                                              pairs=pc_pairs,
                                                              start_date=pc_start_date,
@@ -307,7 +305,7 @@ class CMMModelPredictorFactory:
             if self.precompute:
                 input_dataset = self.cmm_df_dataset_factory.get_precomputed(pair)
             else:
-                start_date = date - seconds(days=self.LOOKBACK_DAYS)
+                start_date = date
                 end_date = date
 
                 input_dataset = self.cmm_df_dataset_factory.create_dataset(cs_store=cs_store,

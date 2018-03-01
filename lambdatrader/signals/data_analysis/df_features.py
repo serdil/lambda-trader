@@ -38,6 +38,13 @@ class DFFeatureSet:
         if self.sort:
             self.features.sort(key=attrgetter('name'))
 
+    def get_lookback(self):
+        return max(0, *[f.lookback for f in self.features if isinstance(f, LookbackFeature)])
+
+    def get_lookforward(self):
+        from lambdatrader.signals.data_analysis.df_values import LookforwardFeature
+        return max(0, *[f.lookback for f in self.features if isinstance(f, LookforwardFeature)])
+
 
 class BaseFeature:
 

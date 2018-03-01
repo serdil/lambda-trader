@@ -10,10 +10,13 @@ from lambdatrader.exchanges.enums import POLONIEX
 
 class DFDataset:
 
-    def __init__(self, dfs, feature_df, value_df):
+    def __init__(self, dfs, feature_df, value_df, feature_set, value_set):
         self.dfs = dfs
         self.feature_df = feature_df
         self.value_df = value_df
+
+        self.feature_set = feature_set,
+        self.value_set = value_set
 
         self.return_values = []
 
@@ -22,6 +25,9 @@ class DFDataset:
                 end_date=None, cs_store=None, normalize=True, error_on_missing=True):
         if cs_store is None:
             cs_store = SQLiteCandlestickStore.get_for_exchange(POLONIEX)
+
+        start_date = start_date - feature_set.get_lookback()
+        end_date = end_date + value_set.get_lookforward()
 
         dfs = cs_store.get_agg_period_dfs(pair,
                                           start_date=start_date,
@@ -43,7 +49,7 @@ class DFDataset:
 
         print('dataset comp time: {:.3f}s'.format(time.time() - start_time))
 
-        return DFDataset(dfs, feature_df, value_df)
+        return DFDataset(dfs, feature_df, value_df, feature_set, value_set)
 
     @classmethod
     def compute_interleaved(cls, pairs, feature_set, value_set,
@@ -78,7 +84,8 @@ class DFDataset:
         value_dfs = [ds.value_df for ds in datasets]
         feature_df = pd.concat(feature_dfs).sort_index()
         value_df = pd.concat(value_dfs).sort_index()
-        return DFDataset(dfs=None, feature_df=feature_df, value_df=value_df)
+        return DFDataset(dfs=None, feature_df=feature_df, value_df=value_df,
+                         feature_set=None, value_set=None)
 
     @property
     def feature_names(self):
@@ -141,3 +148,4 @@ class DFDataset:
         return_values = tuple(self.return_values)
         self.return_values = []
         return return_values
+
