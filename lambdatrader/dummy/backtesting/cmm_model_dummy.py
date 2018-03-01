@@ -54,10 +54,10 @@ sig_gen_fact = CMMModelSignalGeneratorFactory(cs_store=cs_store,
 # rf_sig_gen = sig_gen_fact.get_random_forest_n_days_n_estimators(n_days=7)
 # xgb_lin_reg_sig_gen = sig_gen_fact.get_xgb_lin_reg_n_days(n_days=7)
 xgb_lin_reg_one_model_sig_gen = (sig_gen_fact.
-                                 get_xgb_lin_reg_n_days_one_model_max_pred(n_days=200,
-                                                                           training_pairs=None,
-                                                                           close_thr=0.03,
-                                                                           retrain_interval_days=30))
+                                 get_xgb_lin_reg_n_days_one_model(n_days=200,
+                                                                  training_pairs=None,
+                                                                  close_thr=0.03,
+                                                                  retrain_interval_days=30))
 
 signal_generators = [xgb_lin_reg_one_model_sig_gen]
 

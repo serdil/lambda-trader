@@ -206,6 +206,7 @@ class CMMModelPredictorFactoryFactory:
             'sample_type': 'weighted',
             'rate_drop': 0.01,
         }
+        return booster_params
 
     @staticmethod
     def _xgb_lin_reg_params_2():
@@ -442,11 +443,12 @@ class CMMModelSignalGeneratorFactory:
                                                    cmm_model_predictor_factory=predictor_factory)
         return self._create_with_settings(settings)
 
-    def get_xgb_lin_reg_n_days_one_model_max_pred(self,
-                                                  n_days,
-                                                  training_pairs=None,
-                                                  close_thr=0.03,
-                                                  retrain_interval_days=30):
+    def get_xgb_lin_reg_n_days_one_model(self,
+                                         n_days=200,
+                                         training_pairs=None,
+                                         close_thr=0.03,
+                                         retrain_interval_days=30,
+                                         tp_strategy=CMM__TP_STRATEGY_MAX_PRED_MULT):
         if training_pairs is None:
             training_pairs = Pairs.all_pairs()
 
@@ -462,7 +464,7 @@ class CMMModelSignalGeneratorFactory:
                                                    cmm_model_predictor_factory=predictor_factory,
                                                    one_model_to_rule_them_all=True,
                                                    one_model_training_pairs=training_pairs,
-                                                   tp_strategy=CMM__TP_STRATEGY_MAX_PRED_MULT,
+                                                   tp_strategy=tp_strategy,
                                                    close_thr=close_thr,
                                                    model_update_interval=model_update_interval)
         return self._create_with_settings(settings)
