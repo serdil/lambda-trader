@@ -34,13 +34,13 @@ all_symbols = set(SQLiteCandlestickStore.get_for_exchange(POLONIEX).get_pairs())
 # test_ratio = 0.9
 # feature_set = fsf.get_all_periods_last_five_ohlcv()
 
-symbols = sorted(list(all_symbols))
-num_candles = 48
-day_offset = 12
-days = 200
-val_ratio = 0.8
-test_ratio = 0.9
-feature_set = fsf.get_all_periods_last_ten_ohlcv()
+# symbols = sorted(list(all_symbols))
+# num_candles = 48
+# day_offset = 12
+# days = 200
+# val_ratio = 0.8
+# test_ratio = 0.9
+# feature_set = fsf.get_all_periods_last_ten_ohlcv()
 
 # symbols = sorted(list(all_symbols))
 # num_candles = 48
@@ -49,6 +49,14 @@ feature_set = fsf.get_all_periods_last_ten_ohlcv()
 # val_ratio = 0.6
 # test_ratio = 0.8
 # feature_set = fsf.get_all_periods_last_ten_ohlcv()
+
+symbols = sorted(list(all_symbols))
+num_candles = 1
+day_offset = 12
+days = 200
+val_ratio = 0.8
+test_ratio = 0.9
+feature_set = fsf.get_all_periods_last_ten_ohlcv()
 
 valr = int(val_ratio * 100)
 testr = int(test_ratio * 100)
