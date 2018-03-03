@@ -5,6 +5,7 @@ import time
 import pandas as pd
 import xgboost as xgb
 from pandas.core.base import DataError
+from sklearn.datasets import dump_svmlight_file
 
 from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.constants import M5, M15, H, H4, D
@@ -35,7 +36,7 @@ class DatasetDescriptor:
         if not interleaved and len(exchanges) > 1:
             raise ValueError('There should be exactly 1 exchange if interleaved is False.')
 
-        self.pairs = pairs
+        self.pairs = sorted(pairs)
         self.feature_set = feature_set
         self.value_set = value_set
         self.start_date = start_date
@@ -319,7 +320,7 @@ class XGBDMatrixDataset:
 
         value_name = descriptor.value_set.features[0].name
 
-        with open(cls._get_libsvm_file_path(descriptor), 'w') as f:
+        with open(cls._get_libsvm_file_path(descriptor), 'wb') as f:
             for batch_start_date in range(start_date, end_date, batch_size * M5.seconds()):
                 print('computing batch...')
                 batch_end_date = min(end_date, start_date + batch_seconds)
@@ -338,8 +339,8 @@ class XGBDMatrixDataset:
                         .get())
 
                 print('saving batch...')
-                for line in cls._stream_x_y_libsvm_lines(x, y):
-                    f.write(line + '\n')
+                if len(x) > 0:
+                    dump_svmlight_file(X=x, y=y, f=f, zero_based=False)
 
     @classmethod
     def _get_libsvm_file_path(cls, descriptor):
@@ -359,14 +360,6 @@ class XGBDMatrixDataset:
         if not os.path.isdir(path):
             os.mkdir(path)
         return path
-
-    @classmethod
-    def _stream_x_y_libsvm_lines(cls, x, y):
-        assert len(x) == len(y)
-        for i, row in enumerate(x):
-            label_and_space = str(y[i]) + ' '
-            line = label_and_space + ' '.join(['{}:{}'.format(j+1, f) for (j, f) in enumerate(row)])
-            yield line
 
     @classmethod
     def compute(cls, descriptor: SingleValueDatasetDescriptor,
