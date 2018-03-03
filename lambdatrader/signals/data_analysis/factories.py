@@ -2,10 +2,13 @@ from lambdatrader.constants import M5, M15, H, H4, D
 from lambdatrader.signals.data_analysis.constants import (
     OHLCV_OPEN, OHLCV_HIGH, OHLCV_LOW, OHLCV_CLOSE, OHLCV_VOLUME,
 )
-from lambdatrader.signals.data_analysis.df_datasets import DateRange
+from lambdatrader.signals.data_analysis.df_datasets import DateRange, SplitDateRange
 from lambdatrader.signals.data_analysis.df_features import (
     OHLCVCloseDelta, OHLCVValue, OHLCVSelfDelta, DFFeatureSet, DummyFeature, RandomFeature,
 )
+from lambdatrader.signals.data_analysis.df_values import CloseReturn, MaxReturn
+from lambdatrader.signals.data_analysis.utils import date_str_to_timestamp
+from lambdatrader.utilities.utils import seconds
 
 
 class FeaturesFactory:
@@ -122,6 +125,61 @@ class FeatureSets:
         return DFFeatureSet(features=features)
 
 
+class Values:
+
+    @classmethod
+    def close_return_4h(cls):
+        return cls.close_return_n_candles(48)
+
+    @classmethod
+    def close_return_1h(cls):
+        return cls.close_return_n_candles(12)
+
+    @classmethod
+    def close_return_next_candle(cls):
+        return cls.close_return_n_candles(1)
+
+    @classmethod
+    def close_return_n_candles(cls, n):
+        return CloseReturn(n_candles=n)
+
+    @classmethod
+    def max_return_4h(cls):
+        return cls.max_return_n_candles(48)
+
+    @classmethod
+    def max_return_1h(cls):
+        return cls.max_return_n_candles(12)
+
+    @classmethod
+    def max_return_next_candle(cls):
+        return cls.max_return_n_candles(1)
+
+    @classmethod
+    def max_return_n_candles(cls, n):
+        return MaxReturn(n_candles=n)
+
+
+class ValueSets:
+
+    @classmethod
+    def close_return_4h(cls):
+        return DFFeatureSet(features=[Values.close_return_4h()])
+
+    @classmethod
+    def close_max_return_4h(cls):
+        return DFFeatureSet(features=[Values.close_return_4h(), Values.max_return_4h()])
+
+    @classmethod
+    def close_return_next_candle(cls):
+        return DFFeatureSet(features=[Values.close_return_next_candle()])
+
+    @classmethod
+    def close_max_return_next_candle(cls):
+        return DFFeatureSet(features=[Values.close_return_next_candle(),
+                                      Values.max_return_next_candle()])
+
+
 class DateRanges:
 
     @classmethod
@@ -151,3 +209,53 @@ class DateRanges:
     @classmethod
     def january_last_10_days(cls):
         return DateRange.from_str(start_str='2018-01-20', end_str='2018-02-01')
+
+    @classmethod
+    def until_start_of_january_5_months(cls):
+        return DateRange.from_str(start_str='2017-07-01', end_str='2018-01-01')
+
+
+class SplitDateRanges:
+
+    @classmethod
+    def january_1_month_test_1_month_val_5_months_train(cls):
+        return SplitDateRange(
+            train_dr=DateRanges.until_start_of_january_5_months(),
+            val_dr=DateRanges.december(),
+            test_dr=DateRanges.january()
+        )
+
+    @classmethod
+    def january_20_days_test_20_days_val_160_days_train(cls):
+        december_20_timestamp = date_str_to_timestamp('2018-12-20')
+        return SplitDateRange(
+            train_dr=DateRange(december_20_timestamp - seconds(days=160), december_20_timestamp),
+            val_dr=DateRange.from_str('2017-12-20', '2018-01-10'),
+            test_dr=DateRanges.january_last_20_days()
+        )
+
+    @classmethod
+    def january_20_days_test_20_days_val_360_days_train(cls):
+        december_20_timestamp = date_str_to_timestamp('2018-12-20')
+        return SplitDateRange(
+            train_dr=DateRange(december_20_timestamp - seconds(days=360), december_20_timestamp),
+            val_dr=DateRange.from_str('2017-12-20', '2018-01-10'),
+            test_dr=DateRanges.january_last_20_days()
+        )
+
+    @classmethod
+    def january_20_days_test_20_days_val_500_days_train(cls):
+        december_20_timestamp = date_str_to_timestamp('2018-12-20')
+        return SplitDateRange(
+            train_dr=DateRange(december_20_timestamp - seconds(days=500), december_20_timestamp),
+            val_dr=DateRange.from_str('2017-12-20', '2018-01-10'),
+            test_dr=DateRanges.january_last_20_days()
+        )
+
+    @classmethod
+    def january_20_days_test_20_days_val_rest_train(cls):
+        return SplitDateRange(
+            train_dr=DateRange.from_str(None, '2018-12-20'),
+            val_dr=DateRange.from_str('2017-12-20', '2018-01-10'),
+            test_dr=DateRanges.january_last_20_days()
+        )

@@ -3,7 +3,6 @@ import os
 import time
 
 import pandas as pd
-from datetime import datetime
 from pandas.core.base import DataError
 import xgboost as xgb
 
@@ -11,6 +10,7 @@ from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.constants import M5, M15, H, H4, D
 from lambdatrader.exchanges.enums import POLONIEX, ExchangeEnum
 from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
+from lambdatrader.signals.data_analysis.utils import date_str_to_timestamp
 from lambdatrader.utilities.utils import get_project_directory
 
 
@@ -61,6 +61,53 @@ class DatasetDescriptor:
     @property
     def feature_names(self):
         return self.feature_set.feature_names
+
+
+class SplitDatasetDescriptor:
+
+    def __init__(self, train_descriptor, val_descriptor, test_descriptor):
+        self.training = train_descriptor
+        self.validation = val_descriptor
+        self.test = test_descriptor
+
+    @classmethod
+    def create_with_train_val_test_date_ranges(cls, pairs, feature_set, value_set, split_date_range,
+                                               exchanges=(POLONIEX,), interleaved=False):
+        return cls._create_with_desc_class(pairs, feature_set, value_set, split_date_range,
+                                           exchanges, interleaved, desc_class=DatasetDescriptor)
+
+    @classmethod
+    def create_single_value_with_train_val_test_date_ranges(cls, pairs, feature_set,
+                                                            value_set, split_date_range,
+                                                            exchanges=(POLONIEX,),
+                                                            interleaved=False):
+        return cls._create_with_desc_class(pairs, feature_set, value_set, split_date_range,
+                                           exchanges, interleaved,
+                                           desc_class=SingleValueDatasetDescriptor)
+
+    @classmethod
+    def _create_with_desc_class(cls, pairs, feature_set, value_set, split_date_range,
+                                exchanges, interleaved, desc_class=DatasetDescriptor):
+        train_dr = split_date_range.training
+        val_dr = split_date_range.validation
+        test_dr = split_date_range.test
+        train_s, train_e = train_dr.start, train_dr.end
+        val_s, val_e = val_dr.start, val_dr.end
+        test_s, test_e = test_dr.start, test_dr.end
+
+        train_dd = desc_class(pairs=pairs, feature_set=feature_set, value_set=value_set,
+                              start_date=train_s, end_date=train_e, exchanges=exchanges,
+                              interleaved=interleaved)
+
+        val_dd = desc_class(pairs=pairs, feature_set=feature_set, value_set=value_set,
+                            start_date=val_s, end_date=val_e, exchanges=exchanges,
+                            interleaved=interleaved)
+
+        test_dd = desc_class(pairs=pairs, feature_set=feature_set, value_set=value_set,
+                             start_date=test_s, end_date=test_e, exchanges=exchanges,
+                             interleaved=interleaved)
+
+        return SplitDatasetDescriptor(train_dd, val_dd, test_dd)
 
 
 class SingleValueDatasetDescriptor(DatasetDescriptor):
@@ -343,5 +390,12 @@ class DateRange:
 
     @staticmethod
     def _parse_str(date_str):
-        return int(datetime.strptime(date_str, '%Y-%m-%d').timestamp())
-        pass
+        return date_str_to_timestamp(date_str)
+
+
+class SplitDateRange:
+
+    def __init__(self, train_dr, val_dr, test_dr):
+        self.training = train_dr
+        self.validation = val_dr
+        self.test = test_dr
