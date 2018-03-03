@@ -294,7 +294,7 @@ class DFDataset:
         return return_values
 
 
-LIBSVM_BATCH_SIZE = 2880
+LIBSVM_BATCH_SIZE = 10000
 
 
 class XGBDMatrixDataset:
@@ -323,7 +323,7 @@ class XGBDMatrixDataset:
         with open(cls._get_libsvm_file_path(descriptor), 'wb') as f:
             for batch_start_date in range(start_date, end_date, batch_size * M5.seconds()):
                 print('computing batch...')
-                batch_end_date = min(end_date, start_date + batch_seconds)
+                batch_end_date = min(end_date, batch_start_date + batch_seconds)
                 batch_descriptor = DatasetDescriptor(pairs=descriptor.pairs,
                                                      feature_set=descriptor.feature_set,
                                                      value_set=descriptor.value_set,

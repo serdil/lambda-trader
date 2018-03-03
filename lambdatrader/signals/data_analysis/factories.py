@@ -271,7 +271,7 @@ class SplitDateRanges:
     def january_3_days_test_3_days_val_7_days_train(cls):
         return SplitDateRange(
             train_dr=DateRange.from_str('2018-01-17', '2018-01-24'),
-            val_dr=DateRange.from_str('2017-12-24', '2018-01-27'),
+            val_dr=DateRange.from_str('2018-01-24', '2018-01-27'),
             test_dr=DateRange.from_str('2018-01-27', '2018-01-30')
         )
 
