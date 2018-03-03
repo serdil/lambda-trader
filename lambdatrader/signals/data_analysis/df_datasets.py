@@ -47,7 +47,7 @@ class DatasetDescriptor:
     def descriptive_name(self):
         pair_names = ','.join(self.pairs)
         feature_names = ','.join(self.feature_set.feature_names)
-        value_names = ','.join([self.value_set.feature_names])
+        value_names = ','.join(self.value_set.feature_names)
         exchange_names = ','.join([e.name for e in self.exchanges])
         start_date = self.start_date
         end_date = self.end_date
@@ -305,7 +305,9 @@ class XGBDMatrixDataset:
     @classmethod
     def save_buffer(cls, descriptor: SingleValueDatasetDescriptor,
                     normalize=True, error_on_missing=True):
-        dmatrix = cls.compute(descriptor, normalize=normalize, error_on_missing=error_on_missing)
+        dmatrix = (cls
+                   .compute(descriptor, normalize=normalize, error_on_missing=error_on_missing)
+                   .dmatrix)
         dmatrix.save_binary(cls._get_buffer_file_path(descriptor))
 
     @classmethod
@@ -315,9 +317,12 @@ class XGBDMatrixDataset:
         start_date = descriptor.start_date
         end_date = descriptor.end_date
 
+        value_name = descriptor.value_set.features[0].name
+
         with open(cls._get_libsvm_file_path(descriptor), 'w') as f:
             for batch_start_date in range(start_date, end_date, batch_size * M5.seconds()):
-                batch_end_date = start_date + batch_seconds
+                print('computing batch...')
+                batch_end_date = min(end_date, start_date + batch_seconds)
                 batch_descriptor = DatasetDescriptor(pairs=descriptor.pairs,
                                                      feature_set=descriptor.feature_set,
                                                      value_set=descriptor.value_set,
@@ -328,8 +333,11 @@ class XGBDMatrixDataset:
                 x, y = (DFDataset.compute_from_descriptor(descriptor=batch_descriptor,
                                                           normalize=normalize,
                                                           error_on_missing=error_on_missing)
-                        .add_feature_values().add_value_values(value_name=descriptor.value.name))
+                        .add_feature_values()
+                        .add_value_values(value_name=value_name)
+                        .get())
 
+                print('saving batch...')
                 for line in cls._stream_x_y_libsvm_lines(x, y):
                     f.write(line + '\n')
 
@@ -356,28 +364,30 @@ class XGBDMatrixDataset:
     def _stream_x_y_libsvm_lines(cls, x, y):
         assert len(x) == len(y)
         for i, row in enumerate(x):
-            label = y.iloc(i)
-            line = str(label) + ' '.join(['{}:{}'.format(j+1, f) for (j, f) in enumerate(row)])
+            label_and_space = str(y[i]) + ' '
+            line = label_and_space + ' '.join(['{}:{}'.format(j+1, f) for (j, f) in enumerate(row)])
             yield line
 
     @classmethod
     def compute(cls, descriptor: SingleValueDatasetDescriptor,
                 normalize=True, error_on_missing=True):
+        value_name = descriptor.value_set.features[0].name
         x, y = (DFDataset
                 .compute_from_descriptor(descriptor=descriptor,
                                          normalize=normalize,
                                          error_on_missing=error_on_missing)
                 .add_feature_values()
-                .add_value_values(value_name=descriptor.value.name))
+                .add_value_values(value_name=value_name)
+                .get())
 
         dmatrix = xgb.DMatrix(data=x, label=y, feature_names=descriptor.feature_names)
-        return dmatrix
+        return XGBDMatrixDataset(descriptor=descriptor, dmatrix=dmatrix)
 
     @classmethod
     def load_libsvm_cached(cls, descriptor: SingleValueDatasetDescriptor):
         data_and_cache = '{}#{}'.format(cls._get_libsvm_file_path(descriptor),
                                         cls._get_cache_path(descriptor))
-        dmatrix = xgb.DMatrix(data_and_cache, feature_names=descriptor.feature_names)
+        dmatrix = xgb.DMatrix(data_and_cache)
         return XGBDMatrixDataset(descriptor, dmatrix)
 
     @classmethod
