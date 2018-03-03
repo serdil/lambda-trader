@@ -294,7 +294,7 @@ class DFDataset:
         return return_values
 
 
-LIBSVM_BATCH_SIZE = 10000
+LIBSVM_BATCH_SIZE = 2880
 
 
 class XGBDMatrixDataset:
