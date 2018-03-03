@@ -3,13 +3,12 @@ import os
 import time
 
 import pandas as pd
-from pandas.core.base import DataError
 import xgboost as xgb
+from pandas.core.base import DataError
 
 from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.constants import M5, M15, H, H4, D
 from lambdatrader.exchanges.enums import POLONIEX, ExchangeEnum
-from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
 from lambdatrader.signals.data_analysis.utils import date_str_to_timestamp
 from lambdatrader.utilities.utils import get_project_directory
 
@@ -66,6 +65,19 @@ class DatasetDescriptor:
         return self.feature_set.feature_names
 
 
+class SingleValueDatasetDescriptor(DatasetDescriptor):
+    def __init__(self, pairs, feature_set, value_set, start_date, end_date,
+                 exchanges=(POLONIEX,), interleaved=False):
+        if len(value_set.features) > 1:
+            raise ValueError('There should be one and only one value in the ValueSet.')
+        super().__init__(pairs, feature_set, value_set,
+                         start_date, end_date, exchanges, interleaved)
+
+    @property
+    def value(self):
+        return self.value_set.features[0]
+
+
 class SplitDatasetDescriptor:
 
     def __init__(self, train_descriptor, val_descriptor, test_descriptor):
@@ -111,18 +123,6 @@ class SplitDatasetDescriptor:
                              interleaved=interleaved)
 
         return SplitDatasetDescriptor(train_dd, val_dd, test_dd)
-
-
-class SingleValueDatasetDescriptor(DatasetDescriptor):
-    def __init__(self, pairs, feature_set, value, start_date, end_date,
-                 exchanges=(POLONIEX,), interleaved=False):
-        value_set = DFFeatureSet(features=[value])
-        super().__init__(pairs, feature_set, value_set,
-                         start_date, end_date, exchanges, interleaved)
-
-    @property
-    def value(self):
-        return self.value_set.features[0]
 
 
 class DFDataset:
@@ -305,14 +305,7 @@ class XGBDMatrixDataset:
     @classmethod
     def save_buffer(cls, descriptor: SingleValueDatasetDescriptor,
                     normalize=True, error_on_missing=True):
-        x, y = (DFDataset
-                .compute_from_descriptor(descriptor=descriptor,
-                                         normalize=normalize,
-                                         error_on_missing=error_on_missing)
-                .add_feature_values()
-                .add_value_values(value_name=descriptor.value.name))
-
-        dmatrix = xgb.DMatrix(data=x, label=y, feature_names=descriptor.feature_names)
+        dmatrix = cls.compute(descriptor, normalize=normalize, error_on_missing=error_on_missing)
         dmatrix.save_binary(cls._get_buffer_file_path(descriptor))
 
     @classmethod
@@ -366,6 +359,19 @@ class XGBDMatrixDataset:
             label = y.iloc(i)
             line = str(label) + ' '.join(['{}:{}'.format(j+1, f) for (j, f) in enumerate(row)])
             yield line
+
+    @classmethod
+    def compute(cls, descriptor: SingleValueDatasetDescriptor,
+                normalize=True, error_on_missing=True):
+        x, y = (DFDataset
+                .compute_from_descriptor(descriptor=descriptor,
+                                         normalize=normalize,
+                                         error_on_missing=error_on_missing)
+                .add_feature_values()
+                .add_value_values(value_name=descriptor.value.name))
+
+        dmatrix = xgb.DMatrix(data=x, label=y, feature_names=descriptor.feature_names)
+        return dmatrix
 
     @classmethod
     def load_libsvm_cached(cls, descriptor: SingleValueDatasetDescriptor):

@@ -263,6 +263,14 @@ class SplitDateRanges:
             test_dr=DateRanges.january_last_20_days()
         )
 
+    @classmethod
+    def january_3_days_test_3_days_val_7_days_train(cls):
+        return SplitDateRange(
+            train_dr=DateRange.from_str('2018-01-17', '2018-01-24'),
+            val_dr=DateRange.from_str('2017-12-24', '2018-01-27'),
+            test_dr=DateRange.from_str('2018-01-27', '2018-01-30')
+        )
+
 
 class SplitDatasetDescriptors:
 
@@ -278,6 +286,44 @@ class SplitDatasetDescriptors:
         )
 
     @classmethod
+    def sdd_1_close(cls):
+        SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
+            pairs=None,
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            value_set=ValueSets.close_return_4h(),
+            split_date_range=SplitDateRanges.january_20_days_test_20_days_val_160_days_train(),
+            exchanges=(POLONIEX,), interleaved=True
+        )
+
+    @classmethod
+    def sdd_1_max(cls):
+        SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
+            pairs=None,
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            value_set=Values.max_return_4h(),
+            split_date_range=SplitDateRanges.january_20_days_test_20_days_val_160_days_train(),
+            exchanges=(POLONIEX,), interleaved=True
+        )
+
+    @classmethod
+    def sdd_1_close_mini(cls):
+        SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
+            pairs=None,
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            value_set=ValueSets.close_return_4h(),
+            split_date_range=SplitDateRanges.january_3_days_test_3_days_val_7_days_train(),
+            exchanges=(POLONIEX,), interleaved=True
+        )
+
+    @classmethod
+    def sdd_1_max_mini(cls):
+        SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(pairs=None,
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            value_set=Values.max_return_4h(),
+            split_date_range=SplitDateRanges.january_3_days_test_3_days_val_7_days_train(),
+            exchanges=(POLONIEX,), interleaved=True)
+
+    @classmethod
     def sdd_1_more_data(cls):
         SplitDatasetDescriptor.create_with_train_val_test_date_ranges(
             pairs=None,
@@ -290,11 +336,14 @@ class SplitDatasetDescriptors:
 
     @classmethod
     def sdd_1_all_data(cls):
-        SplitDatasetDescriptor.create_with_train_val_test_date_ranges(pairs=None,
+        SplitDatasetDescriptor.create_with_train_val_test_date_ranges(
+            pairs=None,
             feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
             value_set=ValueSets.close_max_return_4h(),
             split_date_range=SplitDateRanges.january_20_days_test_20_days_val_rest_train(),
-            exchanges=(POLONIEX,), interleaved=True)
+            exchanges=(POLONIEX,),
+            interleaved=True
+        )
 
     @classmethod
     def sdd_2(cls):
@@ -309,8 +358,10 @@ class SplitDatasetDescriptors:
 
     @classmethod
     def sdd_2_all_data(cls):
-        SplitDatasetDescriptor.create_with_train_val_test_date_ranges(pairs=None,
+        SplitDatasetDescriptor.create_with_train_val_test_date_ranges(
+            pairs=None,
             feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
             value_set=ValueSets.close_max_return_next_candle(),
             split_date_range=SplitDateRanges.january_20_days_test_20_days_val_rest_train(),
-            exchanges=(POLONIEX,), interleaved=True)
+            exchanges=(POLONIEX,), interleaved=True
+        )
