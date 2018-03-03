@@ -1,8 +1,11 @@
 from lambdatrader.constants import M5, M15, H, H4, D
+from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.signals.data_analysis.constants import (
     OHLCV_OPEN, OHLCV_HIGH, OHLCV_LOW, OHLCV_CLOSE, OHLCV_VOLUME,
 )
-from lambdatrader.signals.data_analysis.df_datasets import DateRange, SplitDateRange
+from lambdatrader.signals.data_analysis.df_datasets import (
+    DateRange, SplitDateRange, SplitDatasetDescriptor,
+)
 from lambdatrader.signals.data_analysis.df_features import (
     OHLCVCloseDelta, OHLCVValue, OHLCVSelfDelta, DFFeatureSet, DummyFeature, RandomFeature,
 )
@@ -259,3 +262,55 @@ class SplitDateRanges:
             val_dr=DateRange.from_str('2017-12-20', '2018-01-10'),
             test_dr=DateRanges.january_last_20_days()
         )
+
+
+class SplitDatasetDescriptors:
+
+    @classmethod
+    def sdd_1(cls):
+        SplitDatasetDescriptor.create_with_train_val_test_date_ranges(
+            pairs=None,
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            value_set=ValueSets.close_max_return_4h(),
+            split_date_range=SplitDateRanges.january_20_days_test_20_days_val_160_days_train(),
+            exchanges=(POLONIEX,),
+            interleaved=True
+        )
+
+    @classmethod
+    def sdd_1_more_data(cls):
+        SplitDatasetDescriptor.create_with_train_val_test_date_ranges(
+            pairs=None,
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            value_set=ValueSets.close_max_return_4h(),
+            split_date_range=SplitDateRanges.january_20_days_test_20_days_val_360_days_train(),
+            exchanges=(POLONIEX,),
+            interleaved=True
+        )
+
+    @classmethod
+    def sdd_1_all_data(cls):
+        SplitDatasetDescriptor.create_with_train_val_test_date_ranges(pairs=None,
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            value_set=ValueSets.close_max_return_4h(),
+            split_date_range=SplitDateRanges.january_20_days_test_20_days_val_rest_train(),
+            exchanges=(POLONIEX,), interleaved=True)
+
+    @classmethod
+    def sdd_2(cls):
+        SplitDatasetDescriptor.create_with_train_val_test_date_ranges(
+            pairs=None,
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            value_set=ValueSets.close_max_return_next_candle(),
+            split_date_range=SplitDateRanges.january_20_days_test_20_days_val_160_days_train(),
+            exchanges=(POLONIEX,),
+            interleaved=True
+        )
+
+    @classmethod
+    def sdd_2_all_data(cls):
+        SplitDatasetDescriptor.create_with_train_val_test_date_ranges(pairs=None,
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            value_set=ValueSets.close_max_return_next_candle(),
+            split_date_range=SplitDateRanges.january_20_days_test_20_days_val_rest_train(),
+            exchanges=(POLONIEX,), interleaved=True)

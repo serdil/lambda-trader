@@ -18,6 +18,9 @@ class DatasetDescriptor:
     def __init__(self, pairs, feature_set, value_set, start_date, end_date, exchanges=(POLONIEX,),
                  interleaved=False):
 
+        if pairs is None:
+            pairs = SQLiteCandlestickStore.get_for_exchange(POLONIEX).get_pairs()
+
         if isinstance(pairs, str):
             pairs = [pairs]
 
