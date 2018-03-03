@@ -2,7 +2,7 @@ import numpy as np
 
 from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.exchanges.enums import POLONIEX
-from lambdatrader.signals.data_analysis.factories import DFFeatureSetFactory as fsf
+from lambdatrader.signals.data_analysis.factories import FeatureSets as fsf
 from lambdatrader.signals.data_analysis.learning.dummy.xgb_interleaved.utils import (
     get_test_X_ys, train_close_from_saved, train_max_from_saved, train_close, train_max,
 )
@@ -26,6 +26,9 @@ feature_set = fsf.get_all_periods_last_ten_ohlcv()
 
 use_saved = True
 # use_saved = False
+
+num_rounds = 100
+early_stopping_rounds = 10
 
 params = {
     'silent': 1,
@@ -73,9 +76,6 @@ max_params = params.copy()
 max_params.update({
     'eta': 0.2
 })
-
-num_rounds = 100
-early_stopping_rounds = 10
 
 common_args = {
     'day_offset': day_offset,

@@ -5,13 +5,12 @@
 # determine trading gains for different
 # (max_price_threshold, min_price_threshold, close_price_threshold) pairs.
 
-from datetime import datetime
 from operator import itemgetter
 
 import xgboost as xgb
 from xgboost.core import XGBoostError
 
-from lambdatrader.signals.data_analysis.factories import DFFeatureSetFactory
+from lambdatrader.signals.data_analysis.factories import FeatureSets
 from lambdatrader.signals.data_analysis.learning.dummy.dummy_utils_dummy import (
     get_dataset_info,
 )
@@ -25,7 +24,7 @@ num_candles = 48
 day_offset = 120
 days = 500
 
-feature_set = DFFeatureSetFactory.get_small()
+feature_set = FeatureSets.get_small()
 
 ds_info = get_dataset_info(symbol=symbol, day_offset=day_offset, days=days, feature_set=feature_set)
 

@@ -45,6 +45,10 @@ class DFFeatureSet:
         from lambdatrader.signals.data_analysis.df_values import LookforwardFeature
         return max(0, *[f.lookforward for f in self.features if isinstance(f, LookforwardFeature)])
 
+    @property
+    def feature_names(self):
+        return [f.name for f in self.features]
+
 
 class BaseFeature:
 

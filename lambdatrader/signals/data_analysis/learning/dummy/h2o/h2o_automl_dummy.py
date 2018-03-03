@@ -1,7 +1,7 @@
 from h2o import H2OFrame, h2o
 from h2o.automl import H2OAutoML
 
-from lambdatrader.signals.data_analysis.factories import DFFeatureSetFactory
+from lambdatrader.signals.data_analysis.factories import FeatureSets
 from lambdatrader.signals.data_analysis.learning.dummy.dummy_utils_dummy import (
     get_dataset_info,
 )
@@ -11,7 +11,7 @@ h2o.init()
 
 num_candles = 48
 
-feature_set = DFFeatureSetFactory.get_all_periods_last_five_ohlcv()
+feature_set = FeatureSets.get_all_periods_last_five_ohlcv()
 num_days = 500
 
 ds_info = get_dataset_info(num_candles=num_candles, days=num_days, feature_set=feature_set)

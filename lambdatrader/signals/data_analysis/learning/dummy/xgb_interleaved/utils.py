@@ -45,7 +45,8 @@ def get_train_val_test_Xs_ys_feature_names(symbols, feature_set, val_ratio, test
     DFDataset.compute_interleaved(pairs=symbols, feature_set=feature_set,
                                   value_set=cmm_vs.value_set, start_date=dataset_start_date,
                                   end_date=dataset_end_date,
-                                  error_on_missing=False).add_feature_values().add_value_values(
+                                  error_on_missing=False)
+        .add_feature_values().add_value_values(
         value_name=cmm_vs.close_name).add_value_values(
         value_name=cmm_vs.max_name).add_feature_names().get())
 

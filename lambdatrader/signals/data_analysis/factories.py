@@ -2,12 +2,13 @@ from lambdatrader.constants import M5, M15, H, H4, D
 from lambdatrader.signals.data_analysis.constants import (
     OHLCV_OPEN, OHLCV_HIGH, OHLCV_LOW, OHLCV_CLOSE, OHLCV_VOLUME,
 )
+from lambdatrader.signals.data_analysis.df_datasets import DateRange
 from lambdatrader.signals.data_analysis.df_features import (
     OHLCVCloseDelta, OHLCVValue, OHLCVSelfDelta, DFFeatureSet, DummyFeature, RandomFeature,
 )
 
 
-class DFFeaturesFactory:
+class FeaturesFactory:
 
     @classmethod
     def get_ohlc_close_delta(cls, offsets=(1, 2, 3, 4, 5,), periods=(M5,)):
@@ -43,10 +44,10 @@ class DFFeaturesFactory:
         return features
 
 
-ff = DFFeaturesFactory
+ff = FeaturesFactory
 
 
-class DFFeatureSetFactory:
+class FeatureSets:
 
     @classmethod
     def get_feature_set_1(cls):
@@ -119,3 +120,34 @@ class DFFeatureSetFactory:
     def _get_ohlc_close_delta_volume_value_num_offsets_periods(cls, num_offsets, periods):
         features = ff.get_ohlc_close_delta_volume_value(offsets=range(num_offsets), periods=periods)
         return DFFeatureSet(features=features)
+
+
+class DateRanges:
+
+    @classmethod
+    def december(cls):
+        return DateRange.from_str(start_str='2017-12-01', end_str='2018-01-01')
+
+    @classmethod
+    def january(cls):
+        return DateRange.from_str(start_str='2018-01-01', end_str='2018-02-01')
+
+    @classmethod
+    def february(cls):
+        return DateRange.from_str(start_str='2018-02-01', end_str='2018-03-01')
+
+    @classmethod
+    def until_start_of_january(cls):
+        return DateRange.from_str(start_str=None, end_str='2018-01-01')
+
+    @classmethod
+    def until_start_of_february(cls):
+        return DateRange.from_str(start_str=None, end_str='2018-02-01')
+
+    @classmethod
+    def january_last_20_days(cls):
+        return DateRange.from_str(start_str='2018-01-10', end_str='2018-02-01')
+
+    @classmethod
+    def january_last_10_days(cls):
+        return DateRange.from_str(start_str='2018-01-20', end_str='2018-02-01')

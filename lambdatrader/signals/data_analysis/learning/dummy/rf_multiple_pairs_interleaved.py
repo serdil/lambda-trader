@@ -4,7 +4,7 @@ from sklearn.metrics import mean_squared_error
 
 from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.exchanges.enums import POLONIEX
-from lambdatrader.signals.data_analysis.factories import DFFeatureSetFactory
+from lambdatrader.signals.data_analysis.factories import FeatureSets
 from lambdatrader.signals.data_analysis.learning.dummy.dummy_utils_dummy import (
     get_dataset_info,
 )
@@ -27,7 +27,7 @@ num_candles = 48
 day_offset = 120
 days = 10
 
-feature_set = DFFeatureSetFactory.get_small()
+feature_set = FeatureSets.get_small()
 
 ds_infos = []
 

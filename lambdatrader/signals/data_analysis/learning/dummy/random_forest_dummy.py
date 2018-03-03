@@ -9,7 +9,7 @@ from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.signals.data_analysis.df_datasets import DFDataset
 from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
 from lambdatrader.signals.data_analysis.df_values import MaxReturn, CloseReturn, MinReturn
-from lambdatrader.signals.data_analysis.factories import DFFeatureSetFactory
+from lambdatrader.signals.data_analysis.factories import FeatureSets
 from lambdatrader.signals.data_analysis.learning.dummy.xgboost_analysis_utils_dummy import \
     analyze_output
 from lambdatrader.utilities.utils import seconds
@@ -45,7 +45,7 @@ print()
 
 dataset_symbol = 'BTC_ETH'
 
-fsf = DFFeatureSetFactory
+fsf = FeatureSets
 
 num_candles = 48
 

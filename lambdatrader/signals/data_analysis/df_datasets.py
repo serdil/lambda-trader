@@ -1,11 +1,78 @@
+import hashlib
+import os
 import time
 
 import pandas as pd
+from datetime import datetime
 from pandas.core.base import DataError
+import xgboost as xgb
 
 from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.constants import M5, M15, H, H4, D
-from lambdatrader.exchanges.enums import POLONIEX
+from lambdatrader.exchanges.enums import POLONIEX, ExchangeEnum
+from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
+from lambdatrader.utilities.utils import get_project_directory
+
+
+class DatasetDescriptor:
+    def __init__(self, pairs, feature_set, value_set, start_date, end_date, exchanges=(POLONIEX,),
+                 interleaved=False):
+
+        if isinstance(pairs, str):
+            pairs = [pairs]
+
+        if isinstance(exchanges, ExchangeEnum):
+            exchanges = [exchanges]
+
+        if len(exchanges) > 1:
+            raise NotImplementedError('Multiple exchanges not implemented.')
+
+        if not interleaved and len(pairs) > 1:
+            raise ValueError('There should be exactly 1 pair if interleaved is False.')
+
+        if not interleaved and len(exchanges) > 1:
+            raise ValueError('There should be exactly 1 exchange if interleaved is False.')
+
+        self.pairs = pairs
+        self.feature_set = feature_set
+        self.value_set = value_set
+        self.start_date = start_date
+        self.end_date = end_date
+        self.exchanges = exchanges
+        self.interleaved = interleaved
+
+    @property
+    def descriptive_name(self):
+        pair_names = ','.join(self.pairs)
+        feature_names = ','.join(self.feature_set.feature_names)
+        value_names = ','.join([self.value_set.feature_names])
+        exchange_names = ','.join([e.name for e in self.exchanges])
+        start_date = self.start_date
+        end_date = self.end_date
+        name = 'dataset_{}_{}_{}_{}_{}_{}'.format(pair_names, feature_names,
+                                                  value_names, start_date, end_date, exchange_names)
+
+        return name
+
+    @property
+    def hash(self):
+        return hashlib.md5(self.descriptive_name.encode('utf-8')).hexdigest()
+
+    @property
+    def feature_names(self):
+        return self.feature_set.feature_names
+
+
+class SingleValueDatasetDescriptor(DatasetDescriptor):
+    def __init__(self, pairs, feature_set, value, start_date, end_date,
+                 exchanges=(POLONIEX,), interleaved=False):
+        value_set = DFFeatureSet(features=[value])
+        super().__init__(pairs, feature_set, value_set,
+                         start_date, end_date, exchanges, interleaved)
+
+    @property
+    def value(self):
+        return self.value_set.features[0]
 
 
 class DFDataset:
@@ -23,60 +90,86 @@ class DFDataset:
     @classmethod
     def compute(cls, pair, feature_set, value_set, start_date=None,
                 end_date=None, cs_store=None, normalize=True, error_on_missing=True):
-        if cs_store is None:
-            cs_store = SQLiteCandlestickStore.get_for_exchange(POLONIEX)
 
-        start_date = start_date - feature_set.get_lookback()
-        end_date = end_date + value_set.get_lookforward()
+        descriptor = DatasetDescriptor(pairs=[pair], feature_set=feature_set, value_set=value_set,
+                                       start_date=start_date, end_date=end_date, exchanges=POLONIEX,
+                                       interleaved=False)
 
-        dfs = cs_store.get_agg_period_dfs(pair,
-                                          start_date=start_date,
-                                          end_date=end_date,
-                                          periods=[M5, M15, H, H4, D],
-                                          error_on_missing=error_on_missing)
-
-        start_time = time.time()
-        feature_dfs = [f.compute(dfs) for f in feature_set.features]
-
-        value_dfs = [v.compute(dfs) for v in value_set.features]
-
-        feature_df = feature_dfs[0].join(feature_dfs[1:], how='inner')
-        value_df = value_dfs[0].join(value_dfs[1:], how='inner')
-
-        if normalize:
-            feature_df = feature_df.dropna()
-            value_df = value_df.reindex(feature_df.index)
-
-        print('dataset comp time: {:.3f}s'.format(time.time() - start_time))
-
-        return DFDataset(dfs, feature_df, value_df, feature_set, value_set)
+        return cls.compute_from_descriptor(descriptor,
+                                           normalize=normalize,
+                                           error_on_missing=error_on_missing)
 
     @classmethod
     def compute_interleaved(cls, pairs, feature_set, value_set,
                             start_date=None, end_date=None, cs_store=None,
                             normalize=True, error_on_missing=True):
-        if cs_store is None:
-            cs_store = SQLiteCandlestickStore.get_for_exchange(POLONIEX)
-        if pairs is None:
-            pairs = cs_store.get_pairs()
 
-        datasets = []
-        for pair in pairs:
-            try:
-                ds = cls.compute(pair=pair,
-                        feature_set=feature_set,
-                        value_set=value_set,
-                        start_date=start_date,
-                        end_date=end_date,
-                        cs_store=cs_store,
-                        normalize=normalize,
-                        error_on_missing=error_on_missing)
-                datasets.append(ds)
-            except DataError as e:
-                if error_on_missing:
-                    raise e
+        descriptor = DatasetDescriptor(pairs=pairs, feature_set=feature_set, value_set=value_set,
+                                       start_date=start_date, end_date=end_date, exchanges=POLONIEX,
+                                       interleaved=True)
 
-        return cls._interleave_datasets(datasets)
+        return cls.compute_from_descriptor(descriptor,
+                                           normalize=normalize,
+                                           error_on_missing=error_on_missing)
+
+    @classmethod
+    def compute_from_descriptor(cls, descriptor, normalize=True, error_on_missing=True):
+        exchange = descriptor.exchanges[0]
+        cs_store = SQLiteCandlestickStore.get_for_exchange(exchange)
+
+        start_date = descriptor.start_date
+        end_date = descriptor.end_date
+        feature_set = descriptor.feature_set
+        value_set = descriptor.value_set
+        pairs = descriptor.pairs
+        interleaved = descriptor.interleaved
+
+        if interleaved:
+            datasets = []
+            for pair in pairs:
+                try:
+                    pair_desc = DatasetDescriptor(pairs=[pair],
+                                                  feature_set=feature_set,
+                                                  value_set=value_set,
+                                                  start_date=start_date,
+                                                  end_date=end_date,
+                                                  exchanges=exchange,
+                                                  interleaved=False)
+                    ds = cls.compute_from_descriptor(pair_desc,
+                                                     normalize=normalize,
+                                                     error_on_missing=error_on_missing)
+                    datasets.append(ds)
+                except DataError as e:
+                    if error_on_missing:
+                        raise e
+            return cls._interleave_datasets(datasets)
+        else:
+            pair = pairs[0]
+
+            start_date = start_date - feature_set.get_lookback()
+            end_date = end_date + value_set.get_lookforward()
+
+            dfs = cs_store.get_agg_period_dfs(pair,
+                                              start_date=start_date,
+                                              end_date=end_date,
+                                              periods=[M5, M15, H, H4, D],
+                                              error_on_missing=error_on_missing)
+
+            start_time = time.time()
+            feature_dfs = [f.compute(dfs) for f in feature_set.features]
+
+            value_dfs = [v.compute(dfs) for v in value_set.features]
+
+            feature_df = feature_dfs[0].join(feature_dfs[1:], how='inner')
+            value_df = value_dfs[0].join(value_dfs[1:], how='inner')
+
+            if normalize:
+                feature_df = feature_df.dropna()
+                value_df = value_df.reindex(feature_df.index)
+
+            print('dataset comp time: {:.3f}s'.format(time.time() - start_time))
+
+            return DFDataset(dfs, feature_df, value_df, feature_set, value_set)
 
     @classmethod
     def _interleave_datasets(cls, datasets):
@@ -149,3 +242,106 @@ class DFDataset:
         self.return_values = []
         return return_values
 
+
+LIBSVM_BATCH_SIZE = 10000
+
+
+class XGBDMatrixDataset:
+
+    def __init__(self, descriptor, dmatrix):
+        self.descriptor = descriptor
+        self.dmatrix = dmatrix
+
+    @classmethod
+    def save_buffer(cls, descriptor: SingleValueDatasetDescriptor,
+                    normalize=True, error_on_missing=True):
+        x, y = (DFDataset
+                .compute_from_descriptor(descriptor=descriptor,
+                                         normalize=normalize,
+                                         error_on_missing=error_on_missing)
+                .add_feature_values()
+                .add_value_values(value_name=descriptor.value.name))
+
+        dmatrix = xgb.DMatrix(data=x, label=y, feature_names=descriptor.feature_names)
+        dmatrix.save_binary(cls._get_buffer_file_path(descriptor))
+
+    @classmethod
+    def save_libsvm(cls, descriptor: SingleValueDatasetDescriptor,
+                    normalize=True, error_on_missing=True, batch_size=LIBSVM_BATCH_SIZE):
+        batch_seconds = batch_size * M5.seconds()
+        start_date = descriptor.start_date
+        end_date = descriptor.end_date
+
+        with open(cls._get_libsvm_file_path(descriptor), 'w') as f:
+            for batch_start_date in range(start_date, end_date, batch_size * M5.seconds()):
+                batch_end_date = start_date + batch_seconds
+                batch_descriptor = DatasetDescriptor(pairs=descriptor.pairs,
+                                                     feature_set=descriptor.feature_set,
+                                                     value_set=descriptor.value_set,
+                                                     start_date=batch_start_date,
+                                                     end_date=batch_end_date,
+                                                     exchanges=descriptor.exchanges,
+                                                     interleaved=descriptor.interleaved)
+                x, y = (DFDataset.compute_from_descriptor(descriptor=batch_descriptor,
+                                                          normalize=normalize,
+                                                          error_on_missing=error_on_missing)
+                        .add_feature_values().add_value_values(value_name=descriptor.value.name))
+
+                for line in cls._stream_x_y_libsvm_lines(x, y):
+                    f.write(line + '\n')
+
+    @classmethod
+    def _get_libsvm_file_path(cls, descriptor):
+        return os.path.join(cls._dir_name(), descriptor.hash + '.txt')
+
+    @classmethod
+    def _get_buffer_file_path(cls, descriptor):
+        return os.path.join(cls._dir_name(), descriptor.hash + '.buffer')
+
+    @classmethod
+    def _get_cache_path(cls, descriptor):
+        return os.path.join(cls._dir_name(), descriptor.hash + '.cache')
+
+    @staticmethod
+    def _dir_name():
+        path = os.path.join(get_project_directory(), 'data', 'libsvm')
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        return path
+
+    @classmethod
+    def _stream_x_y_libsvm_lines(cls, x, y):
+        assert len(x) == len(y)
+        for i, row in enumerate(x):
+            label = y.iloc(i)
+            line = str(label) + ' '.join(['{}:{}'.format(j+1, f) for (j, f) in enumerate(row)])
+            yield line
+
+    @classmethod
+    def load_libsvm_cached(cls, descriptor: SingleValueDatasetDescriptor):
+        data_and_cache = '{}#{}'.format(cls._get_libsvm_file_path(descriptor),
+                                        cls._get_cache_path(descriptor))
+        dmatrix = xgb.DMatrix(data_and_cache, feature_names=descriptor.feature_names)
+        return XGBDMatrixDataset(descriptor, dmatrix)
+
+    @classmethod
+    def load_buffer(cls, descriptor: SingleValueDatasetDescriptor):
+        buffer_path = cls._get_buffer_file_path(descriptor)
+        dmatrix = xgb.DMatrix(buffer_path, feature_names=descriptor.feature_names)
+        return XGBDMatrixDataset(descriptor, dmatrix)
+
+
+class DateRange:
+
+    def __init__(self, start=None, end=None):
+        self.start = start
+        self.end = end
+
+    @classmethod
+    def from_str(cls, start_str=None, end_str=None):
+        return DateRange(start=cls._parse_str(start_str), end=cls._parse_str(end_str))
+
+    @staticmethod
+    def _parse_str(date_str):
+        return int(datetime.strptime(date_str, '%Y-%m-%d').timestamp())
+        pass

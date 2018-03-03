@@ -7,10 +7,10 @@ from lambdatrader.exchanges.enums import ExchangeEnum
 from lambdatrader.signals.data_analysis.df_datasets import DFDataset
 from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
 from lambdatrader.signals.data_analysis.df_values import MaxReturn, MinReturn, CloseReturn
-from lambdatrader.signals.data_analysis.factories import DFFeatureSetFactory
+from lambdatrader.signals.data_analysis.factories import FeatureSets
 from lambdatrader.utilities.utils import seconds
 
-fsf = DFFeatureSetFactory
+fsf = FeatureSets
 
 DatasetInfo = namedtuple('DatasetInfo', ['ds', 'feature_df', 'feature_names', 'value_df',
                                          'close_return_name', 'max_return_name', 'min_return_name',

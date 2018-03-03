@@ -10,7 +10,7 @@ from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.signals.data_analysis.df_datasets import DFDataset
 from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
 from lambdatrader.signals.data_analysis.df_values import CloseReturn, MaxReturn, MinReturn
-from lambdatrader.signals.data_analysis.factories import DFFeatureSetFactory
+from lambdatrader.signals.data_analysis.factories import FeatureSets
 from lambdatrader.signals.generators.constants import (
     LINREG__TP_STRATEGY_MAX_PRED_MULT, LINREG__TP_STRATEGY_CLOSE_PRED_MULT,
     CMM__TP_STRATEGY_MAX_PRED_MULT,
@@ -123,7 +123,7 @@ class CMMModelPredictorFactoryFactory:
                                            model_kwargs=rfr_kwargs)
         cmm_model = SklearnCMMModel(model_factory=model_factory, num_candles=48, candle_period=M5)
 
-        feature_set = DFFeatureSetFactory.get_all_periods_last_five_ohlcv()
+        feature_set = FeatureSets.get_all_periods_last_five_ohlcv()
         cmm_df_dataset_factory = CMMDFDatasetFactory(feature_set=feature_set,
                                                      num_candles=num_candles,
                                                      candle_period=M5)
@@ -157,7 +157,7 @@ class CMMModelPredictorFactoryFactory:
                                 num_rounds=n_rounds,
                                 early_stopping_rounds=early_stopping_rounds)
 
-        feature_set = DFFeatureSetFactory.get_all_periods_last_ten_ohlcv()
+        feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
         cmm_df_dataset_factory = CMMDFDatasetFactory(feature_set=feature_set,
                                                      num_candles=num_candles, candle_period=M5)
 

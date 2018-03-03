@@ -1,7 +1,7 @@
 from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.constants import M5
 from lambdatrader.exchanges.enums import POLONIEX
-from lambdatrader.signals.data_analysis.factories import DFFeatureSetFactory as fsf
+from lambdatrader.signals.data_analysis.factories import FeatureSets as fsf
 from lambdatrader.signals.data_analysis.learning.dummy.xgb_interleaved.dmatrix_save_load_util \
     import (
     save_close_dmatrix, load_close_dmatrix,
