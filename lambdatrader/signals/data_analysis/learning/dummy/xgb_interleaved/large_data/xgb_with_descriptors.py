@@ -108,37 +108,37 @@ max_params.update({
 if use_saved:
     if saved_type == 'libsvm':
         res_close = train_xgb_libsvm_cache(dataset_descriptor=max_dataset,
-                                                        params=close_params,
-                                                        num_round=num_round,
-                                                        early_stopping_rounds=early_stopping_rounds,
-                                                        obj_name='close')
+                                           params=close_params,
+                                           num_round=num_round,
+                                           early_stopping_rounds=early_stopping_rounds,
+                                           obj_name='close')
         res_max = train_xgb_libsvm_cache(dataset_descriptor=max_dataset,
-                                                    params=max_params,
-                                                    num_round=num_round,
-                                                    early_stopping_rounds=early_stopping_rounds,
-                                                    obj_name='max')
+                                         params=max_params,
+                                         num_round=num_round,
+                                         early_stopping_rounds=early_stopping_rounds,
+                                         obj_name='max')
     else:
         res_close = train_xgb_buffer(dataset_descriptor=max_dataset,
-                                                  params=close_params,
-                                                  num_round=num_round,
-                                                  early_stopping_rounds=early_stopping_rounds,
-                                                  obj_name='close')
+                                     params=close_params,
+                                     num_round=num_round,
+                                     early_stopping_rounds=early_stopping_rounds,
+                                     obj_name='close')
         res_max = train_xgb_buffer(dataset_descriptor=max_dataset,
-                                              params=max_params,
-                                              num_round=num_round,
-                                              early_stopping_rounds=early_stopping_rounds,
-                                              obj_name='max')
-else:
-    res_close = train_xgb(dataset_descriptor=max_dataset,
-                                       params=close_params,
-                                       num_round=num_round,
-                                       early_stopping_rounds=early_stopping_rounds,
-                                       obj_name='close')
-    res_max = train_xgb(dataset_descriptor=max_dataset,
                                    params=max_params,
                                    num_round=num_round,
                                    early_stopping_rounds=early_stopping_rounds,
                                    obj_name='max')
+else:
+    res_close = train_xgb(dataset_descriptor=max_dataset,
+                          params=close_params,
+                          num_round=num_round,
+                          early_stopping_rounds=early_stopping_rounds,
+                          obj_name='close')
+    res_max = train_xgb(dataset_descriptor=max_dataset,
+                        params=max_params,
+                        num_round=num_round,
+                        early_stopping_rounds=early_stopping_rounds,
+                        obj_name='max')
 
 pred_close, real_close, bst_close = res_close
 pred_max, real_max, bst_max = res_max

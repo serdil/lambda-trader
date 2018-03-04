@@ -92,3 +92,24 @@ class MinReturn(ValueFeature):
         min_returns = (df[OHLCV_LOW].rolling(window=self.n_candles).min().shift(-self.n_candles) /
                        df[OHLCV_CLOSE]) - 1
         return to_ffilled_df_with_name(dfs[M5].index, min_returns, self.name)
+
+
+class CloseAvgReturn(ValueFeature):
+
+    def __init__(self, n_candles, period=M5):
+        self.n_candles = n_candles
+        self.period = period
+
+    @property
+    def name(self):
+        return 'close_avg_return_period_{}_n_candles_{}'.format(self.period.name, self.n_candles)
+
+    @property
+    def lookforward(self):
+        return self.n_candles * self.period.seconds()
+
+    def compute(self, dfs):
+        df = dfs[self.period]
+        min_returns = (df[OHLCV_LOW].rolling(window=self.n_candles).mean().shift(-self.n_candles) /
+                       df[OHLCV_CLOSE]) - 1
+        return to_ffilled_df_with_name(dfs[M5].index, min_returns, self.name)
