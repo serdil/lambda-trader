@@ -1,4 +1,5 @@
 import numpy as np
+import xgboost as xgb
 
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.signals.data_analysis.df_datasets import SplitDatasetDescriptor
@@ -27,11 +28,14 @@ use_saved = False
 saved_type = 'libsvm'
 # saved_type = 'buffer'
 
+plot_tree = True
+# plot_tree = False
+
 num_round = 100
 early_stopping_rounds = 10
 
-pair = 'BTC_RIC'
-split_date_range = SplitDateRanges.january_20_days_test_20_days_val_rest_train()
+pair = 'BTC_ETH'
+split_date_range = SplitDateRanges.january_20_days_test_20_days_val_160_days_train()
 feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
 value_set_close = ValueSets.close_return_next_candle()
 value_set_max = ValueSets.max_return_next_candle()
@@ -103,38 +107,42 @@ max_params.update({
 
 if use_saved:
     if saved_type == 'libsvm':
-        pred_close, real_close = train_xgb_libsvm_cache(dataset_descriptor=max_dataset,
+        res_close = train_xgb_libsvm_cache(dataset_descriptor=max_dataset,
                                                         params=close_params,
                                                         num_round=num_round,
                                                         early_stopping_rounds=early_stopping_rounds,
                                                         obj_name='close')
-        pred_max, real_max = train_xgb_libsvm_cache(dataset_descriptor=max_dataset,
+        res_max = train_xgb_libsvm_cache(dataset_descriptor=max_dataset,
                                                     params=max_params,
                                                     num_round=num_round,
                                                     early_stopping_rounds=early_stopping_rounds,
                                                     obj_name='max')
     else:
-        pred_close, real_close = train_xgb_buffer(dataset_descriptor=max_dataset,
+        res_close = train_xgb_buffer(dataset_descriptor=max_dataset,
                                                   params=close_params,
                                                   num_round=num_round,
                                                   early_stopping_rounds=early_stopping_rounds,
                                                   obj_name='close')
-        pred_max, real_max = train_xgb_buffer(dataset_descriptor=max_dataset,
+        res_max = train_xgb_buffer(dataset_descriptor=max_dataset,
                                               params=max_params,
                                               num_round=num_round,
                                               early_stopping_rounds=early_stopping_rounds,
                                               obj_name='max')
 else:
-    pred_close, real_close = train_xgb(dataset_descriptor=max_dataset,
+    res_close = train_xgb(dataset_descriptor=max_dataset,
                                        params=close_params,
                                        num_round=num_round,
                                        early_stopping_rounds=early_stopping_rounds,
                                        obj_name='close')
-    pred_max, real_max = train_xgb(dataset_descriptor=max_dataset,
+    res_max = train_xgb(dataset_descriptor=max_dataset,
                                    params=max_params,
                                    num_round=num_round,
                                    early_stopping_rounds=early_stopping_rounds,
                                    obj_name='max')
+
+pred_close, real_close, bst_close = res_close
+pred_max, real_max, bst_max = res_max
+
 
 print()
 print('++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++++++TEST++++')
@@ -150,3 +158,9 @@ pred_real_min = list(zip(pred_min, real_min))
 analyze_output(pred_real_close=pred_real_close,
                pred_real_max=pred_real_max,
                pred_real_min=pred_real_min)
+
+
+if plot_tree:
+    import matplotlib.pyplot as plt
+    xgb.plot_tree(bst_close, num_trees=0)
+    plt.show()

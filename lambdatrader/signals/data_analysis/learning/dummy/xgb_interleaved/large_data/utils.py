@@ -68,4 +68,4 @@ def train_xgb_with_dmatrices(dtrain, dval, dtest,
         pred = bst.predict(dtest, ntree_limit=close_best_ntree_limit)
     except XGBoostError:
         pred = bst.predict(dtest)
-    return pred, real
+    return pred, real, bst
