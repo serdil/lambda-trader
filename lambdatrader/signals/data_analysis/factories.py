@@ -345,6 +345,27 @@ class SplitDatasetDescriptors:
         )
 
     @classmethod
+    def sdd_1_more_data_close(cls):
+        return SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
+            pairs=None,
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            value_set=ValueSets.close_return_4h(),
+            split_date_range=SplitDateRanges.january_20_days_test_20_days_val_360_days_train(),
+            exchanges=(POLONIEX,),
+            interleaved=True)
+
+    @classmethod
+    def sdd_1_more_data_max(cls):
+        return SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
+            pairs=None,
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            value_set=ValueSets.max_return_4h(),
+            split_date_range=SplitDateRanges.january_20_days_test_20_days_val_360_days_train(),
+            exchanges=(POLONIEX,),
+            interleaved=True
+        )
+
+    @classmethod
     def sdd_1_all_data(cls):
         return SplitDatasetDescriptor.create_with_train_val_test_date_ranges(
             pairs=None,

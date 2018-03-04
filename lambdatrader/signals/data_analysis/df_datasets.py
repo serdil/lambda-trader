@@ -340,7 +340,7 @@ class XGBDMatrixDataset:
 
                 print('saving batch...')
                 if len(x) > 0:
-                    dump_svmlight_file(X=x, y=y, f=f, zero_based=False)
+                    dump_svmlight_file(X=x, y=y, f=f, zero_based=True)
 
     @classmethod
     def _get_libsvm_file_path(cls, descriptor):
