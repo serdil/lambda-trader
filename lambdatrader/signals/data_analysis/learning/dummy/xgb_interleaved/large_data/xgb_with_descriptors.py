@@ -25,7 +25,7 @@ early_stopping_rounds = 10
 
 params = {
     'silent': 1,
-    'booster': 'gblinear',
+    'booster': 'gbtree',
 
     'objective': 'reg:linear',
     'base_score': 0,
