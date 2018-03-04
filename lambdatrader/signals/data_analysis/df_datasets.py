@@ -197,8 +197,10 @@ class DFDataset:
         else:
             pair = pairs[0]
 
-            start_date = start_date - feature_set.get_lookback()
-            end_date = end_date + value_set.get_lookforward()
+            if start_date is not None:
+                start_date = start_date - feature_set.get_lookback()
+            if end_date is not None:
+                end_date = end_date + value_set.get_lookforward()
 
             dfs = cs_store.get_agg_period_dfs(pair,
                                               start_date=start_date,
@@ -402,6 +404,8 @@ class DateRange:
 
     @staticmethod
     def _parse_str(date_str):
+        if date_str is None:
+            return None
         return date_str_to_timestamp(date_str)
 
 

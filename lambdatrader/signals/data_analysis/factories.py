@@ -182,6 +182,10 @@ class ValueSets:
         return DFFeatureSet(features=[Values.close_return_next_candle()])
 
     @classmethod
+    def max_return_next_candle(cls):
+        return DFFeatureSet(features=[Values.max_return_next_candle()])
+
+    @classmethod
     def close_max_return_next_candle(cls):
         return DFFeatureSet(features=[Values.close_return_next_candle(),
                                       Values.max_return_next_candle()])
