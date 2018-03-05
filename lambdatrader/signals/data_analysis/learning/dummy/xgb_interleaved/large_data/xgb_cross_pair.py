@@ -1,8 +1,9 @@
 import numpy as np
 import xgboost as xgb
 
+from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.exchanges.enums import POLONIEX
-from lambdatrader.signals.data_analysis.df_datasets import SplitDatasetDescriptor
+from lambdatrader.signals.data_analysis.df_datasets import SplitDatasetDescriptor, DatasetDescriptor
 from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
 from lambdatrader.signals.data_analysis.df_values import CloseAvgReturn
 from lambdatrader.signals.data_analysis.factories import (
@@ -15,14 +16,7 @@ from lambdatrader.signals.data_analysis.learning.dummy.xgboost_analysis_utils_du
     analyze_output
 
 sdd = SplitDatasetDescriptors
-
-# close_dataset = sdd.sdd_1_close()
-# max_dataset = sdd.sdd_1_max()
-
-
-# close_dataset = sdd.sdd_1_close_mini()
-# max_dataset = sdd.sdd_1_max_mini()
-
+all_pairs_set = set(SQLiteCandlestickStore.get_for_exchange(POLONIEX).get_pairs())
 
 # use_saved = True
 use_saved = False
@@ -36,13 +30,32 @@ plot_tree = False
 num_round = 100
 early_stopping_rounds = 10
 
-# pairs = ['BTC_ETH']; interleaved=False
-pairs = None; interleaved=True
+
+# target_pair = 'BTC_ETH'
+target_pair = 'BTC_LTC'
+
+# train_pairs = [target_pair]
+# train_pairs = ['BTC_ETH']
+# train_pairs = ['BTC_LTC']
+# train_pairs = ['BTC_XRP']
+# train_pairs = ['BTC_RIC']
+# train_pairs = ['BTC_ETH', 'BTC_LTC']
+# train_pairs = ['BTC_ETH', 'BTC_LTC', 'BTC_XRP', 'BTC_RIC']
+# train_pairs = ['BTC_LTC', 'BTC_XRP', 'BTC_RIC']
+train_pairs = list(all_pairs_set)[:10]
+# train_pairs = list(all_pairs_set)
+
+# val_pairs = train_pairs
+val_pairs = [target_pair]
+
+test_pairs = [target_pair]
+
 
 split_date_range = SplitDateRanges.january_20_days_test_20_days_val_160_days_train()
 # split_date_range = SplitDateRanges.january_20_days_test_20_days_val_360_days_train()
 # split_date_range = SplitDateRanges.january_20_days_test_20_days_val_500_days_train()
 # split_date_range = SplitDateRanges.january_20_days_test_20_days_val_rest_train()
+
 feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
 
 value_set_close = DFFeatureSet(features=[CloseAvgReturn(n_candles=48)])
@@ -50,23 +63,69 @@ value_set_close = DFFeatureSet(features=[CloseAvgReturn(n_candles=48)])
 
 value_set_max = ValueSets.max_return_4h()
 
-close_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
-    pairs=pairs,
+close_train_dataset = DatasetDescriptor(
+    pairs=train_pairs,
     feature_set=feature_set,
     value_set=value_set_close,
-    split_date_range=split_date_range,
-    exchanges=(POLONIEX,),
-    interleaved=interleaved
+    start_date=split_date_range.training.start,
+    end_date=split_date_range.training.end,
+    interleaved=True
 )
 
-max_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
-    pairs=pairs,
+close_val_dataset = DatasetDescriptor(
+    pairs=val_pairs,
+    feature_set=feature_set,
+    value_set=value_set_close,
+    start_date=split_date_range.validation.start,
+    end_date=split_date_range.validation.end,
+    interleaved=True
+)
+
+close_test_dataset = DatasetDescriptor(
+    pairs=test_pairs,
+    feature_set=feature_set,
+    value_set=value_set_close,
+    start_date=split_date_range.test.start,
+    end_date=split_date_range.test.end,
+    interleaved=True
+)
+
+
+max_train_dataset = DatasetDescriptor(
+    pairs=train_pairs,
     feature_set=feature_set,
     value_set=value_set_max,
-    split_date_range=split_date_range,
-    exchanges=(POLONIEX,),
-    interleaved=interleaved
+    start_date=split_date_range.training.start,
+    end_date=split_date_range.training.end,
+    interleaved=True
 )
+
+max_val_dataset = DatasetDescriptor(
+    pairs=val_pairs,
+    feature_set=feature_set,
+    value_set=value_set_max,
+    start_date=split_date_range.validation.start,
+    end_date=split_date_range.validation.end,
+    interleaved=True
+)
+
+max_test_dataset = DatasetDescriptor(
+    pairs=test_pairs,
+    feature_set=feature_set,
+    value_set=value_set_max,
+    start_date=split_date_range.test.start,
+    end_date=split_date_range.test.end,
+    interleaved=True
+)
+
+close_dataset = SplitDatasetDescriptor(train_descriptor=close_train_dataset,
+                                       val_descriptor=close_val_dataset,
+                                       test_descriptor=close_test_dataset)
+
+max_dataset = SplitDatasetDescriptor(train_descriptor=max_train_dataset,
+                                     val_descriptor=max_val_dataset,
+                                     test_descriptor=max_test_dataset)
+
 
 params = {
     'silent': 1,
