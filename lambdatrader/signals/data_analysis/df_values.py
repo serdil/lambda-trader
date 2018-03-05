@@ -110,6 +110,6 @@ class CloseAvgReturn(ValueFeature):
 
     def compute(self, dfs):
         df = dfs[self.period]
-        min_returns = (df[OHLCV_LOW].rolling(window=self.n_candles).mean().shift(-self.n_candles) /
-                       df[OHLCV_CLOSE]) - 1
+        min_returns = (df[OHLCV_CLOSE].rolling(window=self.n_candles).mean()
+                       .shift(-self.n_candles) / df[OHLCV_CLOSE]) - 1
         return to_ffilled_df_with_name(dfs[M5].index, min_returns, self.name)
