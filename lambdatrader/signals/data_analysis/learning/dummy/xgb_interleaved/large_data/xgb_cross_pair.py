@@ -31,8 +31,8 @@ num_round = 100
 early_stopping_rounds = 10
 
 
-# target_pair = 'BTC_ETH'
-target_pair = 'BTC_LTC'
+target_pair = 'BTC_ETH'
+# target_pair = 'BTC_LTC'
 
 train_pairs = [target_pair]
 # train_pairs = ['BTC_ETH']
@@ -58,7 +58,7 @@ split_date_range = SplitDateRanges.january_20_days_test_20_days_val_160_days_tra
 # split_date_range = SplitDateRanges.january_20_days_test_20_days_val_rest_train()
 # split_date_range = SplitDateRanges.january_20_days_test_60_days_val_rest_train()
 
-feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
+feature_set = FeatureSets.get_all_periods_last_five_ohlcv()
 
 value_set_close = DFFeatureSet(features=[CloseAvgReturn(n_candles=48)])
 # value_set_close = ValueSets.close_return_4h()
