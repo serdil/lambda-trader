@@ -3,7 +3,9 @@ import pandas
 from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.constants import M5, H, H4, D
 from lambdatrader.exchanges.enums import POLONIEX
-from lambdatrader.signals.data_analysis.df_values import MaxReturn, CloseReturn, MinReturn
+from lambdatrader.signals.data_analysis.df_values import (
+    MaxReturn, CloseReturn, MinReturn, CloseAvgReturn,
+)
 from lambdatrader.utilities.utils import seconds
 
 pandas.set_option('display.max_rows', 20)
@@ -23,6 +25,7 @@ print(dfs[M5])
 mrv = MaxReturn(n_candles=3)
 crv = CloseReturn(n_candles=3)
 minrv = MinReturn(n_candles=3)
+cavgrv = CloseAvgReturn(n_candles=3)
 
 print()
 print(mrv.compute(dfs))
@@ -32,3 +35,6 @@ print(crv.compute(dfs))
 
 print()
 print(minrv.compute(dfs))
+
+print()
+print(cavgrv.compute(dfs))

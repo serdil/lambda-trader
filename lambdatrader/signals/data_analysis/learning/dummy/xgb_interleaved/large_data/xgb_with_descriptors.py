@@ -3,6 +3,8 @@ import xgboost as xgb
 
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.signals.data_analysis.df_datasets import SplitDatasetDescriptor
+from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
+from lambdatrader.signals.data_analysis.df_values import CloseAvgReturn
 from lambdatrader.signals.data_analysis.factories import (
     SplitDatasetDescriptors, FeatureSets, ValueSets, SplitDateRanges,
 )
@@ -34,28 +36,33 @@ plot_tree = True
 num_round = 100
 early_stopping_rounds = 10
 
-pair = 'BTC_ETH'
-split_date_range = SplitDateRanges.january_20_days_test_20_days_val_160_days_train()
+pairs = ['BTC_ETH']; interleaved=False
+# pairs = None; interleaved=True
+
+split_date_range = SplitDateRanges.january_20_days_test_20_days_val_20_days_train()
 feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
-value_set_close = ValueSets.close_return_next_candle()
-value_set_max = ValueSets.max_return_next_candle()
+
+# value_set_close = DFFeatureSet(features=[CloseAvgReturn(n_candles=48)])
+value_set_close = ValueSets.close_return_4h()
+
+value_set_max = ValueSets.max_return_4h()
 
 close_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
-    pairs=[pair],
+    pairs=pairs,
     feature_set=feature_set,
     value_set=value_set_close,
     split_date_range=split_date_range,
     exchanges=(POLONIEX,),
-    interleaved=False
+    interleaved=interleaved
 )
 
 max_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
-    pairs=[pair],
+    pairs=pairs,
     feature_set=feature_set,
     value_set=value_set_max,
     split_date_range=split_date_range,
     exchanges=(POLONIEX,),
-    interleaved=False
+    interleaved=interleaved
 )
 
 params = {
@@ -102,12 +109,12 @@ close_params = params.copy()
 
 max_params = params.copy()
 max_params.update({
-    'eta': 0.2
+    'eta': close_params['eta']
 })
 
 if use_saved:
     if saved_type == 'libsvm':
-        res_close = train_xgb_libsvm_cache(dataset_descriptor=max_dataset,
+        res_close = train_xgb_libsvm_cache(dataset_descriptor=close_dataset,
                                            params=close_params,
                                            num_round=num_round,
                                            early_stopping_rounds=early_stopping_rounds,
@@ -118,7 +125,7 @@ if use_saved:
                                          early_stopping_rounds=early_stopping_rounds,
                                          obj_name='max')
     else:
-        res_close = train_xgb_buffer(dataset_descriptor=max_dataset,
+        res_close = train_xgb_buffer(dataset_descriptor=close_dataset,
                                      params=close_params,
                                      num_round=num_round,
                                      early_stopping_rounds=early_stopping_rounds,
@@ -129,7 +136,7 @@ if use_saved:
                                    early_stopping_rounds=early_stopping_rounds,
                                    obj_name='max')
 else:
-    res_close = train_xgb(dataset_descriptor=max_dataset,
+    res_close = train_xgb(dataset_descriptor=close_dataset,
                           params=close_params,
                           num_round=num_round,
                           early_stopping_rounds=early_stopping_rounds,
