@@ -34,7 +34,7 @@ early_stopping_rounds = 10
 # target_pair = 'BTC_ETH'
 target_pair = 'BTC_LTC'
 
-# train_pairs = [target_pair]
+train_pairs = [target_pair]
 # train_pairs = ['BTC_ETH']
 # train_pairs = ['BTC_LTC']
 # train_pairs = ['BTC_XRP']
@@ -42,7 +42,8 @@ target_pair = 'BTC_LTC'
 # train_pairs = ['BTC_ETH', 'BTC_LTC']
 # train_pairs = ['BTC_ETH', 'BTC_LTC', 'BTC_XRP', 'BTC_RIC']
 # train_pairs = ['BTC_LTC', 'BTC_XRP', 'BTC_RIC']
-train_pairs = list(all_pairs_set)[:10]
+# train_pairs = list(all_pairs_set - {target_pair})[:10] + [target_pair]
+# train_pairs = list(all_pairs_set - {target_pair})[:20] + [target_pair]
 # train_pairs = list(all_pairs_set)
 
 # val_pairs = train_pairs
@@ -55,6 +56,7 @@ split_date_range = SplitDateRanges.january_20_days_test_20_days_val_160_days_tra
 # split_date_range = SplitDateRanges.january_20_days_test_20_days_val_360_days_train()
 # split_date_range = SplitDateRanges.january_20_days_test_20_days_val_500_days_train()
 # split_date_range = SplitDateRanges.january_20_days_test_20_days_val_rest_train()
+# split_date_range = SplitDateRanges.january_20_days_test_60_days_val_rest_train()
 
 feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
 

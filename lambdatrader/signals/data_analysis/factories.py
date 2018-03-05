@@ -281,6 +281,14 @@ class SplitDateRanges:
         )
 
     @classmethod
+    def january_20_days_test_60_days_val_rest_train(cls):
+        return SplitDateRange(
+            train_dr=DateRange.from_str(None, '2017-11-10'),
+            val_dr=DateRange.from_str('2017-11-10', '2018-01-10'),
+            test_dr=DateRanges.january_last_20_days()
+        )
+
+    @classmethod
     def january_3_days_test_3_days_val_7_days_train(cls):
         return SplitDateRange(
             train_dr=DateRange.from_str('2018-01-17', '2018-01-24'),
