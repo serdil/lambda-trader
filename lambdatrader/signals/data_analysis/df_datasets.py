@@ -65,6 +65,14 @@ class DatasetDescriptor:
     def feature_names(self):
         return self.feature_set.feature_names
 
+    @property
+    def value_names(self):
+        return self.value_set.feature_names
+
+    @property
+    def first_value_name(self):
+        return self.value_names[0]
+
 
 class SingleValueDatasetDescriptor(DatasetDescriptor):
     def __init__(self, pairs, feature_set, value_set, start_date, end_date,
@@ -124,6 +132,10 @@ class SplitDatasetDescriptor:
                              interleaved=interleaved)
 
         return SplitDatasetDescriptor(train_dd, val_dd, test_dd)
+
+    @property
+    def first_value_name(self):
+        return self.training.first_value_name
 
 
 class DFDataset:
