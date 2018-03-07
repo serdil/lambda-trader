@@ -56,7 +56,7 @@ value_set_max = DFFeatureSet(features=[MaxReturn(n_candles=n_candles)])
 model_per_pair = True
 
 c_thr = 0.03
-m_thr = 0.05
+m_thr = 0.03
 
 cavg_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
     pairs=training_pairs,
@@ -107,9 +107,9 @@ params = {
     'base_score': 0,
     'eval_metric': 'rmse',
 
-    'eta': 0.5,
+    'eta': 0.05,
     'gamma': 0,
-    'max_depth': 12,
+    'max_depth': 2,
     'min_child_weight': 1,
     'max_delta_step': 0,
     'subsample': 1,
@@ -141,8 +141,8 @@ params = {
 
 close_params = params.copy()
 
-num_round = 2000
-early_stopping_rounds = 3
+num_round = 100
+early_stopping_rounds = 10
 
 max_params = params.copy()
 max_params.update({

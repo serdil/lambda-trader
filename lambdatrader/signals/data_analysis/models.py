@@ -42,12 +42,14 @@ class XGBSplitDatasetModel(BaseModel):
 
     def __init__(self, dataset_descriptor: SplitDatasetDescriptor,
                  booster_params, num_round, early_stopping_rounds,
-                 obj_name='', use_saved_buffer=False, use_saved_libsvm_cache=False):
+                 obj_name='', custom_obj=None,
+                 use_saved_buffer=False, use_saved_libsvm_cache=False):
         self.dataset_descriptor = dataset_descriptor
         self.params = booster_params
         self.num_round = num_round
         self.early_stopping_rounds = early_stopping_rounds
         self.obj_name = obj_name
+        self.custom_obj = custom_obj
 
         if use_saved_buffer and use_saved_libsvm_cache:
             raise ValueError('use_saved_buffer and use_saved_libsvm_cache '
@@ -69,13 +71,11 @@ class XGBSplitDatasetModel(BaseModel):
         dtest = XGBDMatrixDataset.compute(descriptor=dd.test, normalize=True,
                                           error_on_missing=False).dmatrix
 
-        pred, real, bst, best_ntree_limit = (self.
-                                            _train_xgb_with_dmatrices(dtrain, dval, dtest,
-                                                                      self.params,
-                                                                      self.num_round,
-                                                                      self.early_stopping_rounds,
-                                                                      self.obj_name))
-        self.best_ntree_limit = best_ntree_limit
+        pred, real, bst = (self._train_xgb_with_dmatrices(dtrain, dval, dtest,
+                                                          self.params,
+                                                          self.num_round,
+                                                          self.early_stopping_rounds,
+                                                          self.obj_name))
         self.bst = bst
         return pred, real
 
@@ -105,9 +105,8 @@ class XGBSplitDatasetModel(BaseModel):
                      (dval, 'val_{}'.format(obj_name))]
 
         bst = xgb.train(params=params, dtrain=dtrain, num_boost_round=num_round, evals=watchlist,
-                        early_stopping_rounds=early_stopping_rounds)
+                        early_stopping_rounds=early_stopping_rounds, obj=self.custom_obj)
 
-        best_ntree_limit = bst.best_ntree_limit
         feature_importances = bst.get_fscore()
 
         print()
@@ -119,10 +118,10 @@ class XGBSplitDatasetModel(BaseModel):
         real = dtest.get_label()
 
         try:
-            pred = bst.predict(dtest, ntree_limit=best_ntree_limit)
+            pred = bst.predict(dtest, ntree_limit=bst.best_ntree_limit)
         except XGBoostError:
             pred = bst.predict(dtest)
-        return pred, real, bst, best_ntree_limit
+        return pred, real, bst
 
     def save(self):
         raise NotImplementedError
@@ -146,7 +145,7 @@ class XGBSplitDatasetModel(BaseModel):
         if self.bst is None:
             raise NotTrainedException
         try:
-            return self.bst.predict(dmatrix, ntree_limit=self.best_ntree_limit)
+            return self.bst.predict(dmatrix, ntree_limit=self.bst.best_ntree_limit)
         except XGBoostError:
             return self.bst.predict(dmatrix)
 
