@@ -99,7 +99,7 @@ for pair in training_pairs:
     pair_cavg_datasets[pair] = pair_cavg_dataset
     pair_max_datasets[pair] = pair_max_dataset
 
-params = {
+xgb_params = {
     'silent': 1,
     'booster': 'gbtree',
 
@@ -139,12 +139,12 @@ params = {
     # 'updater': 'shotgun'
 }
 
-close_params = params.copy()
+close_params = xgb_params.copy()
 
 num_round = 100
 early_stopping_rounds = 10
 
-max_params = params.copy()
+max_params = xgb_params.copy()
 max_params.update({
     'eta': close_params['eta'] * 2
 })

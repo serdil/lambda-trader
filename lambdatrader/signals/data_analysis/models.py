@@ -1,9 +1,12 @@
 from operator import itemgetter
 
 import xgboost as xgb
+from sklearn.ensemble import RandomForestRegressor
 from xgboost.core import XGBoostError, DMatrix
 
-from lambdatrader.signals.data_analysis.df_datasets import SplitDatasetDescriptor, XGBDMatrixDataset
+from lambdatrader.signals.data_analysis.df_datasets import (
+    SplitDatasetDescriptor, XGBDMatrixDataset, DFDataset,
+)
 
 
 class BaseModel:
@@ -148,6 +151,60 @@ class XGBSplitDatasetModel(BaseModel):
             return self.bst.predict(dmatrix, ntree_limit=self.bst.best_ntree_limit)
         except XGBoostError:
             return self.bst.predict(dmatrix)
+
+    @property
+    def value_name(self):
+        return self.dataset_descriptor.first_value_name
+
+
+class RFModel(BaseModel):
+
+    def __init__(self,
+                 dataset_descriptor: SplitDatasetDescriptor,
+                 n_estimators=10, n_jobs=-1, max_depth=12):
+        self.dataset_descriptor = dataset_descriptor
+        self.n_estimators = n_estimators
+        self.n_jobs = n_jobs
+        self.max_depth = max_depth
+
+        self.forest = None
+
+    def train(self):
+        self.forest = RandomForestRegressor(n_estimators=self.n_estimators,
+                                            n_jobs=self.n_jobs,
+                                            max_depth=self.max_depth,
+                                            verbose=True)
+        training_dd = self.dataset_descriptor.training
+        x, y, feature_names = (DFDataset
+                               .compute_from_descriptor(training_dd)
+                               .add_feature_values()
+                               .add_value_values()
+                               .add_feature_names()
+                               .get())
+
+        self.forest.fit(x, y)
+
+    def save(self):
+        raise NotImplementedError
+
+    def load(self):
+        raise NotImplementedError
+
+    def predict_dataset_desc(self, desc):
+        x = DFDataset.compute_from_descriptor(desc).add_feature_values().get()[0]
+        return self.predict_ndarray(x)
+
+    def predict_dmatrix(self, dmatrix):
+        raise NotImplementedError
+
+    def predict_df(self, df):
+        return self.predict_ndarray(df.values)
+
+    def predict_ndarray(self, x):
+        if self.forest is None:
+            raise NotTrainedException
+        else:
+            return self.forest.predict(x)
 
     @property
     def value_name(self):
