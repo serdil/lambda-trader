@@ -61,7 +61,7 @@ value_set_max = DFFeatureSet(features=[MaxReturn(n_candles=rf_n_candles)])
 rf_model_per_pair = True
 
 rf_c_thr = 0.01
-rf_m_thr = 0.01
+rf_m_thr = 0.02
 
 n_estimators = 100
 cavg_n_estimators = n_estimators
