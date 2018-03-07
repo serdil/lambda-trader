@@ -10,8 +10,13 @@ from lambdatrader.config import (
 from lambdatrader.evaluation.utils import statistics_over_periods, period_statistics
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.executors.executors import SignalExecutor
+from lambdatrader.signals.data_analysis.dummy.rf_models_dummy import (
+    rf_training_pairs, rf_n_candles, rf_model_per_pair, rf_pair_models, rf_models, rf_c_thr,
+    rf_m_thr,
+)
 from lambdatrader.signals.data_analysis.dummy.xgb_models_tmp import (
-    cavg_model, max_model, training_pairs, n_candles, model_per_pair, c_thr, m_thr, pair_models,
+    xgb_cavg_model, xgb_max_model, xgb_training_pairs, xgb_n_candles, xgb_model_per_pair, xgb_c_thr, xgb_m_thr,
+    xgb_pair_models, xgb_models,
 )
 from lambdatrader.signals.data_analysis.utils import date_str_to_timestamp
 from lambdatrader.signals.generators.dummy.signal_generation import (
@@ -43,12 +48,23 @@ end_date = date_str_to_timestamp('2018-01-30')
 # pairs = Pairs.all_pairs()
 # pairs = Pairs.eth()
 # pairs = Pairs.xrp()
-pairs = training_pairs
+# pairs = xgb_training_pairs
+pairs = rf_training_pairs
 
-close_avg_pred_model = cavg_model
-max_pred_model = max_model
+# n_candles = xgb_n_candles
+# model_per_pair = xgb_model_per_pair
+# pair_models = xgb_pair_models
+# models = xgb_models
+# c_thr = xgb_c_thr
+# m_thr = xgb_m_thr
 
-models = [close_avg_pred_model, max_pred_model]
+n_candles = rf_n_candles
+model_per_pair = rf_model_per_pair
+pair_models = rf_pair_models
+models = rf_models
+c_thr = rf_c_thr
+m_thr = rf_m_thr
+
 signal_converter = CloseAvgReturnMaxReturnSignalConverter(c_thr=c_thr,
                                                           m_thr=m_thr,
                                                           n_candles=n_candles)

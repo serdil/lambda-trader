@@ -161,11 +161,16 @@ class RFModel(BaseModel):
 
     def __init__(self,
                  dataset_descriptor: SplitDatasetDescriptor,
-                 n_estimators=10, n_jobs=-1, max_depth=12):
+                 n_estimators=10, n_jobs=-1, max_depth=12, max_features=0.1,
+                 obj_name=''):
         self.dataset_descriptor = dataset_descriptor
+
         self.n_estimators = n_estimators
         self.n_jobs = n_jobs
         self.max_depth = max_depth
+        self.max_features = max_features
+
+        self.obj_name = obj_name
 
         self.forest = None
 
@@ -173,16 +178,25 @@ class RFModel(BaseModel):
         self.forest = RandomForestRegressor(n_estimators=self.n_estimators,
                                             n_jobs=self.n_jobs,
                                             max_depth=self.max_depth,
+                                            max_features=self.max_features,
                                             verbose=True)
         training_dd = self.dataset_descriptor.training
         x, y, feature_names = (DFDataset
                                .compute_from_descriptor(training_dd)
                                .add_feature_values()
-                               .add_value_values()
+                               .add_value_values(value_name=self.value_name)
                                .add_feature_names()
                                .get())
 
         self.forest.fit(x, y)
+
+        importance = self.forest.feature_importances_
+        name_importance = zip(feature_names, importance)
+        name_importance_sorted = list(reversed(sorted(name_importance, key=itemgetter(1))))[:10]
+        print()
+        print('feature importances {}:'.format(self.obj_name))
+        for f_name, imp in name_importance_sorted:
+            print(f_name, ':', imp)
 
     def save(self):
         raise NotImplementedError
