@@ -28,6 +28,7 @@ rf_training_pairs = ['BTC_ETH']; interleaved = False
 # split_date_range = SplitDateRanges.january_20_days_test_20_days_val_500_days_train()
 # split_date_range = SplitDateRanges.january_20_days_test_20_days_val_rest_train()
 
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=7)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=20)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=40)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=60)
@@ -50,7 +51,11 @@ split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=500)
 
 
+# feature_set = FeatureSets.get_all_periods_last_five_ohlcv()
 feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
+# feature_set = FeatureSets.get_all_periods_last_n_ohlcv(30)
+# feature_set = FeatureSets.get_all_periods_last_n_ohlcv(3)
+
 
 rf_n_candles = 48
 value_set_cavg = DFFeatureSet(features=[CloseAvgReturn(n_candles=rf_n_candles)])
@@ -64,10 +69,11 @@ rf_c_thr = 0.01
 rf_m_thr = 0.02
 
 n_estimators = 100
+max_depth = 12
+
 cavg_n_estimators = n_estimators
 max_n_estimators = n_estimators
 
-max_depth = 12
 cavg_max_depth = max_depth
 max_max_depth = max_depth
 

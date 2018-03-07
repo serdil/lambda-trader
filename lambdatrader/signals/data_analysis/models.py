@@ -182,7 +182,9 @@ class RFModel(BaseModel):
                                             verbose=True)
         training_dd = self.dataset_descriptor.training
         x, y, feature_names = (DFDataset
-                               .compute_from_descriptor(training_dd)
+                               .compute_from_descriptor(training_dd,
+                                                        normalize=True,
+                                                        error_on_missing=False)
                                .add_feature_values()
                                .add_value_values(value_name=self.value_name)
                                .add_feature_names()
