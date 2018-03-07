@@ -34,6 +34,10 @@ class BaseModel:
         raise NotImplementedError
 
 
+class NotTrainedException(Exception):
+    pass
+
+
 class XGBSplitDatasetModel(BaseModel):
 
     def __init__(self, dataset_descriptor: SplitDatasetDescriptor,
@@ -65,9 +69,13 @@ class XGBSplitDatasetModel(BaseModel):
         dtest = XGBDMatrixDataset.compute(descriptor=dd.test, normalize=True,
                                           error_on_missing=False).dmatrix
 
-        pred, real, bst = self._train_xgb_with_dmatrices(dtrain, dval, dtest,
-                                                         self.params, self.num_round,
-                                                         self.early_stopping_rounds, self.obj_name)
+        pred, real, bst, best_ntree_limit = (self.
+                                            _train_xgb_with_dmatrices(dtrain, dval, dtest,
+                                                                      self.params,
+                                                                      self.num_round,
+                                                                      self.early_stopping_rounds,
+                                                                      self.obj_name))
+        self.best_ntree_limit = best_ntree_limit
         self.bst = bst
         return pred, real
 
@@ -99,7 +107,7 @@ class XGBSplitDatasetModel(BaseModel):
         bst = xgb.train(params=params, dtrain=dtrain, num_boost_round=num_round, evals=watchlist,
                         early_stopping_rounds=early_stopping_rounds)
 
-        close_best_ntree_limit = bst.best_ntree_limit
+        best_ntree_limit = bst.best_ntree_limit
         feature_importances = bst.get_fscore()
 
         print()
@@ -111,10 +119,10 @@ class XGBSplitDatasetModel(BaseModel):
         real = dtest.get_label()
 
         try:
-            pred = bst.predict(dtest, ntree_limit=close_best_ntree_limit)
+            pred = bst.predict(dtest, ntree_limit=best_ntree_limit)
         except XGBoostError:
             pred = bst.predict(dtest)
-        return pred, real, bst
+        return pred, real, bst, best_ntree_limit
 
     def save(self):
         raise NotImplementedError
@@ -127,17 +135,20 @@ class XGBSplitDatasetModel(BaseModel):
         return self.predict_dmatrix(dmatrix)
 
     def predict_ndarray(self, x):
-        dmatrix = DMatrix(x)
+        dmatrix = DMatrix(x, feature_names=self.dataset_descriptor.training.feature_names)
         return self.predict_dmatrix(dmatrix)
 
     def predict_df(self, df):
-        dmatrix = DMatrix(df)
+        dmatrix = DMatrix(df.values, feature_names=self.dataset_descriptor.training.feature_names)
         return self.predict_dmatrix(dmatrix)
 
     def predict_dmatrix(self, dmatrix):
         if self.bst is None:
-            raise Exception('Model is not trained yet.')
-        return self.bst.predict(dmatrix)
+            raise NotTrainedException
+        try:
+            return self.bst.predict(dmatrix, ntree_limit=self.best_ntree_limit)
+        except XGBoostError:
+            return self.bst.predict(dmatrix)
 
     @property
     def value_name(self):

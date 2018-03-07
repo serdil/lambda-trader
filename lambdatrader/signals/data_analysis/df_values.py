@@ -1,3 +1,6 @@
+import numpy as np
+import pandas as pd
+
 from lambdatrader.constants import M5
 from lambdatrader.signals.data_analysis.constants import OHLCV_HIGH, OHLCV_CLOSE, OHLCV_LOW
 from lambdatrader.signals.data_analysis.df_features import BaseFeature, to_ffilled_df_with_name
@@ -29,6 +32,20 @@ class ValueFeature(LookforwardFeature):
 
     def compute(self, dfs):
         raise NotImplementedError
+
+
+class DummyValue(ValueFeature):
+    @property
+    def name(self):
+        return 'dummy_value'
+
+    @property
+    def lookforward(self):
+        return 0
+
+    def compute(self, dfs):
+        zero_series = pd.Series(np.zeros(len(dfs[M5])), index=dfs[M5].index)
+        return to_ffilled_df_with_name(dfs[M5].index, zero_series, self.name)
 
 
 class MaxReturn(ValueFeature):

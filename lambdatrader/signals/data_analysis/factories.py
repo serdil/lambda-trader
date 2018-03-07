@@ -9,7 +9,7 @@ from lambdatrader.signals.data_analysis.df_datasets import (
 from lambdatrader.signals.data_analysis.df_features import (
     OHLCVCloseDelta, OHLCVValue, OHLCVSelfDelta, DFFeatureSet, DummyFeature, RandomFeature,
 )
-from lambdatrader.signals.data_analysis.df_values import CloseReturn, MaxReturn
+from lambdatrader.signals.data_analysis.df_values import CloseReturn, MaxReturn, DummyValue
 from lambdatrader.signals.data_analysis.utils import date_str_to_timestamp
 from lambdatrader.utilities.utils import seconds
 
@@ -162,6 +162,10 @@ class Values:
     def max_return_n_candles(cls, n):
         return MaxReturn(n_candles=n)
 
+    @classmethod
+    def dummy(cls):
+        return DummyValue()
+
 
 class ValueSets:
 
@@ -189,6 +193,32 @@ class ValueSets:
     def close_max_return_next_candle(cls):
         return DFFeatureSet(features=[Values.close_return_next_candle(),
                                       Values.max_return_next_candle()])
+
+    @classmethod
+    def dummy(cls):
+        return DFFeatureSet(features=[Values.dummy()])
+
+
+class Dates:
+    @classmethod
+    def january_10(cls):
+        return date_str_to_timestamp('2018-01-10')
+
+    @classmethod
+    def feb_1(cls):
+        return date_str_to_timestamp('2018-02-01')
+
+    @classmethod
+    def n_days_before_january_10(cls, n):
+        return cls.january_10() - seconds(days=n)
+
+    @classmethod
+    def sixty_days_before_january_10(cls):
+        return cls.n_days_before_january_10(60)
+
+    @classmethod
+    def n_days_before_date(cls, date, n):
+        return date - seconds(days=n)
 
 
 class DateRanges:
@@ -220,6 +250,10 @@ class DateRanges:
     @classmethod
     def january_last_10_days(cls):
         return DateRange.from_str(start_str='2018-01-20', end_str='2018-02-01')
+
+    @classmethod
+    def sixty_days_until_january_10(cls):
+        return DateRange(Dates.sixty_days_before_january_10(), Dates.january_10())
 
     @classmethod
     def until_start_of_january_5_months(cls):
@@ -295,6 +329,22 @@ class SplitDateRanges:
             val_dr=DateRange.from_str('2018-01-24', '2018-01-27'),
             test_dr=DateRange.from_str('2018-01-27', '2018-01-30')
         )
+
+    @classmethod
+    def date_n_days_test_m_days_val_k_days_train(cls, date, test_days, val_days, train_days):
+        test_start = Dates.n_days_before_date(date, test_days)
+        val_start = Dates.n_days_before_date(date, test_days + val_days)
+        train_start = Dates.n_days_before_date(date, test_days + val_days + train_days)
+        return SplitDateRange(
+            train_dr=DateRange(train_start, val_start),
+            val_dr=DateRange(val_start, test_start),
+            test_dr=DateRange(test_start, date)
+        )
+
+    @classmethod
+    def jan_n_days_test_m_days_val_k_days_train(cls, test_days, v, t):
+        return cls.date_n_days_test_m_days_val_k_days_train(Dates.feb_1(),
+                                                            test_days, v, t)
 
 
 class SplitDatasetDescriptors:

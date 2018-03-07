@@ -477,7 +477,7 @@ class Pairs:
 
     @classmethod
     def all_pairs(cls, cs_store=SQLiteCandlestickStore.get_for_exchange(POLONIEX)):
-        return cs_store.get_pairs()
+        return sorted(cs_store.get_pairs())
 
     @classmethod
     def n_pairs(cls, n=None):

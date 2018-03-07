@@ -73,6 +73,12 @@ class DatasetDescriptor:
     def first_value_name(self):
         return self.value_names[0]
 
+    def get_feature_set(self):
+        return self.feature_set
+
+    def get_value_set(self):
+        return self.value_set
+
 
 class SingleValueDatasetDescriptor(DatasetDescriptor):
     def __init__(self, pairs, feature_set, value_set, start_date, end_date,
@@ -209,6 +215,7 @@ class DFDataset:
         else:
             pair = pairs[0]
 
+            # TODO: fix normalization
             if start_date is not None:
                 start_date = start_date - feature_set.get_lookback()
             if end_date is not None:
