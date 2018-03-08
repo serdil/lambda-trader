@@ -79,10 +79,10 @@ c_thr = 0.02
 m_thr = 0.02
 
 # n_estimators = 8000
-n_estimators = 4000
+# n_estimators = 4000
 # n_estimators = 2000
 # n_estimators = 1600
-# n_estimators = 1000
+n_estimators = 1000
 # n_estimators = 800
 # n_estimators = 400
 # n_estimators = 200
@@ -98,16 +98,22 @@ one_day_samples = 288
 max_samples = one_day_samples * 1
 
 max_features = 'sqrt'
+# max_features = 1.0
+# max_features = 0.5
+# max_features = 0.3
 # max_features = 0.2
 # max_features = 0.1
 # max_features = 0.05
+# max_features = 10
 
-dt_max_features = 'sqrt'
+dt_max_features = 1.0
+# dt_max_features = 'sqrt'
+# dt_max_features = 'log2'
 
 # oob_score = True
 oob_score = False
 
-random_state = 0
+random_state = 5943923 + 0
 
 cavg_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
     pairs=training_pairs,
