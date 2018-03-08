@@ -517,5 +517,9 @@ class Pairs:
         return ['BTC_RADS']
 
     @classmethod
+    def ric(cls):
+        return ['BTC_RIC']
+
+    @classmethod
     def xrp(cls):
         return ['BTC_XRP']

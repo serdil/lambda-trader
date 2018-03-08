@@ -11,6 +11,7 @@ from lambdatrader.signals.generators.dummy.backtest_util import do_backtest
 from lambdatrader.signals.generators.dummy.signal_generation import (
     CloseAvgReturnMaxReturnSignalConverter, SignalServer, ModelPredSignalGenerator,
 )
+from lambdatrader.signals.generators.factories import Pairs
 
 # training_pairs = Pairs.all_pairs(); interleaved = True
 # training_pairs = Pairs.n_pairs(); interleaved = True
@@ -25,6 +26,7 @@ training_pairs = ['BTC_RIC']; interleaved = False
 # training_pairs = ['BTC_VIA']; interleaved = False
 # training_pairs = ['BTC_VTC']; interleaved = False
 
+model_per_pair = True
 
 # split_date_range = SplitDateRanges.january_3_days_test_3_days_val_7_days_train()
 # split_date_range = SplitDateRanges.january_20_days_test_20_days_val_20_days_train()
@@ -34,6 +36,7 @@ training_pairs = ['BTC_RIC']; interleaved = False
 # split_date_range = SplitDateRanges.january_20_days_test_20_days_val_rest_train()
 
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=7)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=14)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=20)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=40)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=60)
@@ -71,16 +74,14 @@ value_set_cavg = DFFeatureSet(features=[CloseAvgReturn(n_candles=n_candles)])
 
 value_set_max = DFFeatureSet(features=[MaxReturn(n_candles=n_candles)])
 
-model_per_pair = True
-
 c_thr = 0.02
 m_thr = 0.02
 
 # n_estimators = 8000
-# n_estimators = 4000
+n_estimators = 4000
 # n_estimators = 2000
 # n_estimators = 1600
-n_estimators = 1000
+# n_estimators = 1000
 # n_estimators = 800
 # n_estimators = 400
 # n_estimators = 200
@@ -91,6 +92,8 @@ one_day_samples = 288
 
 # max_samples = 0.1
 # max_samples = 0.01
+# max_samples = one_day_samples * 7
+# max_samples = one_day_samples * 3
 max_samples = one_day_samples * 1
 
 max_features = 'sqrt'
@@ -99,6 +102,9 @@ max_features = 'sqrt'
 # max_features = 0.05
 
 dt_max_features = 'sqrt'
+
+oob_score = True
+# oob_score = False
 
 random_state = 0
 
@@ -150,7 +156,8 @@ rf_cavg_model = BaggingDecisionTreeModel(
     max_features=max_features,
     dt_max_features=dt_max_features,
     random_state=random_state,
-    obj_name='cavg'
+    obj_name='cavg',
+    oob_score=oob_score
 )
 
 rf_max_model = BaggingDecisionTreeModel(
@@ -160,7 +167,8 @@ rf_max_model = BaggingDecisionTreeModel(
     max_features=max_features,
     dt_max_features=dt_max_features,
     random_state=random_state,
-    obj_name='max'
+    obj_name='max',
+    oob_score=oob_score
 )
 
 models = [rf_cavg_model, rf_max_model]
@@ -175,7 +183,8 @@ for pair in training_pairs:
         max_features=max_features,
         dt_max_features=dt_max_features,
         random_state=random_state,
-        obj_name='cavg'
+        obj_name='cavg',
+        oob_score=oob_score
     )
 
     pair_max_model = BaggingDecisionTreeModel(
@@ -185,7 +194,8 @@ for pair in training_pairs:
         max_features=max_features,
         dt_max_features=dt_max_features,
         random_state=random_state,
-        obj_name='max'
+        obj_name='max',
+        oob_score=oob_score
     )
 
     pair_models[pair] = [pair_cavg_model, pair_max_model]
@@ -195,6 +205,7 @@ for pair in training_pairs:
 # pairs = Pairs.n_pairs()
 # pairs = Pairs.eth()
 # pairs = Pairs.xrp()
+# pairs = Pairs.ric()
 pairs = training_pairs
 
 start_date = split_date_range.test.start + n_candles * M5.seconds()
