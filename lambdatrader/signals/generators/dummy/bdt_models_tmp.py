@@ -15,6 +15,7 @@ from lambdatrader.signals.generators.factories import Pairs
 
 # training_pairs = Pairs.all_pairs(); interleaved = True
 # training_pairs = Pairs.n_pairs(); interleaved = True
+# training_pairs = ['BTC_ETH', 'BTC_RIC']; interleaved = False
 # training_pairs = ['BTC_ETH']; interleaved = False
 # training_pairs = ['BTC_XMR']; interleaved = False
 # training_pairs = ['BTC_LTC']; interleaved = False
@@ -103,8 +104,8 @@ max_features = 'sqrt'
 
 dt_max_features = 'sqrt'
 
-oob_score = True
-# oob_score = False
+# oob_score = True
+oob_score = False
 
 random_state = 0
 

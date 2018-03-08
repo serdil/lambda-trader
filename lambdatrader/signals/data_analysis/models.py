@@ -236,7 +236,7 @@ class BaggingDecisionTreeModel(BaseModel):
 
     def __init__(self,
                  dataset_descriptor: SplitDatasetDescriptor,
-                 n_estimators=400, max_samples=288, max_features='sqrt', dt_max_features='sqrt',
+                 n_estimators=1000, max_samples=288, max_features='sqrt', dt_max_features='sqrt',
                  random_state=0, obj_name='', n_jobs=-1, oob_score=False):
         self.dataset_descriptor = dataset_descriptor
 
@@ -289,7 +289,7 @@ class BaggingDecisionTreeModel(BaseModel):
         self.forest.fit(x, y)
 
         if self.oob_score:
-            print('oob score:', self.forest.oob_score_)
+            print('oob score {}: {}'.format(self.obj_name, self.forest.oob_score_))
 
     def save(self):
         raise NotImplementedError
