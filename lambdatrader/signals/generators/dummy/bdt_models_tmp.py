@@ -80,9 +80,9 @@ m_thr = 0.02
 
 # n_estimators = 8000
 # n_estimators = 4000
-# n_estimators = 2000
+n_estimators = 2000
 # n_estimators = 1600
-n_estimators = 1000
+# n_estimators = 1000
 # n_estimators = 800
 # n_estimators = 400
 # n_estimators = 200
@@ -95,7 +95,12 @@ one_day_samples = 288
 # max_samples = 0.01
 # max_samples = one_day_samples * 7
 # max_samples = one_day_samples * 3
-max_samples = one_day_samples * 1
+# max_samples = one_day_samples * 1
+max_samples = one_day_samples // 2
+# max_samples = one_day_samples // 4
+# max_samples = 256
+# max_samples = 128
+# max_samples = 64
 
 max_features = 'sqrt'
 # max_features = 1.0
