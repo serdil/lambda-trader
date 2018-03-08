@@ -8,8 +8,8 @@ from lambdatrader.signals.data_analysis.models import XGBSplitDatasetModel, RFMo
 from lambdatrader.signals.generators.factories import Pairs
 
 # rf_training_pairs = Pairs.all_pairs(); interleaved = True
-# rf_training_pairs = Pairs.n_pairs(); interleaved = True
-rf_training_pairs = ['BTC_ETH']; interleaved = False
+rf_training_pairs = Pairs.n_pairs(); interleaved = True
+# rf_training_pairs = ['BTC_ETH']; interleaved = False
 # rf_training_pairs = ['BTC_XMR']; interleaved = False
 # rf_training_pairs = ['BTC_LTC']; interleaved = False
 # rf_training_pairs = ['BTC_XRP']; interleaved = False
@@ -29,12 +29,14 @@ rf_training_pairs = ['BTC_ETH']; interleaved = False
 # rf_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_rest_train()
 
 # rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=7)
-rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=20)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=20)
 # rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=40)
 # rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=60)
-# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=90)
+rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=90)
 # rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=120)
 # rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=200)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=500)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=1000)
 
 # rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500)
 # rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=5000)
@@ -51,8 +53,8 @@ rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20
 # rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=500)
 
 
-# feature_set = FeatureSets.get_all_periods_last_five_ohlcv()
-feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
+feature_set = FeatureSets.get_all_periods_last_five_ohlcv()
+# feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
 # feature_set = FeatureSets.get_all_periods_last_n_ohlcv(30)
 # feature_set = FeatureSets.get_all_periods_last_n_ohlcv(3)
 
@@ -65,13 +67,21 @@ value_set_max = DFFeatureSet(features=[MaxReturn(n_candles=rf_n_candles)])
 
 rf_model_per_pair = True
 
-rf_c_thr = 0.01
-rf_m_thr = 0.02
+rf_c_thr = 0.04
+rf_m_thr = 0.04
 
-n_estimators = 100
+# n_estimators = 1000
+n_estimators = 500
+# n_estimators = 200
+# n_estimators = 100
 # n_estimators = 20
 
-max_depth = 12
+max_depth = None
+# max_depth = 50
+# max_depth = 20
+# max_depth = 12
+# max_depth = 8
+# max_depth = 6
 
 cavg_n_estimators = n_estimators
 max_n_estimators = n_estimators
@@ -79,11 +89,15 @@ max_n_estimators = n_estimators
 cavg_max_depth = max_depth
 max_max_depth = max_depth
 
-max_features = 'auto'
+# max_features = 'auto'
+# max_features = 'sqrt'
+max_features = 'log2'
+# max_features = 0.2
 # max_features = 0.1
+# max_features = 0.05
 
-# min_samples_leaf = 1
-min_samples_leaf = 3
+min_samples_leaf = 1
+# min_samples_leaf = 3
 
 cavg_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
     pairs=rf_training_pairs,
