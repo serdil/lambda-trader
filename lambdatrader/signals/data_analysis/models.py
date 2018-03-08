@@ -289,7 +289,7 @@ class BaggingDecisionTreeModel(BaseModel):
         self.forest.fit(x, y)
 
         if self.oob_score:
-            print('oob score:', self.forest.oob_score)
+            print('oob score:', self.forest.oob_score_)
 
     def save(self):
         raise NotImplementedError
