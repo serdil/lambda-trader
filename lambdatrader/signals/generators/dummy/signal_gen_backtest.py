@@ -7,16 +7,17 @@ from lambdatrader.candlestick_stores.cachingstore import ChunkCachingCandlestick
 from lambdatrader.config import (
     BACKTESTING_STRATEGIES,
 )
+from lambdatrader.constants import M5
 from lambdatrader.evaluation.utils import statistics_over_periods, period_statistics
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.executors.executors import SignalExecutor
 from lambdatrader.signals.data_analysis.dummy.rf_models_dummy import (
     rf_training_pairs, rf_n_candles, rf_model_per_pair, rf_pair_models, rf_models, rf_c_thr,
-    rf_m_thr,
+    rf_m_thr, rf_split_date_range,
 )
 from lambdatrader.signals.data_analysis.dummy.xgb_models_tmp import (
-    xgb_cavg_model, xgb_max_model, xgb_training_pairs, xgb_n_candles, xgb_model_per_pair, xgb_c_thr, xgb_m_thr,
-    xgb_pair_models, xgb_models,
+    xgb_cavg_model, xgb_max_model, xgb_training_pairs, xgb_n_candles, xgb_model_per_pair, xgb_c_thr,
+    xgb_m_thr, xgb_pair_models, xgb_models, xgb_split_date_range,
 )
 from lambdatrader.signals.data_analysis.utils import date_str_to_timestamp
 from lambdatrader.signals.generators.dummy.signal_generation import (
@@ -41,16 +42,18 @@ market_info = BacktestingMarketInfo(candlestick_store=cs_store)
 
 account = BacktestingAccount(market_info=market_info, balances={'BTC': 100})
 
-start_date = date_str_to_timestamp('2018-01-10')
-end_date = date_str_to_timestamp('2018-01-30')
+# start_date = date_str_to_timestamp('2018-01-10')
+# end_date = date_str_to_timestamp('2018-01-30')
 
 # pairs = Pairs.n_pairs()
 # pairs = Pairs.all_pairs()
 # pairs = Pairs.eth()
 # pairs = Pairs.xrp()
-# pairs = xgb_training_pairs
-pairs = rf_training_pairs
 
+
+# start_date = xgb_split_date_range.test.start + xgb_n_candles * M5.seconds()
+# end_date = xgb_split_date_range.test.end
+# pairs = xgb_training_pairs
 # n_candles = xgb_n_candles
 # model_per_pair = xgb_model_per_pair
 # pair_models = xgb_pair_models
@@ -58,6 +61,9 @@ pairs = rf_training_pairs
 # c_thr = xgb_c_thr
 # m_thr = xgb_m_thr
 
+start_date = rf_split_date_range.test.start + rf_n_candles * M5.seconds()
+end_date = rf_split_date_range.test.end
+pairs = rf_training_pairs
 n_candles = rf_n_candles
 model_per_pair = rf_model_per_pair
 pair_models = rf_pair_models

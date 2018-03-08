@@ -161,7 +161,7 @@ class RFModel(BaseModel):
 
     def __init__(self,
                  dataset_descriptor: SplitDatasetDescriptor,
-                 n_estimators=10, n_jobs=-1, max_depth=12, max_features=0.1,
+                 n_estimators=10, n_jobs=-1, max_depth=12, max_features='auto', min_samples_leaf=3,
                  obj_name=''):
         self.dataset_descriptor = dataset_descriptor
 
@@ -169,6 +169,7 @@ class RFModel(BaseModel):
         self.n_jobs = n_jobs
         self.max_depth = max_depth
         self.max_features = max_features
+        self.min_samples_leaf = min_samples_leaf
 
         self.obj_name = obj_name
 
@@ -179,6 +180,7 @@ class RFModel(BaseModel):
                                             n_jobs=self.n_jobs,
                                             max_depth=self.max_depth,
                                             max_features=self.max_features,
+                                            min_samples_leaf=self.min_samples_leaf,
                                             verbose=True)
         training_dd = self.dataset_descriptor.training
         x, y, feature_names = (DFDataset

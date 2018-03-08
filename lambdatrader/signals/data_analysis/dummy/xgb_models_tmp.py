@@ -21,28 +21,28 @@ xgb_training_pairs = Pairs.all_pairs(); interleaved = True
 # xgb_training_pairs = ['BTC_VTC']; interleaved = False
 
 
-# split_date_range = SplitDateRanges.january_3_days_test_3_days_val_7_days_train()
-# split_date_range = SplitDateRanges.january_20_days_test_20_days_val_20_days_train()
-# split_date_range = SplitDateRanges.january_20_days_test_20_days_val_160_days_train()
-split_date_range = SplitDateRanges.january_20_days_test_20_days_val_360_days_train()
-# split_date_range = SplitDateRanges.january_20_days_test_20_days_val_500_days_train()
-# split_date_range = SplitDateRanges.january_20_days_test_20_days_val_rest_train()
+# xgb_split_date_range = SplitDateRanges.january_3_days_test_3_days_val_7_days_train()
+# xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_20_days_train()
+# xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_160_days_train()
+xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_360_days_train()
+# xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_500_days_train()
+# xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_rest_train()
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=7, t=7)
+# xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=7, t=7)
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=5000)
+# xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500)
+# xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=5000)
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=20)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=200)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500)
+# xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=20)
+# xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=200)
+# xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500)
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=20)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=60)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=200)
+# xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=20)
+# xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=60)
+# xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=200)
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=200)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=500)
+# xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=200)
+# xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=500)
 
 
 feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
@@ -62,7 +62,7 @@ cavg_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_da
     pairs=xgb_training_pairs,
     feature_set=feature_set,
     value_set=value_set_cavg,
-    split_date_range=split_date_range,
+    split_date_range=xgb_split_date_range,
     exchanges=(POLONIEX,),
     interleaved=interleaved
 )
@@ -71,7 +71,7 @@ max_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_dat
     pairs=xgb_training_pairs,
     feature_set=feature_set,
     value_set=value_set_max,
-    split_date_range=split_date_range,
+    split_date_range=xgb_split_date_range,
     exchanges=(POLONIEX,),
     interleaved=interleaved
 )
@@ -84,7 +84,7 @@ for pair in xgb_training_pairs:
         pairs=[pair],
         feature_set=feature_set,
         value_set=value_set_cavg,
-        split_date_range=split_date_range,
+        split_date_range=xgb_split_date_range,
         exchanges=(POLONIEX,),
         interleaved=False
     )
@@ -92,7 +92,7 @@ for pair in xgb_training_pairs:
         pairs=[pair],
         feature_set=feature_set,
         value_set=value_set_max,
-        split_date_range=split_date_range,
+        split_date_range=xgb_split_date_range,
         exchanges=(POLONIEX,),
         interleaved=False
     )

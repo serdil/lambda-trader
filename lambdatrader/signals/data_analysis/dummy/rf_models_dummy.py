@@ -21,34 +21,34 @@ rf_training_pairs = ['BTC_ETH']; interleaved = False
 # rf_training_pairs = ['BTC_VTC']; interleaved = False
 
 
-# split_date_range = SplitDateRanges.january_3_days_test_3_days_val_7_days_train()
-# split_date_range = SplitDateRanges.january_20_days_test_20_days_val_20_days_train()
-# split_date_range = SplitDateRanges.january_20_days_test_20_days_val_160_days_train()
-# split_date_range = SplitDateRanges.january_20_days_test_20_days_val_360_days_train()
-# split_date_range = SplitDateRanges.january_20_days_test_20_days_val_500_days_train()
-# split_date_range = SplitDateRanges.january_20_days_test_20_days_val_rest_train()
+# rf_split_date_range = SplitDateRanges.january_3_days_test_3_days_val_7_days_train()
+# rf_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_20_days_train()
+# rf_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_160_days_train()
+# rf_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_360_days_train()
+# rf_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_500_days_train()
+# rf_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_rest_train()
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=7)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=20)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=40)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=60)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=90)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=120)
-split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=200)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=7)
+rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=20)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=40)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=60)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=90)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=120)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=200)
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=5000)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=5000)
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=20)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=200)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=20)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=200)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500)
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=20)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=60)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=200)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=20)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=60)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=200)
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=200)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=500)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=200)
+# rf_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=500)
 
 
 # feature_set = FeatureSets.get_all_periods_last_five_ohlcv()
@@ -69,6 +69,8 @@ rf_c_thr = 0.01
 rf_m_thr = 0.02
 
 n_estimators = 100
+# n_estimators = 20
+
 max_depth = 12
 
 cavg_n_estimators = n_estimators
@@ -80,11 +82,14 @@ max_max_depth = max_depth
 max_features = 'auto'
 # max_features = 0.1
 
+# min_samples_leaf = 1
+min_samples_leaf = 3
+
 cavg_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
     pairs=rf_training_pairs,
     feature_set=feature_set,
     value_set=value_set_cavg,
-    split_date_range=split_date_range,
+    split_date_range=rf_split_date_range,
     exchanges=(POLONIEX,),
     interleaved=interleaved
 )
@@ -93,7 +98,7 @@ max_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_dat
     pairs=rf_training_pairs,
     feature_set=feature_set,
     value_set=value_set_max,
-    split_date_range=split_date_range,
+    split_date_range=rf_split_date_range,
     exchanges=(POLONIEX,),
     interleaved=interleaved
 )
@@ -106,7 +111,7 @@ for pair in rf_training_pairs:
         pairs=[pair],
         feature_set=feature_set,
         value_set=value_set_cavg,
-        split_date_range=split_date_range,
+        split_date_range=rf_split_date_range,
         exchanges=(POLONIEX,),
         interleaved=False
     )
@@ -114,7 +119,7 @@ for pair in rf_training_pairs:
         pairs=[pair],
         feature_set=feature_set,
         value_set=value_set_max,
-        split_date_range=split_date_range,
+        split_date_range=rf_split_date_range,
         exchanges=(POLONIEX,),
         interleaved=False
     )
@@ -126,6 +131,7 @@ rf_cavg_model = RFModel(
     n_estimators=cavg_n_estimators,
     max_depth=cavg_max_depth,
     max_features=max_features,
+    min_samples_leaf=min_samples_leaf,
     obj_name='cavg'
 )
 
@@ -134,6 +140,7 @@ rf_max_model = RFModel(
     n_estimators=max_n_estimators,
     max_depth=max_max_depth,
     max_features=max_features,
+    min_samples_leaf=min_samples_leaf,
     obj_name='max'
 )
 
@@ -147,6 +154,7 @@ for pair in rf_training_pairs:
         n_estimators=cavg_n_estimators,
         max_depth=cavg_max_depth,
         max_features=max_features,
+        min_samples_leaf=min_samples_leaf,
         obj_name='cavg'
     )
 
@@ -155,6 +163,7 @@ for pair in rf_training_pairs:
         n_estimators=max_n_estimators,
         max_depth=max_max_depth,
         max_features=max_features,
+        min_samples_leaf=min_samples_leaf,
         obj_name='max'
     )
 
