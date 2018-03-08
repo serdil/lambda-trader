@@ -1,7 +1,9 @@
 from operator import itemgetter
 
 import xgboost as xgb
-from sklearn.ensemble import RandomForestRegressor
+from math import sqrt
+from sklearn.ensemble import RandomForestRegressor, BaggingRegressor
+from sklearn.tree import DecisionTreeRegressor
 from xgboost.core import XGBoostError, DMatrix
 
 from lambdatrader.signals.data_analysis.df_datasets import (
@@ -176,12 +178,6 @@ class RFModel(BaseModel):
         self.forest = None
 
     def train(self):
-        self.forest = RandomForestRegressor(n_estimators=self.n_estimators,
-                                            n_jobs=self.n_jobs,
-                                            max_depth=self.max_depth,
-                                            max_features=self.max_features,
-                                            min_samples_leaf=self.min_samples_leaf,
-                                            verbose=True)
         training_dd = self.dataset_descriptor.training
         x, y, feature_names = (DFDataset
                                .compute_from_descriptor(training_dd,
@@ -192,6 +188,13 @@ class RFModel(BaseModel):
                                .add_feature_names()
                                .get())
 
+        self.forest = RandomForestRegressor(n_estimators=self.n_estimators,
+                                            n_jobs=self.n_jobs,
+                                            max_depth=self.max_depth,
+                                            max_features=self.max_features,
+                                            min_samples_leaf=self.min_samples_leaf,
+                                            verbose=True)
+
         self.forest.fit(x, y)
 
         importance = self.forest.feature_importances_
@@ -201,6 +204,87 @@ class RFModel(BaseModel):
         print('feature importances {}:'.format(self.obj_name))
         for f_name, imp in name_importance_sorted:
             print(f_name, ':', imp)
+
+    def save(self):
+        raise NotImplementedError
+
+    def load(self):
+        raise NotImplementedError
+
+    def predict_dataset_desc(self, desc):
+        x = DFDataset.compute_from_descriptor(desc).add_feature_values().get()[0]
+        return self.predict_ndarray(x)
+
+    def predict_dmatrix(self, dmatrix):
+        raise NotImplementedError
+
+    def predict_df(self, df):
+        return self.predict_ndarray(df.values)
+
+    def predict_ndarray(self, x):
+        if self.forest is None:
+            raise NotTrainedException
+        else:
+            return self.forest.predict(x)
+
+    @property
+    def value_name(self):
+        return self.dataset_descriptor.first_value_name
+
+
+class BaggingDecisionTreeModel(BaseModel):
+
+    def __init__(self,
+                 dataset_descriptor: SplitDatasetDescriptor,
+                 n_estimators=400, max_samples=288, max_features='sqrt', dt_max_features='sqrt',
+                 random_state=0, obj_name='', n_jobs=-1):
+        self.dataset_descriptor = dataset_descriptor
+
+        self.n_estimators = n_estimators
+        self.max_samples = max_samples
+        self.max_features = max_features
+        self.dt_max_features = dt_max_features
+
+        self.random_state = random_state
+        self.n_jobs = n_jobs
+
+        self.obj_name = obj_name
+
+        self.forest = None
+
+    def train(self):
+        training_dd = self.dataset_descriptor.training
+        x, y, feature_names = (DFDataset
+                               .compute_from_descriptor(training_dd,
+                                                        normalize=True,
+                                                        error_on_missing=False)
+                               .add_feature_values()
+                               .add_value_values(value_name=self.value_name)
+                               .add_feature_names()
+                               .get())
+
+        dtr = DecisionTreeRegressor(max_features=self.dt_max_features,
+                                    random_state=self.random_state)
+
+        if self.max_features == 'sqrt':
+            max_features = int(sqrt(len(feature_names)))
+        else:
+            max_features = self.max_features
+
+        if self.max_samples == 'sqrt':
+            max_samples = int(sqrt(len(x)))
+        else:
+            max_samples = self.max_samples
+
+        self.forest = BaggingRegressor(base_estimator=dtr,
+                                       n_estimators=self.n_estimators,
+                                       max_samples=max_samples,
+                                       max_features=max_features,
+                                       n_jobs=self.n_jobs,
+                                       random_state=self.random_state,
+                                       verbose=True)
+
+        self.forest.fit(x, y)
 
     def save(self):
         raise NotImplementedError

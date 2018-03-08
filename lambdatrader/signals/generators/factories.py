@@ -482,7 +482,7 @@ class Pairs:
     @classmethod
     def n_pairs(cls, n=None):
         pair_list = ['BTC_LTC', 'BTC_ETH', 'BTC_ETC', 'BTC_XMR',
-                     'BTC_SYS', 'BTC_VIA', 'BTC_SC', 'BTC_RADS', 'BTC_XRP']
+                     'BTC_SYS', 'BTC_VIA', 'BTC_SC', 'BTC_RADS', 'BTC_RIC', 'BTC_XRP',]
         if n:
             return pair_list[:n]
         else:
