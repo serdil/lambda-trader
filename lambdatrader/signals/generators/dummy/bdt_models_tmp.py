@@ -17,10 +17,10 @@ from lambdatrader.signals.generators.dummy.signal_generation import (
 # training_pairs = ['BTC_ETH']; interleaved = False
 # training_pairs = ['BTC_XMR']; interleaved = False
 # training_pairs = ['BTC_LTC']; interleaved = False
-training_pairs = ['BTC_XRP']; interleaved = False
+# training_pairs = ['BTC_XRP']; interleaved = False
 # training_pairs = ['BTC_STR']; interleaved = False
 # training_pairs = ['BTC_RADS']; interleaved = False
-# training_pairs = ['BTC_RIC']; interleaved = False
+training_pairs = ['BTC_RIC']; interleaved = False
 # training_pairs = ['BTC_SC']; interleaved = False
 # training_pairs = ['BTC_VIA']; interleaved = False
 # training_pairs = ['BTC_VTC']; interleaved = False
@@ -76,20 +76,22 @@ model_per_pair = True
 c_thr = 0.02
 m_thr = 0.02
 
-n_estimators = 2000
+# n_estimators = 8000
+# n_estimators = 4000
+# n_estimators = 2000
 # n_estimators = 1600
-# n_estimators = 1000
+n_estimators = 1000
 # n_estimators = 800
 # n_estimators = 400
 # n_estimators = 200
 # n_estimators = 100
 # n_estimators = 20
 
-day = 288
+one_day_samples = 288
 
 # max_samples = 0.1
 # max_samples = 0.01
-max_samples = day * 1
+max_samples = one_day_samples * 1
 
 max_features = 'sqrt'
 # max_features = 0.2
