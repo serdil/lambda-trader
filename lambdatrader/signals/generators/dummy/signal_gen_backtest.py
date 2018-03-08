@@ -11,15 +11,10 @@ from lambdatrader.constants import M5
 from lambdatrader.evaluation.utils import statistics_over_periods, period_statistics
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.executors.executors import SignalExecutor
-from lambdatrader.signals.data_analysis.dummy.rf_models_dummy import (
+from lambdatrader.signals.generators.dummy.rf_models_tmp import (
     rf_training_pairs, rf_n_candles, rf_model_per_pair, rf_pair_models, rf_models, rf_c_thr,
     rf_m_thr, rf_split_date_range,
 )
-from lambdatrader.signals.data_analysis.dummy.xgb_models_tmp import (
-    xgb_cavg_model, xgb_max_model, xgb_training_pairs, xgb_n_candles, xgb_model_per_pair, xgb_c_thr,
-    xgb_m_thr, xgb_pair_models, xgb_models, xgb_split_date_range,
-)
-from lambdatrader.signals.data_analysis.utils import date_str_to_timestamp
 from lambdatrader.signals.generators.dummy.signal_generation import (
     SignalServer, CloseAvgReturnMaxReturnSignalConverter, ModelPredSignalGenerator,
 )
