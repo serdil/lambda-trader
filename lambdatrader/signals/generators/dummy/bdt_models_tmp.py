@@ -22,12 +22,12 @@ from lambdatrader.signals.generators.factories import Pairs
 # training_pairs = Pairs.all_pairs()[:40]; interleaved = True
 # training_pairs = Pairs.all_pairs()[:20]; interleaved = True
 # training_pairs = Pairs.all_pairs()[:10]; interleaved = True
-# training_pairs = random.sample(Pairs.all_pairs(), 40); interleaved = True
+training_pairs = random.sample(Pairs.all_pairs(), 40); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 20); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 15); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 10); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 5); interleaved = True
-training_pairs = random.sample(Pairs.all_pairs(), 1); interleaved = True
+# training_pairs = random.sample(Pairs.all_pairs(), 1); interleaved = True
 # training_pairs = Pairs.n_pairs(); interleaved = True
 # training_pairs = ['BTC_ETH']; interleaved = False
 # training_pairs = ['BTC_XMR']; interleaved = False
@@ -42,10 +42,36 @@ training_pairs = random.sample(Pairs.all_pairs(), 1); interleaved = True
 # training_pairs = ['BTC_XCP']; interleaved = False
 # training_pairs = ['BTC_XVC']; interleaved = False
 # training_pairs = ['BTC_STEEM']; interleaved = False
+# training_pairs = ['BTC_ZRX']; interleaved = False
 
+# low success rate
+# training_pairs = ['BTC_BTM']; interleaved = False
+# training_pairs = ['BTC_VRC']; interleaved = False
+# training_pairs = ['BTC_HUC']; interleaved = False
+# training_pairs = ['BTC_NXC']; interleaved = False
+# training_pairs = ['BTC_NEOS']; interleaved = False
+# training_pairs = ['BTC_RIC']; interleaved = False
+
+# few signals
+# training_pairs = ['BTC_ETC']; interleaved = False
+# training_pairs = ['BTC_PINK']; interleaved = False
+# training_pairs = ['BTC_FLO']; interleaved = False
+# training_pairs = ['BTC_BCH']; interleaved = False
+# training_pairs = ['BTC_GNO']; interleaved = False
+# training_pairs = ['BTC_FLDC']; interleaved = False
+# training_pairs = ['BTC_NOTE']; interleaved = False
+
+# good
+# training_pairs = ['BTC_ZRX']; interleaved = False
+# training_pairs = ['BTC_BURST']; interleaved = False
 
 # model_per_pair = True
 model_per_pair = False
+
+if model_per_pair:
+    n_p = 1
+else:
+    n_p = len(training_pairs)
 
 # split_date_range = SplitDateRanges.january_3_days_test_3_days_val_7_days_train()
 # split_date_range = SplitDateRanges.january_20_days_test_20_days_val_20_days_train()
@@ -54,36 +80,36 @@ model_per_pair = False
 # split_date_range = SplitDateRanges.january_20_days_test_20_days_val_500_days_train()
 # split_date_range = SplitDateRanges.january_20_days_test_20_days_val_rest_train()
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=7)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=14)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=20)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=30)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=40)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=60)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=90)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=120)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=200)
-split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=500)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=1000)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=2000)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=7//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=14//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=20//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=30//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=40//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=60//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=90//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=120//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=200//n_p)
+split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=500//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=1000//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=2000//n_p)
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=5000)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=5000//n_p)
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=20)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=200)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=20//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=200//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500//n_p)
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=20)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=60)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=200)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=20//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=60//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=200//n_p)
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=200)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=500)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=200//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=500//n_p)
 
 
-feature_set = FeatureSets.get_all_periods_last_five_ohlcv()
-# feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
+# feature_set = FeatureSets.get_all_periods_last_five_ohlcv()
+feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
 # feature_set = FeatureSets.get_all_periods_last_n_ohlcv(30)
 # feature_set = FeatureSets.get_all_periods_last_n_ohlcv(3)
 
@@ -116,6 +142,7 @@ samples_every_n_candles = n_samples // n_candles
 # max_samples = one_day_samples * 1
 # max_samples = one_day_samples // 2
 # max_samples = one_day_samples // 4
+# max_samples = 16384 * 2
 # max_samples = 16384
 # max_samples = 8192
 # max_samples = 4096
@@ -128,6 +155,7 @@ max_samples = 1024
 # max_samples = samples_every_n_candles
 
 
+n_estimators = max(1024000 // max_samples, 500)
 # n_estimators = 20000
 # n_estimators = 16000
 # n_estimators = 8000
@@ -141,19 +169,25 @@ max_samples = 1024
 # n_estimators = 200
 # n_estimators = 100
 # n_estimators = 20
+
 # n_estimators = n_candles * 100
 # n_estimators = n_candles * 50
 # n_estimators = n_candles * 10
 # n_estimators = n_candles * 4
 # n_estimators = n_candles * 2
 # n_estimators = n_candles
+
+# n_estimators = max(n_samples // max_samples * 10, 500)
+
+# n_estimators = n_samples // max_samples * 200
 # n_estimators = n_samples // max_samples * 100
 # n_estimators = n_samples // max_samples * 80
 # n_estimators = n_samples // max_samples * 60
 # n_estimators = n_samples // max_samples * 40
 # n_estimators = n_samples // max_samples * 20
-n_estimators = n_samples // max_samples * 10
+# n_estimators = n_samples // max_samples * 10
 # n_estimators = n_samples // max_samples * 5
+# n_estimators = n_samples // max_samples * 2
 # n_estimators = n_samples // max_samples
 
 max_features = 'sqrt'
