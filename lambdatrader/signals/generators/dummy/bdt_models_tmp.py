@@ -18,11 +18,11 @@ from lambdatrader.signals.generators.dummy.signal_generation import (
 )
 from lambdatrader.signals.generators.factories import Pairs
 
-# training_pairs = Pairs.all_pairs(); interleaved = True
+training_pairs = Pairs.all_pairs(); interleaved = True
 # training_pairs = Pairs.all_pairs()[:40]; interleaved = True
 # training_pairs = Pairs.all_pairs()[:20]; interleaved = True
 # training_pairs = Pairs.all_pairs()[:10]; interleaved = True
-training_pairs = random.sample(Pairs.all_pairs(), 40); interleaved = True
+# training_pairs = random.sample(Pairs.all_pairs(), 40); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 20); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 15); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 10); interleaved = True
@@ -126,7 +126,7 @@ m_thr = 0.02
 
 one_day_samples = 288
 n_samples = (split_date_range.training.end - split_date_range.training.start) \
-            // M5.seconds() * len(training_pairs)
+            // M5.seconds() * n_p
 n_samples_sqrt = int(sqrt(n_samples))
 samples_every_n_candles = n_samples // n_candles
 
@@ -155,7 +155,8 @@ max_samples = 1024
 # max_samples = samples_every_n_candles
 
 
-n_estimators = max(1024000 // max_samples, 500)
+n_estimators = max(1024000 // max_samples, 1000)
+# n_estimators = max(512000 // max_samples, 500)
 # n_estimators = 20000
 # n_estimators = 16000
 # n_estimators = 8000
