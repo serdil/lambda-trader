@@ -1,3 +1,5 @@
+import itertools
+
 from lambdatrader.constants import M5, M15, H, H4, D
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.signals.data_analysis.constants import (
@@ -146,6 +148,25 @@ class FeatureSets:
     @classmethod
     def get_random(cls):
         return DFFeatureSet(features=[RandomFeature()])
+
+    @classmethod
+    def compose_remove_duplicates(cls, *feature_sets):
+        feature_lists = [fs.features for fs in feature_sets]
+        all_features = list(itertools.chain.from_iterable(feature_lists))
+        unique_features = cls._filter_duplicate_features(all_features)
+        return DFFeatureSet(features=unique_features)
+
+    @classmethod
+    def _filter_duplicate_features(cls, feature_list):
+        seen_names = set()
+        unique_features = []
+        for feature in feature_list:
+            if feature.name in seen_names:
+                pass
+            else:
+                unique_features.append(feature)
+                seen_names.add(feature.name)
+        return unique_features
 
     @classmethod
     def _ohlc_now_close_delta_volume_value_num_offsets_periods(cls, num_offsets, periods):

@@ -22,12 +22,13 @@ from lambdatrader.signals.generators.factories import Pairs
 # training_pairs = Pairs.all_pairs()[:40]; interleaved = True
 # training_pairs = Pairs.all_pairs()[:20]; interleaved = True
 # training_pairs = Pairs.all_pairs()[:10]; interleaved = True
+training_pairs = Pairs.all_pairs()[20:25]; interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 40); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 20); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 15); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 10); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 5); interleaved = True
-training_pairs = random.sample(Pairs.all_pairs(), 1); interleaved = True
+# training_pairs = random.sample(Pairs.all_pairs(), 1); interleaved = True
 # training_pairs = Pairs.n_pairs(); interleaved = True
 # training_pairs = ['BTC_ETH']; interleaved = False
 # training_pairs = ['BTC_XMR']; interleaved = False
@@ -89,29 +90,45 @@ else:
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=90//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=120//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=200//n_p)
-split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=500//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=500//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=1000//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=2000//n_p)
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500//n_p)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=5000//n_p)
-
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=20//n_p)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=200//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=30//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=90//n_p)
+split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=200//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500//n_p)
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=20//n_p)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=60//n_p)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=60, t=200//n_p)
+fs = FeatureSets
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=200//n_p)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=500//n_p)
+nd_5 = fs.get_all_periods_last_n_ohlcv_now_delta(5)
+nd_10 = fs.get_all_periods_last_n_ohlcv_now_delta(10)
+nd_20 = fs.get_all_periods_last_n_ohlcv_now_delta(20)
+nd_30 = fs.get_all_periods_last_n_ohlcv_now_delta(30)
+nd_100 = fs.get_all_periods_last_n_ohlcv_now_delta(100)
 
+sd_5 = fs.get_all_periods_last_n_ohlcv_self_delta(5)
+sd_10 = fs.get_all_periods_last_n_ohlcv_self_delta(10)
+sd_20 = fs.get_all_periods_last_n_ohlcv_self_delta(20)
+sd_30 = fs.get_all_periods_last_n_ohlcv_self_delta(30)
+sd_100 = fs.get_all_periods_last_n_ohlcv_self_delta(100)
 
-# feature_set = FeatureSets.get_all_periods_last_five_ohlcv()
-feature_set = FeatureSets.get_all_periods_last_ten_ohlcv_now_delta()
-# feature_set = FeatureSets.get_all_periods_last_n_ohlcv(30)
-# feature_set = FeatureSets.get_all_periods_last_n_ohlcv(3)
+# feature_set = nd_100
+# feature_set = nd_30
+# feature_set = nd_20
+# feature_set = nd_10
+# feature_set = nd_5
+
+# feature_set = sd_100
+# feature_set = sd_30
+# feature_set = sd_20
+# feature_set = sd_10
+# feature_set = sd_5
+
+# feature_set = fs.compose_remove_duplicates(nd_5, sd_5)
+feature_set = fs.compose_remove_duplicates(nd_10, sd_10)
+# feature_set = fs.compose_remove_duplicates(nd_20, sd_20)
+# feature_set = fs.compose_remove_duplicates(nd_100, sd_100)
 
 
 n_candles = 48
@@ -131,6 +148,7 @@ n_samples_sqrt = int(sqrt(n_samples))
 samples_every_n_candles = n_samples // n_candles
 
 # max_samples = n_samples_sqrt
+# max_samples = 1.00
 # max_samples = 0.50
 # max_samples = 0.25
 # max_samples = 0.10
@@ -155,15 +173,15 @@ max_samples = 1024
 # max_samples = samples_every_n_candles
 
 
-n_estimators = max(1024000 // max_samples, 1000)
-# n_estimators = max(512000 // max_samples, 500)
+# n_estimators = max(1024000 // max_samples, 1000)
+# # n_estimators = max(512000 // max_samples, 500)
 # n_estimators = 20000
 # n_estimators = 16000
 # n_estimators = 8000
 # n_estimators = 4000
 # n_estimators = 2000
 # n_estimators = 1600
-# n_estimators = 1000
+n_estimators = 1000
 # n_estimators = 800
 # n_estimators = 500
 # n_estimators = 400

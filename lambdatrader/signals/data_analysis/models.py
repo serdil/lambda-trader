@@ -1,7 +1,10 @@
 from operator import itemgetter
 
+import numpy as np
 import xgboost as xgb
 from math import sqrt
+
+from sklearn import metrics
 from sklearn.ensemble import RandomForestRegressor, BaggingRegressor
 from sklearn.tree import DecisionTreeRegressor
 from xgboost.core import XGBoostError, DMatrix
@@ -264,6 +267,15 @@ class BaggingDecisionTreeModel(BaseModel):
                                .add_feature_names()
                                .get())
 
+        validation_dd = self.dataset_descriptor.validation
+        val_x, val_y = (DFDataset
+                        .compute_from_descriptor(validation_dd,
+                                                 normalize=True,
+                                                 error_on_missing=False)
+                        .add_feature_values()
+                        .add_value_values(value_name=self.value_name)
+                        .get())
+
         dtr = DecisionTreeRegressor(max_features=self.dt_max_features,
                                     random_state=self.random_state)
 
@@ -287,9 +299,42 @@ class BaggingDecisionTreeModel(BaseModel):
                                        verbose=True)
 
         self.forest.fit(x, y)
+        val_pred = self.forest.predict(val_x)
 
         if self.oob_score:
+            print()
             print('oob score {}: {}'.format(self.obj_name, self.forest.oob_score_))
+            print()
+
+        print()
+        r2_score = metrics.r2_score(val_y, val_pred)
+        rmse = sqrt(metrics.mean_squared_error(val_y, val_pred))
+        print('r2 score:', r2_score)
+        print('rmse:', rmse)
+        print()
+
+        self._print_feature_imp(self.forest, feature_names)
+
+    @classmethod
+    def _print_feature_imp(cls, forest, feature_names):
+        feature_imp = cls._comp_feature_imp(forest, feature_names)
+        name_importance_sorted = list(reversed(sorted(feature_imp, key=itemgetter(1))))[:10]
+        print()
+        print('feature importances:')
+        for f_name, imp in name_importance_sorted:
+            print(f_name, ':', imp)
+        print()
+
+    @classmethod
+    def _comp_feature_imp(cls, forest, feature_names):
+        feature_imp = np.zeros(len(feature_names))
+        estimators = forest.estimators_
+        estimators_features = forest.estimators_features_
+        for est, est_features in zip(estimators, estimators_features):
+            feature_imp[est_features] += est.feature_importances_
+        feature_imp /= len(estimators)
+        imp_tuples = list(zip(feature_names, feature_imp))
+        return imp_tuples
 
     def save(self):
         raise NotImplementedError
