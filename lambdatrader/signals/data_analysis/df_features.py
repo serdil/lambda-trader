@@ -127,7 +127,7 @@ class OHLCVValue(LookbackFeature):
         return to_ffilled_df_with_name(dfs[M5].index, df[self.mode].shift(self.offset), self.name)
 
 
-class OHLCVSelfDelta(LookbackFeature):
+class OHLCVNowSelfDelta(LookbackFeature):
     def __init__(self, mode, offset, period=M5):
         self.mode = mode
         self.offset = offset
@@ -135,9 +135,9 @@ class OHLCVSelfDelta(LookbackFeature):
 
     @property
     def name(self):
-        return 'ohlcv_self_delta_period_{}_mode_{}_offset_{}'.format(self.period.name,
-                                                                     self.mode,
-                                                                     self.offset)
+        return 'ohlcv_now_self_delta_period_{}_mode_{}_offset_{}'.format(self.period.name,
+                                                                         self.mode,
+                                                                         self.offset)
 
     @property
     def lookback(self):
@@ -149,7 +149,7 @@ class OHLCVSelfDelta(LookbackFeature):
         return to_ffilled_df_with_name(dfs[M5].index, self_delta, self.name)
 
 
-class OHLCVCloseDelta(LookbackFeature):
+class OHLCVNowCloseDelta(LookbackFeature):
 
     def __init__(self, mode, offset, period=M5):
         self.mode = mode
@@ -158,9 +158,9 @@ class OHLCVCloseDelta(LookbackFeature):
 
     @property
     def name(self):
-        return 'ohlcv_close_delta_period_{}_mode_{}_offset_{}'.format(self.period.name,
-                                                                      self.mode,
-                                                                      self.offset)
+        return 'ohlcv_now_close_delta_period_{}_mode_{}_offset_{}'.format(self.period.name,
+                                                                          self.mode,
+                                                                          self.offset)
 
     @property
     def lookback(self):
@@ -170,6 +170,32 @@ class OHLCVCloseDelta(LookbackFeature):
         df = dfs[self.period]
         close_delta = (df[OHLCV_CLOSE] - df[self.mode].shift(self.offset)) / df[OHLCV_CLOSE]
         return to_ffilled_df_with_name(dfs[M5].index, close_delta, self.name)
+
+
+class OHLCVSelfCloseDelta(LookbackFeature):
+
+    def __init__(self, mode, offset, period=M5):
+        self.mode = mode
+        self.offset = offset
+        self.period = period
+
+    @property
+    def name(self):
+        return 'ohlcv_self_close_delta_period_{}_mode_{}_offset_{}'.format(self.period.name,
+                                                                           self.mode,
+                                                                           self.offset)
+
+    @property
+    def lookback(self):
+        return self.period.seconds() * self.offset
+
+    def compute(self, dfs):
+        df = dfs[self.period]
+        close = df[OHLCV_CLOSE]
+        shifted_close = close.shift(self.offset)
+        shifted_mode = df[self.mode].shift(self.offset)
+        self_close_delta = (shifted_close - shifted_mode) / shifted_close
+        return to_ffilled_df_with_name(dfs[M5].index, self_close_delta, self.name)
 
 
 class IndicatorValue(LookbackFeature):

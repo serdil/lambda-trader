@@ -7,7 +7,8 @@ from lambdatrader.signals.data_analysis.df_datasets import (
     DateRange, SplitDateRange, SplitDatasetDescriptor,
 )
 from lambdatrader.signals.data_analysis.df_features import (
-    OHLCVCloseDelta, OHLCVValue, OHLCVSelfDelta, DFFeatureSet, DummyFeature, RandomFeature,
+    OHLCVNowCloseDelta, OHLCVValue, OHLCVNowSelfDelta, DFFeatureSet, DummyFeature, RandomFeature,
+    OHLCVSelfCloseDelta,
 )
 from lambdatrader.signals.data_analysis.df_values import CloseReturn, MaxReturn, DummyValue
 from lambdatrader.signals.data_analysis.utils import date_str_to_timestamp
@@ -17,14 +18,25 @@ from lambdatrader.utilities.utils import seconds
 class FeatureListFactory:
 
     @classmethod
-    def get_ohlc_close_delta(cls, offsets=(1, 2, 3, 4, 5,), periods=(M5,)):
+    def get_ohlc_now_close_delta(cls, offsets=(1, 2, 3, 4, 5,), periods=(M5,)):
         features = []
         for period in periods:
             for offset in offsets:
-                features.append(OHLCVCloseDelta(OHLCV_OPEN, offset=offset, period=period))
-                features.append(OHLCVCloseDelta(OHLCV_HIGH, offset=offset, period=period))
-                features.append(OHLCVCloseDelta(OHLCV_LOW, offset=offset, period=period))
-                features.append(OHLCVCloseDelta(OHLCV_CLOSE, offset=offset, period=period))
+                features.append(OHLCVNowCloseDelta(OHLCV_OPEN, offset=offset, period=period))
+                features.append(OHLCVNowCloseDelta(OHLCV_HIGH, offset=offset, period=period))
+                features.append(OHLCVNowCloseDelta(OHLCV_LOW, offset=offset, period=period))
+                features.append(OHLCVNowCloseDelta(OHLCV_CLOSE, offset=offset, period=period))
+        return features
+
+    @classmethod
+    def get_ohlc_self_close_delta(cls, offsets=(1, 2, 3, 4, 5,), periods=(M5,)):
+        features = []
+        for period in periods:
+            for offset in offsets:
+                features.append(OHLCVSelfCloseDelta(OHLCV_OPEN, offset=offset, period=period))
+                features.append(OHLCVSelfCloseDelta(OHLCV_HIGH, offset=offset, period=period))
+                features.append(OHLCVSelfCloseDelta(OHLCV_LOW, offset=offset, period=period))
+                features.append(OHLCVSelfCloseDelta(OHLCV_CLOSE, offset=offset, period=period))
         return features
 
     @classmethod
@@ -36,17 +48,23 @@ class FeatureListFactory:
         return features
 
     @classmethod
-    def get_ohlc_close_delta_volume_value(cls, offsets=(1, 2, 3, 4, 5,), periods=(M5,)):
-        ohlc_close_delta = cls.get_ohlc_close_delta(offsets=offsets, periods=periods)
+    def get_ohlc_now_close_delta_volume_value(cls, offsets=(1, 2, 3, 4, 5,), periods=(M5,)):
+        ohlc_now_close_delta = cls.get_ohlc_now_close_delta(offsets=offsets, periods=periods)
         volume_value = cls.get_volume_value(offsets=offsets, periods=periods)
-        return ohlc_close_delta + volume_value
+        return ohlc_now_close_delta + volume_value
+
+    @classmethod
+    def get_ohlc_self_close_delta_volume_value(cls, offsets=(1, 2, 3, 4, 5,), periods=(M5,)):
+        ohlc_self_close_delta = cls.get_ohlc_self_close_delta(offsets=offsets, periods=periods)
+        volume_value = cls.get_volume_value(offsets=offsets, periods=periods)
+        return ohlc_self_close_delta + volume_value
 
     @classmethod
     def get_volume_self_delta(cls, offsets=(1, 2, 3, 4, 5,), periods=(M5,)):
         features = []
         for period in periods:
             for offset in offsets:
-                features.append(OHLCVSelfDelta(OHLCV_VOLUME, offset=offset, period=period))
+                features.append(OHLCVNowSelfDelta(OHLCV_VOLUME, offset=offset, period=period))
         return features
 
 
@@ -58,7 +76,7 @@ class FeatureSets:
     @classmethod
     def get_feature_set_1(cls):
         features = []
-        features.extend(ff.get_ohlc_close_delta_volume_value())
+        features.extend(ff.get_ohlc_now_close_delta_volume_value())
         features.extend(ff.get_volume_self_delta())
         return DFFeatureSet(features=features)
 
@@ -66,7 +84,7 @@ class FeatureSets:
     def get_feature_set_2(cls):
         features = []
         periods = [M5, M15, H, H4, D]
-        features.extend(ff.get_ohlc_close_delta_volume_value(periods=periods))
+        features.extend(ff.get_ohlc_now_close_delta_volume_value(periods=periods))
         features.extend(ff.get_volume_self_delta(periods=periods))
         return DFFeatureSet(features=features)
 
@@ -77,42 +95,49 @@ class FeatureSets:
         if len(num_offsets) != len(periods):
             raise ValueError('number of num_offsets should be {}'.format(len(periods)))
         for i, period in enumerate(periods):
-            features.extend(ff.get_ohlc_close_delta_volume_value(periods=[period],
-                                                                 offsets=range(num_offsets[i])))
+            features.extend(ff.get_ohlc_now_close_delta_volume_value(periods=[period],
+                                                                     offsets=range(num_offsets[i])))
         return DFFeatureSet(features=features)
 
     @classmethod
     def get_smallest(cls):
-        features = ff.get_ohlc_close_delta_volume_value(offsets=[1], periods=[M5])
+        features = ff.get_ohlc_now_close_delta_volume_value(offsets=[1], periods=[M5])
         return DFFeatureSet(features=features)
 
     @classmethod
     def get_small(cls):
         num_offsets = 5
         periods = [M5, M15, H, H4]
-        return cls._get_ohlc_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
+        return cls._ohlc_now_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
                                                                           periods=periods)
 
     @classmethod
-    def get_all_periods_last_five_ohlcv(cls):
+    def get_all_periods_last_five_ohlcv_now_delta(cls):
         num_offsets = 5
         periods = [M5, M15, H, H4, D]
-        return cls._get_ohlc_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
+        return cls._ohlc_now_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
                                                                           periods=periods)
 
     @classmethod
-    def get_all_periods_last_ten_ohlcv(cls):
+    def get_all_periods_last_ten_ohlcv_now_delta(cls):
         num_offsets = 10
         periods = [M5, M15, H, H4, D]
-        return cls._get_ohlc_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
+        return cls._ohlc_now_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
                                                                           periods=periods)
 
     @classmethod
-    def get_all_periods_last_n_ohlcv(cls, n):
+    def get_all_periods_last_n_ohlcv_now_delta(cls, n):
         num_offsets = n
         periods = [M5, M15, H, H4, D]
-        return cls._get_ohlc_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
+        return cls._ohlc_now_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
                                                                           periods=periods)
+
+    @classmethod
+    def get_all_periods_last_n_ohlcv_self_delta(cls, n):
+        num_offsets = n
+        periods = [M5, M15, H, H4, D]
+        return cls._ohlc_self_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
+                                                                           periods=periods)
 
     @classmethod
     def get_dummy(cls):
@@ -123,8 +148,15 @@ class FeatureSets:
         return DFFeatureSet(features=[RandomFeature()])
 
     @classmethod
-    def _get_ohlc_close_delta_volume_value_num_offsets_periods(cls, num_offsets, periods):
-        features = ff.get_ohlc_close_delta_volume_value(offsets=range(num_offsets), periods=periods)
+    def _ohlc_now_close_delta_volume_value_num_offsets_periods(cls, num_offsets, periods):
+        features = ff.get_ohlc_now_close_delta_volume_value(offsets=range(num_offsets),
+                                                            periods=periods)
+        return DFFeatureSet(features=features)
+
+    @classmethod
+    def _ohlc_self_close_delta_volume_value_num_offsets_periods(cls, num_offsets, periods):
+        features = ff.get_ohlc_self_close_delta_volume_value(offsets=range(num_offsets),
+                                                             periods=periods)
         return DFFeatureSet(features=features)
 
 
@@ -353,7 +385,7 @@ class SplitDatasetDescriptors:
     def sdd_1(cls):
         return SplitDatasetDescriptor.create_with_train_val_test_date_ranges(
             pairs=None,
-            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv_now_delta(),
             value_set=ValueSets.close_max_return_4h(),
             split_date_range=SplitDateRanges.january_20_days_test_20_days_val_160_days_train(),
             exchanges=(POLONIEX,),
@@ -364,7 +396,7 @@ class SplitDatasetDescriptors:
     def sdd_1_close(cls):
         return SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
             pairs=None,
-            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv_now_delta(),
             value_set=ValueSets.close_return_4h(),
             split_date_range=SplitDateRanges.january_20_days_test_20_days_val_160_days_train(),
             exchanges=(POLONIEX,),
@@ -375,7 +407,7 @@ class SplitDatasetDescriptors:
     def sdd_1_max(cls):
         return SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
             pairs=None,
-            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv_now_delta(),
             value_set=ValueSets.max_return_4h(),
             split_date_range=SplitDateRanges.january_20_days_test_20_days_val_160_days_train(),
             exchanges=(POLONIEX,),
@@ -386,7 +418,7 @@ class SplitDatasetDescriptors:
     def sdd_1_close_mini(cls):
         return SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
             pairs=None,
-            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv_now_delta(),
             value_set=ValueSets.close_return_4h(),
             split_date_range=SplitDateRanges.january_3_days_test_3_days_val_7_days_train(),
             exchanges=(POLONIEX,),
@@ -397,7 +429,7 @@ class SplitDatasetDescriptors:
     def sdd_1_max_mini(cls):
         return SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
             pairs=None,
-            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv_now_delta(),
             value_set=ValueSets.max_return_4h(),
             split_date_range=SplitDateRanges.january_3_days_test_3_days_val_7_days_train(),
             exchanges=(POLONIEX,),
@@ -408,7 +440,7 @@ class SplitDatasetDescriptors:
     def sdd_1_more_data(cls):
         return SplitDatasetDescriptor.create_with_train_val_test_date_ranges(
             pairs=None,
-            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv_now_delta(),
             value_set=ValueSets.close_max_return_4h(),
             split_date_range=SplitDateRanges.january_20_days_test_20_days_val_360_days_train(),
             exchanges=(POLONIEX,),
@@ -419,7 +451,7 @@ class SplitDatasetDescriptors:
     def sdd_1_more_data_close(cls):
         return SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
             pairs=None,
-            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv_now_delta(),
             value_set=ValueSets.close_return_4h(),
             split_date_range=SplitDateRanges.january_20_days_test_20_days_val_360_days_train(),
             exchanges=(POLONIEX,),
@@ -429,7 +461,7 @@ class SplitDatasetDescriptors:
     def sdd_1_more_data_max(cls):
         return SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
             pairs=None,
-            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv_now_delta(),
             value_set=ValueSets.max_return_4h(),
             split_date_range=SplitDateRanges.january_20_days_test_20_days_val_360_days_train(),
             exchanges=(POLONIEX,),
@@ -440,7 +472,7 @@ class SplitDatasetDescriptors:
     def sdd_1_all_data(cls):
         return SplitDatasetDescriptor.create_with_train_val_test_date_ranges(
             pairs=None,
-            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv_now_delta(),
             value_set=ValueSets.close_max_return_4h(),
             split_date_range=SplitDateRanges.january_20_days_test_20_days_val_rest_train(),
             exchanges=(POLONIEX,),
@@ -451,7 +483,7 @@ class SplitDatasetDescriptors:
     def sdd_2(cls):
         return SplitDatasetDescriptor.create_with_train_val_test_date_ranges(
             pairs=None,
-            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv_now_delta(),
             value_set=ValueSets.close_max_return_next_candle(),
             split_date_range=SplitDateRanges.january_20_days_test_20_days_val_160_days_train(),
             exchanges=(POLONIEX,),
@@ -462,7 +494,7 @@ class SplitDatasetDescriptors:
     def sdd_2_all_data(cls):
         return SplitDatasetDescriptor.create_with_train_val_test_date_ranges(
             pairs=None,
-            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv(),
+            feature_set=FeatureSets.get_all_periods_last_ten_ohlcv_now_delta(),
             value_set=ValueSets.close_max_return_next_candle(),
             split_date_range=SplitDateRanges.january_20_days_test_20_days_val_rest_train(),
             exchanges=(POLONIEX,),

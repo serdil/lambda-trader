@@ -58,7 +58,7 @@ split_date_range = SplitDateRanges.january_20_days_test_20_days_val_160_days_tra
 # split_date_range = SplitDateRanges.january_20_days_test_20_days_val_rest_train()
 # split_date_range = SplitDateRanges.january_20_days_test_60_days_val_rest_train()
 
-feature_set = FeatureSets.get_all_periods_last_five_ohlcv()
+feature_set = FeatureSets.get_all_periods_last_five_ohlcv_now_delta()
 
 value_set_close = DFFeatureSet(features=[CloseAvgReturn(n_candles=48)])
 # value_set_close = ValueSets.close_return_4h()

@@ -109,7 +109,7 @@ split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v
 
 
 # feature_set = FeatureSets.get_all_periods_last_five_ohlcv()
-feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
+feature_set = FeatureSets.get_all_periods_last_ten_ohlcv_now_delta()
 # feature_set = FeatureSets.get_all_periods_last_n_ohlcv(30)
 # feature_set = FeatureSets.get_all_periods_last_n_ohlcv(3)
 

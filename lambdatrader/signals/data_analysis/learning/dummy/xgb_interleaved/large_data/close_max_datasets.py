@@ -15,7 +15,7 @@ class CloseMaxDatasets:
 
     def get_1(self):
         split_date_range = SplitDateRanges.january_20_days_test_20_days_val_rest_train()
-        feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
+        feature_set = FeatureSets.get_all_periods_last_ten_ohlcv_now_delta()
         value_set_close = ValueSets.close_return_next_candle()
         value_set_max = ValueSets.max_return_next_candle()
 
@@ -23,7 +23,7 @@ class CloseMaxDatasets:
 
     def get_2(self):
         split_date_range = SplitDateRanges.january_20_days_test_20_days_val_160_days_train()
-        feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
+        feature_set = FeatureSets.get_all_periods_last_ten_ohlcv_now_delta()
         value_set_close = ValueSets.close_return_next_candle()
         value_set_max = ValueSets.max_return_next_candle()
 

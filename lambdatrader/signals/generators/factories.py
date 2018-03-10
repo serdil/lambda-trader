@@ -123,7 +123,7 @@ class CMMModelPredictorFactoryFactory:
                                            model_kwargs=rfr_kwargs)
         cmm_model = SklearnCMMModel(model_factory=model_factory, num_candles=48, candle_period=M5)
 
-        feature_set = FeatureSets.get_all_periods_last_five_ohlcv()
+        feature_set = FeatureSets.get_all_periods_last_five_ohlcv_now_delta()
         cmm_df_dataset_factory = CMMDFDatasetFactory(feature_set=feature_set,
                                                      num_candles=num_candles,
                                                      candle_period=M5)
@@ -157,7 +157,7 @@ class CMMModelPredictorFactoryFactory:
                                 num_rounds=n_rounds,
                                 early_stopping_rounds=early_stopping_rounds)
 
-        feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
+        feature_set = FeatureSets.get_all_periods_last_ten_ohlcv_now_delta()
         cmm_df_dataset_factory = CMMDFDatasetFactory(feature_set=feature_set,
                                                      num_candles=num_candles, candle_period=M5)
 

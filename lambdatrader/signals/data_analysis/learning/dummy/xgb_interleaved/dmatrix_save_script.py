@@ -56,7 +56,7 @@ day_offset = 12
 days = 200
 val_ratio = 0.8
 test_ratio = 0.9
-feature_set = fsf.get_all_periods_last_ten_ohlcv()
+feature_set = fsf.get_all_periods_last_ten_ohlcv_now_delta()
 
 valr = int(val_ratio * 100)
 testr = int(test_ratio * 100)

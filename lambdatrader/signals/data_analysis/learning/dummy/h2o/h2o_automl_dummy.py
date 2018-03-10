@@ -11,7 +11,7 @@ h2o.init()
 
 num_candles = 48
 
-feature_set = FeatureSets.get_all_periods_last_five_ohlcv()
+feature_set = FeatureSets.get_all_periods_last_five_ohlcv_now_delta()
 num_days = 500
 
 ds_info = get_dataset_info(num_candles=num_candles, days=num_days, feature_set=feature_set)

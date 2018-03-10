@@ -45,7 +45,7 @@ xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_360_days
 # xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=500)
 
 
-feature_set = FeatureSets.get_all_periods_last_ten_ohlcv()
+feature_set = FeatureSets.get_all_periods_last_ten_ohlcv_now_delta()
 
 xgb_n_candles = 48
 value_set_cavg = DFFeatureSet(features=[CloseAvgReturn(n_candles=xgb_n_candles)])

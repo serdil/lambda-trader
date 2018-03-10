@@ -22,7 +22,7 @@ days = 200
 val_ratio = 0.8
 test_ratio = 0.9
 
-feature_set = fsf.get_all_periods_last_ten_ohlcv()
+feature_set = fsf.get_all_periods_last_ten_ohlcv_now_delta()
 
 use_saved = True
 # use_saved = False
