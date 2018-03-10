@@ -124,6 +124,17 @@ bb_20_5 = fs.get_bbands_timeperiod_last_n(timeperiod=20, n=5)
 bb_40_3 = fs.get_bbands_timeperiod_last_n(timeperiod=40, n=3)
 bb_60_3 = fs.get_bbands_timeperiod_last_n(timeperiod=60, n=3)
 
+macd_last_3 = fs.get_macd_last_n(3)
+macd_last_5 = fs.get_macd_last_n(5)
+
+rsi_last_3 = fs.get_rsi_last_n(3)
+rsi_last_5 = fs.get_rsi_last_n(5)
+rsi_last_10 = fs.get_rsi_last_n(10)
+
+rsi_7_5 = fs.get_rsi_timeperiod_last_n(7, 5)
+rsi_14_5 = fs.get_rsi_timeperiod_last_n(14, 5)
+rsi_28_5 = fs.get_rsi_timeperiod_last_n(28, 5)
+
 # feature_set = nd_100
 # feature_set = nd_30
 # feature_set = nd_20
@@ -139,6 +150,12 @@ bb_60_3 = fs.get_bbands_timeperiod_last_n(timeperiod=60, n=3)
 # feature_set = bb_20
 # feature_set = bb_5
 
+# feature_set = rsi_7_5
+# feature_set = rsi_14_5
+# feature_set = rsi_28_5
+
+# feature_set = fs.compose_remove_duplicates(rsi_7_5, rsi_14_5, rsi_28_5)
+
 # feature_set = fs.compose_remove_duplicates(nd_5, sd_5)
 # feature_set = fs.compose_remove_duplicates(nd_10, sd_10)
 # feature_set = fs.compose_remove_duplicates(nd_20, sd_20)
@@ -150,6 +167,12 @@ bb_60_3 = fs.get_bbands_timeperiod_last_n(timeperiod=60, n=3)
 # feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5)
 # feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20, bb_5)
 
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, macd_last_3)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, macd_last_5)
+
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, rsi_last_3)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, rsi_last_5)
+
 # feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_1)
 # feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_2)
 # feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_3)
@@ -159,7 +182,8 @@ bb_60_3 = fs.get_bbands_timeperiod_last_n(timeperiod=60, n=3)
 # feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_60_3)
 
 # feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_3, bb_40_3)
-feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_3, bb_40_3, bb_60_3)
+
+feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_3, bb_40_3, rsi_14_5)
 
 
 n_candles = 48
@@ -168,7 +192,7 @@ value_set_cavg = DFFeatureSet(features=[CloseAvgReturn(n_candles=n_candles)])
 
 value_set_max = DFFeatureSet(features=[MaxReturn(n_candles=n_candles)])
 
-c_thr = 0.02
+c_thr = 0.01
 m_thr = 0.02
 
 

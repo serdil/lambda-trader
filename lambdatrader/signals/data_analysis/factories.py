@@ -10,7 +10,7 @@ from lambdatrader.signals.data_analysis.df_datasets import (
 )
 from lambdatrader.signals.data_analysis.df_features import (
     OHLCVNowCloseDelta, OHLCVValue, OHLCVNowSelfDelta, DFFeatureSet, DummyFeature, RandomFeature,
-    OHLCVSelfCloseDelta, BBandsSelfCloseDelta,
+    OHLCVSelfCloseDelta, BBandsSelfCloseDelta, MACDValue, RSIValue,
 )
 from lambdatrader.signals.data_analysis.df_values import CloseReturn, MaxReturn, DummyValue
 from lambdatrader.signals.data_analysis.utils import date_str_to_timestamp
@@ -81,6 +81,25 @@ class FeatureListFactory:
                                                      offset=offset, period=period))
         return features
 
+    @classmethod
+    def get_macd_value(cls, fastperiod=12, slowperiod=26, signalperiod=9,
+                       offsets=(1, 2, 3), periods=(M5,)):
+        features = []
+        for period in periods:
+            for offset in offsets:
+                features.append(MACDValue(fastperiod=fastperiod,
+                                          slowperiod=slowperiod,
+                                          signalperiod=signalperiod,
+                                          offset=offset, period=period))
+        return features
+
+    @classmethod
+    def get_rsi_value(cls, timeperiod=14, offsets=(1, 2, 3), periods=(M5,)):
+        features = []
+        for period in periods:
+            for offset in offsets:
+                features.append(RSIValue(timeperiod=timeperiod, offset=offset, period=period))
+        return features
 
 ff = FeatureListFactory
 
@@ -169,6 +188,29 @@ class FeatureSets:
     @classmethod
     def get_bbands_5_last_3(cls):
         return cls.get_bbands_timeperiod_last_n(timeperiod=5, n=3)
+
+    @classmethod
+    def get_macd_last_n(cls, n):
+        num_offsets = n
+        periods = [M5, M15, H, H4, D]
+        features = ff.get_macd_value(offsets=range(num_offsets), periods=periods)
+        return DFFeatureSet(features=features)
+
+    @classmethod
+    def get_rsi_last_n(cls, n):
+        num_offsets = n
+        periods = [M5, M15, H, H4, D]
+        features = ff.get_rsi_value(offsets=range(num_offsets), periods=periods)
+        return DFFeatureSet(features=features)
+
+    @classmethod
+    def get_rsi_timeperiod_last_n(cls, timeperiod, n):
+        num_offsets = n
+        periods = [M5, M15, H, H4, D]
+        features = ff.get_rsi_value(timeperiod=timeperiod,
+                                    offsets=range(num_offsets),
+                                    periods=periods)
+        return DFFeatureSet(features=features)
 
     @classmethod
     def get_dummy(cls):
