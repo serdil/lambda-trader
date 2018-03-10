@@ -18,7 +18,7 @@ from lambdatrader.signals.generators.dummy.signal_generation import (
 )
 from lambdatrader.signals.generators.factories import Pairs
 
-training_pairs = Pairs.all_pairs(); interleaved = True
+# training_pairs = Pairs.all_pairs(); interleaved = True
 # training_pairs = Pairs.all_pairs()[:40]; interleaved = True
 # training_pairs = Pairs.all_pairs()[:20]; interleaved = True
 # training_pairs = Pairs.all_pairs()[:10]; interleaved = True
@@ -27,7 +27,7 @@ training_pairs = Pairs.all_pairs(); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 15); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 10); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 5); interleaved = True
-# training_pairs = random.sample(Pairs.all_pairs(), 1); interleaved = True
+training_pairs = random.sample(Pairs.all_pairs(), 1); interleaved = True
 # training_pairs = Pairs.n_pairs(); interleaved = True
 # training_pairs = ['BTC_ETH']; interleaved = False
 # training_pairs = ['BTC_XMR']; interleaved = False
@@ -169,7 +169,9 @@ n_estimators = max(1024000 // max_samples, 1000)
 # n_estimators = 400
 # n_estimators = 200
 # n_estimators = 100
+# n_estimators = 50
 # n_estimators = 20
+# n_estimators = 10
 
 # n_estimators = n_candles * 100
 # n_estimators = n_candles * 50
