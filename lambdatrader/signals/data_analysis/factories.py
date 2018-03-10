@@ -10,7 +10,7 @@ from lambdatrader.signals.data_analysis.df_datasets import (
 )
 from lambdatrader.signals.data_analysis.df_features import (
     OHLCVNowCloseDelta, OHLCVValue, OHLCVNowSelfDelta, DFFeatureSet, DummyFeature, RandomFeature,
-    OHLCVSelfCloseDelta,
+    OHLCVSelfCloseDelta, BBandsSelfCloseDelta,
 )
 from lambdatrader.signals.data_analysis.df_values import CloseReturn, MaxReturn, DummyValue
 from lambdatrader.signals.data_analysis.utils import date_str_to_timestamp
@@ -67,6 +67,18 @@ class FeatureListFactory:
         for period in periods:
             for offset in offsets:
                 features.append(OHLCVNowSelfDelta(OHLCV_VOLUME, offset=offset, period=period))
+        return features
+
+    @classmethod
+    def get_bbands_self_close_delta(cls, timeperiod=5, nbdevup=2, nbdevdn=2,
+                                    offsets=(1, 2, 3), periods=(M5,)):
+        features = []
+        for period in periods:
+            for offset in offsets:
+                features.append(BBandsSelfCloseDelta(timeperiod=timeperiod,
+                                                     nbdevup=nbdevup,
+                                                     nbdevdn=nbdevdn,
+                                                     offset=offset, period=period))
         return features
 
 
@@ -140,6 +152,23 @@ class FeatureSets:
         periods = [M5, M15, H, H4, D]
         return cls._ohlc_self_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
                                                                            periods=periods)
+
+    @classmethod
+    def get_bbands_timeperiod_last_n(cls, timeperiod, n):
+        num_offsets = n
+        periods = [M5, M15, H, H4, D]
+        features = ff.get_bbands_self_close_delta(timeperiod=timeperiod,
+                                                  offsets=range(num_offsets),
+                                                  periods=periods)
+        return DFFeatureSet(features=features)
+
+    @classmethod
+    def get_bbands_20_last_3(cls):
+        return cls.get_bbands_timeperiod_last_n(timeperiod=20, n=3)
+
+    @classmethod
+    def get_bbands_5_last_3(cls):
+        return cls.get_bbands_timeperiod_last_n(timeperiod=5, n=3)
 
     @classmethod
     def get_dummy(cls):

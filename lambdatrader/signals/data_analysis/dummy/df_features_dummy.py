@@ -6,7 +6,7 @@ from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.indicator_functions import IndicatorEnum
 from lambdatrader.signals.data_analysis.constants import OHLCV_CLOSE, OHLCV_OPEN
 from lambdatrader.signals.data_analysis.df_features import (
-    OHLCVNowCloseDelta, IndicatorValue, RSIValue, BBandsCloseDelta, MACDValue, DummyFeature,
+    OHLCVNowCloseDelta, IndicatorValue, RSIValue, BBandsNowCloseDelta, MACDValue, DummyFeature,
     RandomFeature, OHLCVSelfCloseDelta,
 )
 from lambdatrader.utilities.utils import seconds

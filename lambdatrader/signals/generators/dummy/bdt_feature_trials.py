@@ -113,6 +113,17 @@ sd_20 = fs.get_all_periods_last_n_ohlcv_self_delta(20)
 sd_30 = fs.get_all_periods_last_n_ohlcv_self_delta(30)
 sd_100 = fs.get_all_periods_last_n_ohlcv_self_delta(100)
 
+bb_20 = fs.get_bbands_20_last_3()
+bb_5 = fs.get_bbands_5_last_3()
+
+bb_20_1 = fs.get_bbands_timeperiod_last_n(timeperiod=20, n=1)
+bb_20_2 = fs.get_bbands_timeperiod_last_n(timeperiod=20, n=2)
+bb_20_3 = fs.get_bbands_timeperiod_last_n(timeperiod=20, n=3)
+bb_20_5 = fs.get_bbands_timeperiod_last_n(timeperiod=20, n=5)
+
+bb_40_3 = fs.get_bbands_timeperiod_last_n(timeperiod=40, n=3)
+bb_60_3 = fs.get_bbands_timeperiod_last_n(timeperiod=60, n=3)
+
 # feature_set = nd_100
 # feature_set = nd_30
 # feature_set = nd_20
@@ -125,10 +136,30 @@ sd_100 = fs.get_all_periods_last_n_ohlcv_self_delta(100)
 # feature_set = sd_10
 # feature_set = sd_5
 
+# feature_set = bb_20
+# feature_set = bb_5
+
 # feature_set = fs.compose_remove_duplicates(nd_5, sd_5)
-feature_set = fs.compose_remove_duplicates(nd_10, sd_10)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10)
 # feature_set = fs.compose_remove_duplicates(nd_20, sd_20)
 # feature_set = fs.compose_remove_duplicates(nd_100, sd_100)
+
+# feature_set = fs.compose_remove_duplicates(bb_20, bb_5)
+
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20, bb_5)
+
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_1)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_2)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_3)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_5)
+
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_40_3)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_60_3)
+
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_3, bb_40_3)
+feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_3, bb_40_3, bb_60_3)
 
 
 n_candles = 48
@@ -236,6 +267,7 @@ oob_score = False
 
 random_state = 5943923 + 0
 
+print('n_features', len(feature_set.features))
 print('params:')
 pprint({
     'dt_max_features': dt_max_features,

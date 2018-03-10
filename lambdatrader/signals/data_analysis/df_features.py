@@ -248,7 +248,7 @@ class IndicatorSelfDelta(LookbackFeature):
         return to_ffilled_df_with_name(dfs[M5].index, self_delta, self.name)
 
 
-class IndicatorCloseDelta(LookbackFeature):
+class IndicatorNowCloseDelta(LookbackFeature):
 
     def __init__(self, indicator, args, offset, longest_timeperiod, period=M5):
         self.indicator = indicator
@@ -259,7 +259,7 @@ class IndicatorCloseDelta(LookbackFeature):
 
     @property
     def name(self):
-        return ('indicator_close_delta_period_{}_indicator_{}_args_{}_offset_{}'
+        return ('indicator_now_close_delta_period_{}_indicator_{}_args_{}_offset_{}'
                 .format(self.period.name, self.indicator.name, join_list(self.args), self.offset))
 
     @property
@@ -270,6 +270,32 @@ class IndicatorCloseDelta(LookbackFeature):
         df = dfs[self.period]
         close_delta = (self.indicator.function()(df, *self.args).shift(self.offset)
                        .rsub(df[OHLCV_CLOSE], axis=0).div(df[OHLCV_CLOSE], axis=0))
+        return to_ffilled_df_with_name(dfs[M5].index, close_delta, self.name)
+
+
+class IndicatorSelfCloseDelta(LookbackFeature):
+
+    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5):
+        self.indicator = indicator
+        self.args = args
+        self.offset = offset
+        self.period = period
+        self.longest_timeperiod = longest_timeperiod
+
+    @property
+    def name(self):
+        return ('indicator_self_close_delta_period_{}_indicator_{}_args_{}_offset_{}'
+                .format(self.period.name, self.indicator.name, join_list(self.args), self.offset))
+
+    @property
+    def lookback(self):
+        return (self.longest_timeperiod + self.offset) * self.period.seconds()
+
+    def compute(self, dfs):
+        df = dfs[self.period]
+        shifted_close = df[OHLCV_CLOSE].shift(self.offset)
+        close_delta = (self.indicator.function()(df, *self.args).shift(self.offset)
+                       .rsub(shifted_close, axis=0).div(shifted_close, axis=0))
         return to_ffilled_df_with_name(dfs[M5].index, close_delta, self.name)
 
 
@@ -287,7 +313,14 @@ class RSIValue(IndicatorValue):
         super().__init__(IndicatorEnum.RSI, [timeperiod], offset, longest_timeperiod, period)
 
 
-class BBandsCloseDelta(IndicatorCloseDelta):
+class BBandsNowCloseDelta(IndicatorNowCloseDelta):
+    def __init__(self, timeperiod=5, nbdevup=2, nbdevdn=2, matype=0, offset=0, period=M5):
+        longest_timeperiod = timeperiod
+        super().__init__(IndicatorEnum.BBANDS, [timeperiod, nbdevup, nbdevdn, matype],
+                         offset, longest_timeperiod, period)
+
+
+class BBandsSelfCloseDelta(IndicatorSelfCloseDelta):
     def __init__(self, timeperiod=5, nbdevup=2, nbdevdn=2, matype=0, offset=0, period=M5):
         longest_timeperiod = timeperiod
         super().__init__(IndicatorEnum.BBANDS, [timeperiod, nbdevup, nbdevdn, matype],
