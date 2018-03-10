@@ -14,7 +14,7 @@ from lambdatrader.signals.data_analysis.utils import date_str_to_timestamp
 from lambdatrader.utilities.utils import seconds
 
 
-class FeaturesFactory:
+class FeatureListFactory:
 
     @classmethod
     def get_ohlc_close_delta(cls, offsets=(1, 2, 3, 4, 5,), periods=(M5,)):
@@ -50,7 +50,7 @@ class FeaturesFactory:
         return features
 
 
-ff = FeaturesFactory
+ff = FeatureListFactory
 
 
 class FeatureSets:
