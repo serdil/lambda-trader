@@ -299,21 +299,24 @@ class BaggingDecisionTreeModel(BaseModel):
                                        verbose=True)
 
         self.forest.fit(x, y)
-        val_pred = self.forest.predict(val_x)
+        try:
+            val_pred = self.forest.predict(val_x)
 
-        if self.oob_score:
+            if self.oob_score:
+                print()
+                print('oob score {}: {}'.format(self.obj_name, self.forest.oob_score_))
+                print()
+
             print()
-            print('oob score {}: {}'.format(self.obj_name, self.forest.oob_score_))
+            r2_score = metrics.r2_score(val_y, val_pred)
+            rmse = sqrt(metrics.mean_squared_error(val_y, val_pred))
+            print('r2 score:', r2_score)
+            print('rmse:', rmse)
             print()
 
-        print()
-        r2_score = metrics.r2_score(val_y, val_pred)
-        rmse = sqrt(metrics.mean_squared_error(val_y, val_pred))
-        print('r2 score:', r2_score)
-        print('rmse:', rmse)
-        print()
-
-        self._print_feature_imp(self.forest, feature_names)
+            self._print_feature_imp(self.forest, feature_names)
+        except ValueError:
+            print('ValueError during prediction for validation set.')
 
     @classmethod
     def _print_feature_imp(cls, forest, feature_names):
