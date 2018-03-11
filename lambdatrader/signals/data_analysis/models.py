@@ -2,7 +2,7 @@ from operator import itemgetter
 
 import numpy as np
 import xgboost as xgb
-from math import sqrt
+from math import sqrt, ceil
 
 from sklearn import metrics
 from sklearn.ensemble import RandomForestRegressor, BaggingRegressor
@@ -12,6 +12,8 @@ from xgboost.core import XGBoostError, DMatrix
 from lambdatrader.signals.data_analysis.df_datasets import (
     SplitDatasetDescriptor, XGBDMatrixDataset, DFDataset,
 )
+from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
+from lambdatrader.signals.data_analysis.factories import FeatureSets
 
 
 class BaseModel:
@@ -254,18 +256,27 @@ class BaggingDecisionTreeModel(BaseModel):
 
         self.obj_name = obj_name
 
+        # assigned during training
         self.forest = None
+        self.feature_names = None
+        self.feature_mapping = None
+        self.feature_importance = None
 
     def train(self):
         training_dd = self.dataset_descriptor.training
-        x, y, feature_names = (DFDataset
-                               .compute_from_descriptor(training_dd,
-                                                        normalize=True,
-                                                        error_on_missing=False)
-                               .add_feature_values()
-                               .add_value_values(value_name=self.value_name)
-                               .add_feature_names()
-                               .get())
+        (x, y, feature_names,
+         feature_mapping) = (DFDataset
+                             .compute_from_descriptor(training_dd,
+                                                      normalize=True,
+                                                      error_on_missing=False)
+                             .add_feature_values()
+                             .add_value_values(value_name=self.value_name)
+                             .add_feature_names()
+                             .add_feature_mapping()
+                             .get())
+
+        self.feature_names = feature_names
+        self.feature_mapping = feature_mapping
 
         validation_dd = self.dataset_descriptor.validation
         val_x, val_y = (DFDataset
@@ -309,26 +320,46 @@ class BaggingDecisionTreeModel(BaseModel):
                 print('oob score {}: {}'.format(self.obj_name, self.forest.oob_score_))
                 print()
 
-            print()
-            r2_score = metrics.r2_score(val_y, val_pred)
-            rmse = sqrt(metrics.mean_squared_error(val_y, val_pred))
-            print('r2 score:', r2_score)
-            print('rmse:', rmse)
-            print()
-
-            self._print_feature_imp(self.forest, feature_names)
+            self._print_val_set_metrics(val_y, val_pred, self.obj_name)
+            self._comp_feature_importance()
+            self._print_feature_imp()
         except ValueError:
             print('ValueError during prediction for validation set.')
 
     @classmethod
-    def _print_feature_imp(cls, forest, feature_names):
-        feature_imp = cls._comp_feature_imp(forest, feature_names)
-        name_importance_sorted = list(reversed(sorted(feature_imp, key=itemgetter(1))))[:20]
+    def _print_val_set_metrics(cls, val_y, val_pred, obj_name):
         print()
-        print('feature importances:')
-        for f_name, imp in name_importance_sorted:
+        r2_score = metrics.r2_score(val_y, val_pred)
+        rmse = sqrt(metrics.mean_squared_error(val_y, val_pred))
+        print('r2 score {}:'.format(obj_name), r2_score)
+        print('rmse {}:'.format(obj_name), rmse)
+        print()
+
+    def _comp_feature_importance(self):
+        feature_imp = np.zeros(len(self.feature_names))
+        estimators = self.forest.estimators_
+        estimators_features = self.forest.estimators_features_
+        for est, est_features in zip(estimators, estimators_features):
+            feature_imp[est_features] += est.feature_importances_
+        feature_imp /= len(estimators)
+        imp_tuples = list(zip(self.feature_names, feature_imp))
+        name_importance_sorted = list(reversed(sorted(imp_tuples, key=itemgetter(1))))
+        self.feature_importance = name_importance_sorted
+
+    def _print_feature_imp(self):
+        print()
+        print('feature importances {}:'.format(self.obj_name))
+        for f_name, imp in self.feature_importance[:10]:
             print(f_name, ':', imp)
         print()
+
+    def select_features_by_ratio(self, ratio):
+        num_select = int((len(self.feature_names) * ratio))
+        selected = self.feature_importance[:num_select]
+        feature_objects = []
+        for name, _ in selected:
+            feature_objects.append(self.feature_mapping[name])
+        return FeatureSets.compose_remove_duplicates(DFFeatureSet(features=feature_objects))
 
     @classmethod
     def _comp_feature_imp(cls, forest, feature_names):

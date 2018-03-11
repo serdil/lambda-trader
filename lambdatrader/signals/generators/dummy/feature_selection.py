@@ -38,8 +38,8 @@ random.seed(0)
 # training_pairs = random.sample(Pairs.all_pairs(), 40); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 20); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 15); interleaved = True
-training_pairs = random.sample(Pairs.all_pairs(), 10); interleaved = True
-# training_pairs = random.sample(Pairs.all_pairs(), 5); interleaved = True
+# training_pairs = random.sample(Pairs.all_pairs(), 10); interleaved = True
+training_pairs = random.sample(Pairs.all_pairs(), 5); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 1); interleaved = True
 # training_pairs = Pairs.n_pairs(); interleaved = True
 # training_pairs = ['BTC_ETH']; interleaved = False
@@ -111,7 +111,9 @@ else:
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=200//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500//n_p)
 
-split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=200//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=200//n_p)
+split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=500//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=1000//n_p)
 
 fs = FeatureSets
 
@@ -267,6 +269,8 @@ top_patterns = fs.compose_remove_duplicates(hikkake, longline, shortline, closin
 # feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, bb_range_50s5, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3, range_sma_48, top_patterns)
 feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3, range_sma_48, top_patterns)
 
+feature_selection_ratio = 0.50
+feature_selection_n_rounds = 1
 
 n_candles = 48
 
@@ -437,6 +441,28 @@ rf_cavg_model = BaggingDecisionTreeModel(
     oob_score=oob_score
 )
 
+for i in range(feature_selection_n_rounds):
+    rf_cavg_model.train()
+    cavg_feature_set = rf_cavg_model.select_features_by_ratio(feature_selection_ratio)
+    cavg_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
+        pairs=training_pairs,
+        feature_set=cavg_feature_set,
+        value_set=value_set_cavg,
+        split_date_range=split_date_range,
+        exchanges=(POLONIEX,),
+        interleaved=interleaved
+    )
+    rf_cavg_model = BaggingDecisionTreeModel(
+        dataset_descriptor=cavg_dataset,
+        n_estimators=n_estimators,
+        max_samples=max_samples,
+        max_features=max_features,
+        dt_max_features=dt_max_features,
+        random_state=random_state,
+        obj_name='cavg',
+        oob_score=oob_score
+    )
+
 rf_max_model = BaggingDecisionTreeModel(
     dataset_descriptor=max_dataset,
     n_estimators=n_estimators,
@@ -446,6 +472,28 @@ rf_max_model = BaggingDecisionTreeModel(
     random_state=random_state,
     obj_name='max',
     oob_score=oob_score
+)
+
+for i in range(feature_selection_n_rounds):
+    rf_max_model.train()
+    max_feature_set = rf_max_model.select_features_by_ratio(feature_selection_ratio)
+    max_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
+        pairs=training_pairs,
+        feature_set=max_feature_set,
+        value_set=value_set_max,
+        split_date_range=split_date_range,
+        exchanges=(POLONIEX,),
+        interleaved=interleaved
+    )
+    rf_max_model = BaggingDecisionTreeModel(
+        dataset_descriptor=max_dataset,
+        n_estimators=n_estimators,
+        max_samples=max_samples,
+        max_features=max_features,
+        dt_max_features=dt_max_features,
+        random_state=random_state,
+        obj_name='max',
+        oob_score=oob_score
 )
 
 models = [rf_cavg_model, rf_max_model]

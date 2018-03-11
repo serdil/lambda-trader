@@ -362,6 +362,7 @@ class DFDataset:
 
     def add_feature_mapping(self):
         self.return_values.append(self.feature_mapping)
+        return self
 
     def get(self):
         return_values = tuple(self.return_values)
