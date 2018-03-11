@@ -163,36 +163,37 @@ class FeatureSets:
     def get_small(cls):
         num_offsets = 5
         periods = [M5, M15, H, H4]
-        return cls._ohlc_now_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
-                                                                          periods=periods)
+        return cls.get_ohlc_now_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
+                                                                             periods=periods)
 
     @classmethod
     def get_all_periods_last_five_ohlcv_now_delta(cls):
         num_offsets = 5
         periods = [M5, M15, H, H4, D]
-        return cls._ohlc_now_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
-                                                                          periods=periods)
+        return cls.get_ohlc_now_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
+                                                                             periods=periods)
 
     @classmethod
     def get_all_periods_last_ten_ohlcv_now_delta(cls):
         num_offsets = 10
         periods = [M5, M15, H, H4, D]
-        return cls._ohlc_now_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
-                                                                          periods=periods)
+        return cls.get_ohlc_now_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
+                                                                             periods=periods)
 
     @classmethod
     def get_all_periods_last_n_ohlcv_now_delta(cls, n):
         num_offsets = n
         periods = [M5, M15, H, H4, D]
-        return cls._ohlc_now_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
-                                                                          periods=periods)
+        return cls.get_ohlc_now_close_delta_volume_value_num_offsets_periods(
+            num_offsets=num_offsets, periods=periods
+        )
 
     @classmethod
     def get_all_periods_last_n_ohlcv_self_delta(cls, n):
         num_offsets = n
         periods = [M5, M15, H, H4, D]
-        return cls._ohlc_self_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
-                                                                           periods=periods)
+        return cls.get_ohlc_self_close_delta_volume_value_num_offsets_periods(num_offsets=num_offsets,
+                                                                              periods=periods)
 
     @classmethod
     def get_bbands_timeperiod_last_n(cls, timeperiod, n):
@@ -284,13 +285,13 @@ class FeatureSets:
         return unique_features
 
     @classmethod
-    def _ohlc_now_close_delta_volume_value_num_offsets_periods(cls, num_offsets, periods):
+    def get_ohlc_now_close_delta_volume_value_num_offsets_periods(cls, num_offsets, periods):
         features = ff.get_ohlc_now_close_delta_volume_value(offsets=range(num_offsets),
                                                             periods=periods)
         return DFFeatureSet(features=features)
 
     @classmethod
-    def _ohlc_self_close_delta_volume_value_num_offsets_periods(cls, num_offsets, periods):
+    def get_ohlc_self_close_delta_volume_value_num_offsets_periods(cls, num_offsets, periods):
         features = ff.get_ohlc_self_close_delta_volume_value(offsets=range(num_offsets),
                                                              periods=periods)
         return DFFeatureSet(features=features)
