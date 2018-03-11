@@ -164,3 +164,26 @@ class IndicatorEnum(Enum):
 
     def function(self):
         return self.value
+
+PAT_REC_INDICATORS = [IndicatorEnum.CDL2CROWS, IndicatorEnum.CDL3BLACKCROWS,
+    IndicatorEnum.CDL3INSIDE, IndicatorEnum.CDL3LINESTRIKE, IndicatorEnum.CDL3OUTSIDE,
+    IndicatorEnum.CDL3STARSINSOUTH, IndicatorEnum.CDL3WHITESOLDIERS, IndicatorEnum.CDLABANDONEDBABY,
+    IndicatorEnum.CDLADVANCEBLOCK, IndicatorEnum.CDLBELTHOLD, IndicatorEnum.CDLBREAKAWAY,
+    IndicatorEnum.CDLCLOSINGMARUBOZU, IndicatorEnum.CDLCONCEALBABYSWALL,
+    IndicatorEnum.CDLCOUNTERATTACK, IndicatorEnum.CDLDARKCLOUDCOVER, IndicatorEnum.CDLDOJI,
+    IndicatorEnum.CDLDOJISTAR, IndicatorEnum.CDLDRAGONFLYDOJI, IndicatorEnum.CDLENGULFING,
+    IndicatorEnum.CDLEVENINGDOJISTAR, IndicatorEnum.CDLEVENINGSTAR,
+    IndicatorEnum.CDLGAPSIDESIDEWHITE, IndicatorEnum.CDLGRAVESTONEDOJI, IndicatorEnum.CDLHAMMER,
+    IndicatorEnum.CDLHANGINGMAN, IndicatorEnum.CDLHARAMI, IndicatorEnum.CDLHARAMICROSS,
+    IndicatorEnum.CDLHIGHWAVE, IndicatorEnum.CDLHIKKAKE, IndicatorEnum.CDLHIKKAKEMOD,
+    IndicatorEnum.CDLHOMINGPIGEON, IndicatorEnum.CDLIDENTICAL3CROWS, IndicatorEnum.CDLINNECK,
+    IndicatorEnum.CDLINVERTEDHAMMER, IndicatorEnum.CDLKICKING, IndicatorEnum.CDLKICKINGBYLENGTH,
+    IndicatorEnum.CDLLADDERBOTTOM, IndicatorEnum.CDLLONGLEGGEDDOJI, IndicatorEnum.CDLLONGLINE,
+    IndicatorEnum.CDLMARUBOZU, IndicatorEnum.CDLMATCHINGLOW, IndicatorEnum.CDLMATHOLD,
+    IndicatorEnum.CDLMORNINGDOJISTAR, IndicatorEnum.CDLMORNINGSTAR, IndicatorEnum.CDLONNECK,
+    IndicatorEnum.CDLPIERCING, IndicatorEnum.CDLRICKSHAWMAN, IndicatorEnum.CDLRISEFALL3METHODS,
+    IndicatorEnum.CDLSEPARATINGLINES, IndicatorEnum.CDLSHOOTINGSTAR, IndicatorEnum.CDLSHORTLINE,
+    IndicatorEnum.CDLSPINNINGTOP, IndicatorEnum.CDLSTALLEDPATTERN, IndicatorEnum.CDLSTICKSANDWICH,
+    IndicatorEnum.CDLTAKURI, IndicatorEnum.CDLTASUKIGAP, IndicatorEnum.CDLTHRUSTING,
+    IndicatorEnum.CDLTRISTAR, IndicatorEnum.CDLUNIQUE3RIVER, IndicatorEnum.CDLUPSIDEGAP2CROWS,
+    IndicatorEnum.CDLXSIDEGAP3METHODS]

@@ -10,6 +10,7 @@ from sklearn.datasets import dump_svmlight_file
 from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.constants import M5, M15, H, H4, D
 from lambdatrader.exchanges.enums import POLONIEX, ExchangeEnum
+from lambdatrader.signals.data_analysis.df_features import LookbackFeature
 from lambdatrader.signals.data_analysis.utils import date_str_to_timestamp
 from lambdatrader.utilities.utils import get_project_directory
 
@@ -215,20 +216,36 @@ class DFDataset:
         else:
             pair = pairs[0]
 
+            extended_start_date = start_date
+            extended_end_date = end_date
+
             # TODO: fix normalization
-            if start_date is not None:
-                start_date = start_date - feature_set.get_lookback()
-            if end_date is not None:
-                end_date = end_date + value_set.get_lookforward()
+            if extended_start_date is not None:
+                extended_start_date = extended_start_date - feature_set.get_lookback()
+            if extended_end_date is not None:
+                extended_end_date = extended_end_date + value_set.get_lookforward()
 
             dfs = cs_store.get_agg_period_dfs(pair,
-                                              start_date=start_date,
-                                              end_date=end_date,
+                                              start_date=extended_start_date,
+                                              end_date=extended_end_date,
                                               periods=[M5, M15, H, H4, D],
                                               error_on_missing=error_on_missing)
 
-            start_time = time.time()
-            feature_dfs = [f.compute(dfs) for f in feature_set.features]
+            comp_start_time = time.time()
+
+            feature_dfs = []
+
+            for feature in feature_set.features:
+                feature_start_date = start_date
+                feature_end_date = end_date
+                if feature_start_date is not None and isinstance(feature, LookbackFeature):
+                    feature_start_date = feature_start_date - feature.lookback
+
+                dfs_for_feature = cls._get_df_slices(dfs, feature_start_date, feature_end_date)
+                feature_df = feature.compute(dfs_for_feature)
+                feature_dfs.append(feature_df)
+
+            # feature_dfs = [f.compute(dfs) for f in feature_set.features]
 
             value_dfs = [v.compute(dfs) for v in value_set.features]
 
@@ -239,9 +256,37 @@ class DFDataset:
                 feature_df = feature_df.dropna()
                 value_df = value_df.reindex(feature_df.index)
 
-            print('dataset comp time: {:.3f}s'.format(time.time() - start_time))
+            start_date_timestamp = pd.Timestamp(start_date, unit='s')
+            end_date_timestamp = pd.Timestamp(end_date, unit='s')
+
+            feature_df = feature_df.loc[start_date_timestamp:end_date_timestamp]
+            value_df = value_df.loc[start_date_timestamp:end_date_timestamp]
+
+            print('dataset comp time: {:.3f}s'.format(time.time() - comp_start_time))
 
             return DFDataset(dfs, feature_df, value_df, feature_set, value_set)
+
+    @classmethod
+    def _get_df_slices(cls, dfs, start_date, end_date):
+        new_dfs = {}
+        for key, df in dfs.items():
+            new_dfs[key] = cls._get_df_slice(df, start_date, end_date)
+        return new_dfs
+
+    @classmethod
+    def _get_df_slice(cls, df, start_date, end_date):
+        if start_date is None:
+            slice_start = None
+        else:
+            slice_start = pd.Timestamp(start_date, unit='s')
+
+        if end_date is None:
+            slice_end = None
+        else:
+            slice_end = pd.Timestamp(end_date, unit='s')
+
+        date_slice = slice(slice_start, slice_end)
+        return df.loc[date_slice]
 
     @classmethod
     def _interleave_datasets(cls, datasets):

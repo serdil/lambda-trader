@@ -7,6 +7,7 @@ from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.candlestick_stores.cachingstore import ChunkCachingCandlestickStore
 from lambdatrader.constants import M5
 from lambdatrader.exchanges.enums import POLONIEX
+from lambdatrader.indicator_functions import IndicatorEnum
 from lambdatrader.signals.data_analysis.df_datasets import SplitDatasetDescriptor
 from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
 from lambdatrader.signals.data_analysis.df_values import CloseAvgReturn, MaxReturn
@@ -18,15 +19,26 @@ from lambdatrader.signals.generators.dummy.signal_generation import (
 )
 from lambdatrader.signals.generators.factories import Pairs
 
+
+random.seed(0)
+# random.seed(1)
+# random.seed(2)
+# random.seed(3)
+# random.seed(4)
+# random.seed(5)
+# random.seed(6)
+# random.seed(7)
+
 # training_pairs = Pairs.all_pairs(); interleaved = True
 # training_pairs = Pairs.all_pairs()[:40]; interleaved = True
 # training_pairs = Pairs.all_pairs()[:20]; interleaved = True
 # training_pairs = Pairs.all_pairs()[:10]; interleaved = True
-training_pairs = Pairs.all_pairs()[20:25]; interleaved = True
+# training_pairs = Pairs.all_pairs()[25:30]; interleaved = True
+# training_pairs = Pairs.all_pairs()[20:25]; interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 40); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 20); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 15); interleaved = True
-# training_pairs = random.sample(Pairs.all_pairs(), 10); interleaved = True
+training_pairs = random.sample(Pairs.all_pairs(), 10); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 5); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 1); interleaved = True
 # training_pairs = Pairs.n_pairs(); interleaved = True
@@ -96,8 +108,10 @@ else:
 
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=30//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=90//n_p)
-split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=200//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=200//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500//n_p)
+
+split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=200//n_p)
 
 fs = FeatureSets
 
@@ -113,16 +127,21 @@ sd_20 = fs.get_all_periods_last_n_ohlcv_self_delta(20)
 sd_30 = fs.get_all_periods_last_n_ohlcv_self_delta(30)
 sd_100 = fs.get_all_periods_last_n_ohlcv_self_delta(100)
 
-bb_20 = fs.get_bbands_20_last_3()
-bb_5 = fs.get_bbands_5_last_3()
-
 bb_20_1 = fs.get_bbands_timeperiod_last_n(timeperiod=20, n=1)
 bb_20_2 = fs.get_bbands_timeperiod_last_n(timeperiod=20, n=2)
 bb_20_3 = fs.get_bbands_timeperiod_last_n(timeperiod=20, n=3)
 bb_20_5 = fs.get_bbands_timeperiod_last_n(timeperiod=20, n=5)
 
+bb_5_3 = fs.get_bbands_timeperiod_last_n(timeperiod=5, n=3)
+bb_7_3 = fs.get_bbands_timeperiod_last_n(timeperiod=7, n=3)
+bb_10_3 = fs.get_bbands_timeperiod_last_n(timeperiod=10, n=3)
+bb_30_3 = fs.get_bbands_timeperiod_last_n(timeperiod=30, n=3)
 bb_40_3 = fs.get_bbands_timeperiod_last_n(timeperiod=40, n=3)
 bb_60_3 = fs.get_bbands_timeperiod_last_n(timeperiod=60, n=3)
+range_bb_24 = fs.compose_remove_duplicates(*[fs.get_bbands_timeperiod_last_n(i, 1) for i in range(2, 24)])
+range_bb_48 = fs.compose_remove_duplicates(*[fs.get_bbands_timeperiod_last_n(i, 1) for i in range(2, 48)])
+range_bb_96 = fs.compose_remove_duplicates(*[fs.get_bbands_timeperiod_last_n(i, 1) for i in range(2, 96)])
+bb_range_50s5 = fs.compose_remove_duplicates(*[fs.get_bbands_timeperiod_last_n(i, 1) for i in range(2, 50, 5)])
 
 macd_last_3 = fs.get_macd_last_n(3)
 macd_last_5 = fs.get_macd_last_n(5)
@@ -135,55 +154,121 @@ rsi_7_5 = fs.get_rsi_timeperiod_last_n(7, 5)
 rsi_14_5 = fs.get_rsi_timeperiod_last_n(14, 5)
 rsi_28_5 = fs.get_rsi_timeperiod_last_n(28, 5)
 
+sma_5_3 = fs.get_sma_timeperiod_self_close_delta_last_n(5, 3)
+sma_13_3 = fs.get_sma_timeperiod_self_close_delta_last_n(13, 3)
+sma_21_3 = fs.get_sma_timeperiod_self_close_delta_last_n(21, 3)
+sma_50_3 = fs.get_sma_timeperiod_self_close_delta_last_n(50, 3)
+sma_100_3 = fs.get_sma_timeperiod_self_close_delta_last_n(100, 3)
+sma_200_3 = fs.get_sma_timeperiod_self_close_delta_last_n(200, 3)
+
+range_sma_12 = fs.compose_remove_duplicates(*[fs.get_sma_timeperiod_self_close_delta_last_n(i, 1) for i in range(2, 12)])
+range_sma_24 = fs.compose_remove_duplicates(*[fs.get_sma_timeperiod_self_close_delta_last_n(i, 1) for i in range(2, 24)])
+range_sma_48 = fs.compose_remove_duplicates(*[fs.get_sma_timeperiod_self_close_delta_last_n(i, 1) for i in range(2, 48)])
+range_sma_10 = fs.compose_remove_duplicates(*[fs.get_sma_timeperiod_self_close_delta_last_n(i, 1) for i in range(2, 48)])
+sma_range_100s5 = fs.compose_remove_duplicates(*[fs.get_sma_timeperiod_self_close_delta_last_n(i, 1) for i in range(2, 100, 5)])
+
+patterns = fs.get_all_candlestick_patterns_last_n()
+
+top_pat_inds = [IndicatorEnum.CDLHIKKAKE, IndicatorEnum.CDLSHORTLINE,
+                IndicatorEnum.CDLCLOSINGMARUBOZU, IndicatorEnum.CDLBELTHOLD,
+                IndicatorEnum.CDLHIGHWAVE, IndicatorEnum.CDLDOJI, IndicatorEnum.CDLSPINNINGTOP]
+
+hikkake = fs.get_candlestick_patterns_last_n([IndicatorEnum.CDLHIKKAKE])
+longline = fs.get_candlestick_patterns_last_n([IndicatorEnum.CDLLONGLINE])
+shortline = fs.get_candlestick_patterns_last_n([IndicatorEnum.CDLSHORTLINE])
+closingmarubozu = fs.get_candlestick_patterns_last_n([IndicatorEnum.CDLCLOSINGMARUBOZU])
+belthold = fs.get_candlestick_patterns_last_n([IndicatorEnum.CDLBELTHOLD])
+highwave = fs.get_candlestick_patterns_last_n([IndicatorEnum.CDLHIGHWAVE])
+doji = fs.get_candlestick_patterns_last_n([IndicatorEnum.CDLDOJI])
+spinningtop = fs.get_candlestick_patterns_last_n([IndicatorEnum.CDLSPINNINGTOP])
+
+top_patterns = fs.compose_remove_duplicates(hikkake, longline, shortline, closingmarubozu,
+                                            belthold, highwave, doji, spinningtop)
+
 # feature_set = nd_100
 # feature_set = nd_30
 # feature_set = nd_20
 # feature_set = nd_10
 # feature_set = nd_5
-
 # feature_set = sd_100
 # feature_set = sd_30
 # feature_set = sd_20
 # feature_set = sd_10
 # feature_set = sd_5
-
-# feature_set = bb_20
-# feature_set = bb_5
-
-# feature_set = rsi_7_5
-# feature_set = rsi_14_5
-# feature_set = rsi_28_5
-
-# feature_set = fs.compose_remove_duplicates(rsi_7_5, rsi_14_5, rsi_28_5)
-
 # feature_set = fs.compose_remove_duplicates(nd_5, sd_5)
 # feature_set = fs.compose_remove_duplicates(nd_10, sd_10)
 # feature_set = fs.compose_remove_duplicates(nd_20, sd_20)
 # feature_set = fs.compose_remove_duplicates(nd_100, sd_100)
 
-# feature_set = fs.compose_remove_duplicates(bb_20, bb_5)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10)
 
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20, bb_5)
+# feature_set = bb_5_3
+# feature_set = bb_7_3
+# feature_set = bb_10_3
+# feature_set = bb_20_3
+# feature_set = bb_30_3
+# feature_set = range_bb_24
+# feature_set = range_bb_48
+# feature_set = bb_range_50s5
+# feature_set = fs.compose_remove_duplicates(bb_5_3, bb_7_3)
+# feature_set = fs.compose_remove_duplicates(bb_5_3, bb_10_3)
+# feature_set = fs.compose_remove_duplicates(bb_5_3, bb_20_3)
+# feature_set = fs.compose_remove_duplicates(bb_5_3, bb_10_3, bb_20_3)
+# feature_set = fs.compose_remove_duplicates(bb_5_3, bb_10_3, bb_20_3, bb_30_3)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_range_50s5)
 
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, macd_last_3)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, macd_last_5)
+# feature_set = rsi_7_5
+# feature_set = rsi_14_5
+# feature_set = rsi_28_5
+# feature_set = fs.compose_remove_duplicates(rsi_7_5, rsi_14_5)
+# feature_set = fs.compose_remove_duplicates(rsi_7_5, rsi_14_5, rsi_28_5)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, rsi_14_5)
 
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, rsi_last_3)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, rsi_last_5)
+# feature_set = macd_last_3
+# feature_set = macd_last_5
 
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_1)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_2)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_3)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_5)
+# feature_set = sma_5_3
+# feature_set = sma_13_3
+# feature_set = sma_21_3
+# feature_set = sma_50_3
+# feature_set = sma_100_3
+# feature_set = sma_200_3
+# feature_set = range_sma_12
+# feature_set = range_sma_24
+# feature_set = range_sma_48
+# feature_set = sma_range_100s5
+# feature_set = fs.compose_remove_duplicates(sma_5_3, sma_13_3)
+# feature_set = fs.compose_remove_duplicates(sma_5_3, sma_13_3, sma_21_3)
+# feature_set = fs.compose_remove_duplicates(sma_5_3, sma_13_3, sma_21_3, sma_50_3)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, sma_5_3, sma_13_3, sma_21_3, sma_50_3)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, range_sma_48)
 
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_40_3)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_60_3)
+# feature_set = hikkake
+# feature_set = longline
+# feature_set = shortline
+# feature_set = closingmarubozu
+# feature_set = belthold
+# feature_set = highwave
+# feature_set = doji
+# feature_set = spinningtop
+# feature_set = top_patterns
+# feature_set = patterns
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, top_patterns)
 
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_3, bb_40_3)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10)
+# feature_set = fs.compose_remove_duplicates(bb_5_3, bb_20_3)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3, top_patterns)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, bb_range_50s5, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3, range_sma_48, top_patterns)
+feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3, range_sma_48, top_patterns)
 
-feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_20_3, bb_40_3, rsi_14_5)
+
+
 
 
 n_candles = 48

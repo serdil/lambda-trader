@@ -2,6 +2,7 @@ import itertools
 
 from lambdatrader.constants import M5, M15, H, H4, D
 from lambdatrader.exchanges.enums import POLONIEX
+from lambdatrader.indicator_functions import PAT_REC_INDICATORS
 from lambdatrader.signals.data_analysis.constants import (
     OHLCV_OPEN, OHLCV_HIGH, OHLCV_LOW, OHLCV_CLOSE, OHLCV_VOLUME,
 )
@@ -10,7 +11,8 @@ from lambdatrader.signals.data_analysis.df_datasets import (
 )
 from lambdatrader.signals.data_analysis.df_features import (
     OHLCVNowCloseDelta, OHLCVValue, OHLCVNowSelfDelta, DFFeatureSet, DummyFeature, RandomFeature,
-    OHLCVSelfCloseDelta, BBandsSelfCloseDelta, MACDValue, RSIValue,
+    OHLCVSelfCloseDelta, BBandsSelfCloseDelta, MACDValue, RSIValue, CandlestickPattern,
+    SMASelfCloseDelta,
 )
 from lambdatrader.signals.data_analysis.df_values import CloseReturn, MaxReturn, DummyValue
 from lambdatrader.signals.data_analysis.utils import date_str_to_timestamp
@@ -100,6 +102,26 @@ class FeatureListFactory:
             for offset in offsets:
                 features.append(RSIValue(timeperiod=timeperiod, offset=offset, period=period))
         return features
+
+    @classmethod
+    def get_cs_patterns(cls, patterns=PAT_REC_INDICATORS, offsets=(1, 2, 3), periods=(M5,)):
+        features = []
+        for period in periods:
+            for offset in offsets:
+                for indicator in patterns:
+                    features.append(CandlestickPattern(pattern_indicator=indicator,
+                                                       offset=offset, period=period))
+        return features
+
+    @classmethod
+    def get_sma_self_close_delta(cls, timeperiod=30, offsets=(1, 2, 3), periods=(M5,)):
+        features = []
+        for period in periods:
+            for offset in offsets:
+                features.append(SMASelfCloseDelta(timeperiod=timeperiod,
+                                                  offset=offset, period=period))
+        return features
+
 
 ff = FeatureListFactory
 
@@ -210,6 +232,28 @@ class FeatureSets:
         features = ff.get_rsi_value(timeperiod=timeperiod,
                                     offsets=range(num_offsets),
                                     periods=periods)
+        return DFFeatureSet(features=features)
+
+    @classmethod
+    def get_all_candlestick_patterns_last_n(cls, n=3):
+        return cls.get_candlestick_patterns_last_n(PAT_REC_INDICATORS, n)
+
+    @classmethod
+    def get_candlestick_patterns_last_n(cls, patterns, n=3):
+        num_offsets = n
+        periods = [M5, M15, H, H4, D]
+        features = ff.get_cs_patterns(patterns=patterns,
+                                      periods=periods,
+                                      offsets=range(num_offsets))
+        return DFFeatureSet(features=features)
+
+    @classmethod
+    def get_sma_timeperiod_self_close_delta_last_n(cls, timeperiod, n=3):
+        num_offsets = n
+        periods = [M5, M15, H, H4, D]
+        features = ff.get_sma_self_close_delta(timeperiod=timeperiod,
+                                               offsets=range(num_offsets),
+                                               periods=periods)
         return DFFeatureSet(features=features)
 
     @classmethod

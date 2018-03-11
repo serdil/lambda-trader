@@ -275,6 +275,8 @@ class BaggingDecisionTreeModel(BaseModel):
                         .add_feature_values()
                         .add_value_values(value_name=self.value_name)
                         .get())
+        print('train set size:', len(x))
+        print('val set size:', len(val_x))
 
         dtr = DecisionTreeRegressor(max_features=self.dt_max_features,
                                     random_state=self.random_state)
@@ -321,7 +323,7 @@ class BaggingDecisionTreeModel(BaseModel):
     @classmethod
     def _print_feature_imp(cls, forest, feature_names):
         feature_imp = cls._comp_feature_imp(forest, feature_names)
-        name_importance_sorted = list(reversed(sorted(feature_imp, key=itemgetter(1))))[:10]
+        name_importance_sorted = list(reversed(sorted(feature_imp, key=itemgetter(1))))[:20]
         print()
         print('feature importances:')
         for f_name, imp in name_importance_sorted:
