@@ -337,3 +337,9 @@ class SMASelfCloseDelta(IndicatorSelfCloseDelta):
     def __init__(self, timeperiod=30, offset=0, period=M5):
         longest_timeperiod = timeperiod
         super().__init__(IndicatorEnum.SMA, [timeperiod], offset, longest_timeperiod, period)
+
+
+class SMANowCloseDelta(IndicatorNowCloseDelta):
+    def __init__(self, timeperiod=30, offset=0, period=M5):
+        longest_timeperiod = timeperiod
+        super().__init__(IndicatorEnum.SMA, [timeperiod], offset, longest_timeperiod, period)

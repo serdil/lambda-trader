@@ -185,7 +185,8 @@ class DFDataset:
                                            error_on_missing=error_on_missing)
 
     @classmethod
-    def compute_from_descriptor(cls, descriptor, normalize=True, error_on_missing=True):
+    def compute_from_descriptor(cls, descriptor, normalize=True, error_on_missing=True,
+                                fillna=True):
         exchange = descriptor.exchanges[0]
         cs_store = SQLiteCandlestickStore.get_for_exchange(exchange)
 
@@ -238,14 +239,24 @@ class DFDataset:
             feature_dfs = []
             feature_mapping = {}
 
+            # print('start_date', pd.Timestamp(start_date, unit='s'))
+            # print('end_date', pd.Timestamp(end_date, unit='s'))
+            # print('extended_start_date', pd.Timestamp(extended_start_date, unit='s'))
+            # print('extended_end_date', pd.Timestamp(extended_end_date, unit='s'))
+
             for feature in feature_set.features:
                 feature_start_date = start_date
                 feature_end_date = end_date
                 if feature_start_date is not None and isinstance(feature, LookbackFeature):
+                    # print('feature lookback', feature.lookback)
                     feature_start_date = feature_start_date - feature.lookback
+
+                # print('feature_start_date', pd.Timestamp(feature_start_date, unit='s'))
+                # print('feature_end_date', pd.Timestamp(feature_end_date, unit='s'))
 
                 dfs_for_feature = cls._get_df_slices(dfs, feature_start_date, feature_end_date)
                 feature_df = feature.compute(dfs_for_feature)
+                # print('feature_df start end', feature_df.index[0], feature_df.index[-1])
                 feature_dfs.append(feature_df)
                 for col_name in feature_df.columns.values:
                     feature_mapping[col_name] = feature
@@ -257,9 +268,22 @@ class DFDataset:
             feature_df = feature_dfs[0].join(feature_dfs[1:], how='inner')
             value_df = value_dfs[0].join(value_dfs[1:], how='inner')
 
+            # print('final feature_df start end', feature_df.index[0], feature_df.index[-1])
+            # all_na_cols = feature_df.columns[feature_df.isna().all()].tolist()
+            # print(feature_df[all_na_cols])
+            # print(all_na_cols)
+            # print('end')
+
             if normalize:
                 feature_df = feature_df.dropna()
                 value_df = value_df.reindex(feature_df.index)
+
+            if fillna:
+                feature_df.fillna(0, inplace=True)
+
+            # print('final feature_df start end after norm', feature_df.index[0],
+            #       feature_df.index[-1])
+
 
             start_date_timestamp = pd.Timestamp(start_date, unit='s')
             end_date_timestamp = pd.Timestamp(end_date, unit='s')

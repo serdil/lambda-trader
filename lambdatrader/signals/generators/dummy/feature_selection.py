@@ -14,13 +14,14 @@ from lambdatrader.signals.data_analysis.df_values import CloseAvgReturn, MaxRetu
 from lambdatrader.signals.data_analysis.factories import SplitDateRanges, FeatureSets
 from lambdatrader.signals.data_analysis.models import BaggingDecisionTreeModel
 from lambdatrader.signals.generators.dummy.backtest_util import do_backtest
+from lambdatrader.signals.generators.dummy.feature_spaces import all_samplers_feature_set_sampler
 from lambdatrader.signals.generators.dummy.signal_generation import (
     CloseAvgReturnMaxReturnSignalConverter, SignalServer, ModelPredSignalGenerator,
 )
 from lambdatrader.signals.generators.factories import Pairs
 
 
-random.seed(0)
+# random.seed(0)
 # random.seed(1)
 # random.seed(2)
 # random.seed(3)
@@ -111,9 +112,14 @@ else:
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=200//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500//n_p)
 
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=200//n_p)
-split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=500//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=30//n_p)
+split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=200//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=500//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=1000//n_p)
+
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=100//n_p, t=200//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=100//n_p, t=1000//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=100//n_p, t=2000//n_p)
 
 fs = FeatureSets
 
@@ -267,10 +273,16 @@ top_patterns = fs.compose_remove_duplicates(hikkake, longline, shortline, closin
 # feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3)
 # feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3, top_patterns)
 # feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, bb_range_50s5, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3, range_sma_48, top_patterns)
-feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3, range_sma_48, top_patterns)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3, range_sma_48, top_patterns)
 
-feature_selection_ratio = 0.50
-feature_selection_n_rounds = 1
+
+feature_selection_ratio = 0.90
+
+feature_selection_n_rounds = 100
+
+num_total_features = 100
+
+feature_set = all_samplers_feature_set_sampler.sample(size=num_total_features)
 
 n_candles = 48
 
@@ -441,9 +453,21 @@ rf_cavg_model = BaggingDecisionTreeModel(
     oob_score=oob_score
 )
 
+feature_set_sampler = all_samplers_feature_set_sampler
+
+
+def train_and_select(model, ratio):
+    model.train()
+    pass
+
+
 for i in range(feature_selection_n_rounds):
     rf_cavg_model.train()
-    cavg_feature_set = rf_cavg_model.select_features_by_ratio(feature_selection_ratio)
+    selected_features = rf_cavg_model.select_features_by_ratio(feature_selection_ratio)
+    num_new_features = num_total_features - len(selected_features.features)
+    new_features = feature_set_sampler.sample(size=num_new_features)
+    cavg_feature_set = fs.compose_remove_duplicates(selected_features, new_features)
+    print('cavg round {} num_features:'.format(i), len(cavg_feature_set.features))
     cavg_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
         pairs=training_pairs,
         feature_set=cavg_feature_set,
@@ -476,7 +500,11 @@ rf_max_model = BaggingDecisionTreeModel(
 
 for i in range(feature_selection_n_rounds):
     rf_max_model.train()
-    max_feature_set = rf_max_model.select_features_by_ratio(feature_selection_ratio)
+    selected_features = rf_max_model.select_features_by_ratio(feature_selection_ratio)
+    num_new_features = len(selected_features.features)
+    new_features = feature_set_sampler.sample(size=num_new_features)
+    max_feature_set = fs.compose_remove_duplicates(selected_features, new_features)
+    print('max round {} num_features:'.format(i), len(max_feature_set.features))
     max_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
         pairs=training_pairs,
         feature_set=max_feature_set,

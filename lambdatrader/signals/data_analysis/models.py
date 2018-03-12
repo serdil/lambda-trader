@@ -1,5 +1,6 @@
 from operator import itemgetter
 
+import logging
 import numpy as np
 import xgboost as xgb
 from math import sqrt, ceil
@@ -264,10 +265,11 @@ class BaggingDecisionTreeModel(BaseModel):
 
     def train(self):
         training_dd = self.dataset_descriptor.training
+        # TODO: normalize was made False
         (x, y, feature_names,
          feature_mapping) = (DFDataset
                              .compute_from_descriptor(training_dd,
-                                                      normalize=True,
+                                                      normalize=False,
                                                       error_on_missing=False)
                              .add_feature_values()
                              .add_value_values(value_name=self.value_name)
@@ -281,7 +283,7 @@ class BaggingDecisionTreeModel(BaseModel):
         validation_dd = self.dataset_descriptor.validation
         val_x, val_y = (DFDataset
                         .compute_from_descriptor(validation_dd,
-                                                 normalize=True,
+                                                 normalize=False,
                                                  error_on_missing=False)
                         .add_feature_values()
                         .add_value_values(value_name=self.value_name)
@@ -323,8 +325,9 @@ class BaggingDecisionTreeModel(BaseModel):
             self._print_val_set_metrics(val_y, val_pred, self.obj_name)
             self._comp_feature_importance()
             self._print_feature_imp()
-        except ValueError:
+        except ValueError as e:
             print('ValueError during prediction for validation set.')
+            logging.exception(e)
 
     @classmethod
     def _print_val_set_metrics(cls, val_y, val_pred, obj_name):
