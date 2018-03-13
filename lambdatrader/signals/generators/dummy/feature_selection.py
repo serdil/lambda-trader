@@ -307,9 +307,9 @@ n_samples_sqrt = int(sqrt(n_samples))
 samples_every_n_candles = n_samples // n_candles
 
 # max_samples = n_samples_sqrt
-# max_samples = 1.00
+max_samples = 1.00
 # max_samples = 0.50
-max_samples = 0.25
+# max_samples = 0.25
 # max_samples = 0.10
 # max_samples = 0.05
 # max_samples = 0.02
