@@ -40,8 +40,8 @@ random.seed(0)
 # training_pairs = random.sample(Pairs.all_pairs(), 20); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 15); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 10); interleaved = True
-training_pairs = random.sample(Pairs.all_pairs(), 5); interleaved = True
-# training_pairs = random.sample(Pairs.all_pairs(), 1); interleaved = True
+# training_pairs = random.sample(Pairs.all_pairs(), 5); interleaved = True
+training_pairs = random.sample(Pairs.all_pairs(), 1); interleaved = True
 # training_pairs = Pairs.n_pairs(); interleaved = True
 # training_pairs = ['BTC_ETH']; interleaved = False
 # training_pairs = ['BTC_XMR']; interleaved = False
@@ -307,9 +307,9 @@ n_samples_sqrt = int(sqrt(n_samples))
 samples_every_n_candles = n_samples // n_candles
 
 # max_samples = n_samples_sqrt
-max_samples = 1.00
+# max_samples = 1.00
 # max_samples = 0.50
-# max_samples = 0.25
+max_samples = 0.25
 # max_samples = 0.10
 # max_samples = 0.05
 # max_samples = 0.02
