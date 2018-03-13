@@ -14,6 +14,7 @@ from lambdatrader.signals.data_analysis.df_values import CloseAvgReturn, MaxRetu
 from lambdatrader.signals.data_analysis.factories import SplitDateRanges, FeatureSets
 from lambdatrader.signals.data_analysis.models import BaggingDecisionTreeModel
 from lambdatrader.signals.generators.dummy.backtest_util import do_backtest
+from lambdatrader.signals.generators.dummy.feature_spaces import all_samplers_feature_set_sampler
 from lambdatrader.signals.generators.dummy.signal_generation import (
     CloseAvgReturnMaxReturnSignalConverter, SignalServer, ModelPredSignalGenerator,
 )
@@ -38,9 +39,9 @@ random.seed(0)
 # training_pairs = random.sample(Pairs.all_pairs(), 40); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 20); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 15); interleaved = True
-training_pairs = random.sample(Pairs.all_pairs(), 10); interleaved = True
+# training_pairs = random.sample(Pairs.all_pairs(), 10); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 5); interleaved = True
-# training_pairs = random.sample(Pairs.all_pairs(), 1); interleaved = True
+training_pairs = random.sample(Pairs.all_pairs(), 1); interleaved = True
 # training_pairs = Pairs.n_pairs(); interleaved = True
 # training_pairs = ['BTC_ETH']; interleaved = False
 # training_pairs = ['BTC_XMR']; interleaved = False
@@ -100,7 +101,7 @@ else:
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=40//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=60//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=90//n_p)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=120//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train`(20, v=0, t=120//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=200//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=500//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=0, t=1000//n_p)
@@ -111,7 +112,10 @@ else:
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=200//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=500//n_p)
 
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=30//n_p)
 split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=200//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=400//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=800//n_p)
 
 fs = FeatureSets
 
@@ -265,8 +269,18 @@ top_patterns = fs.compose_remove_duplicates(hikkake, longline, shortline, closin
 # feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3)
 # feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3, top_patterns)
 # feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, bb_range_50s5, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3, range_sma_48, top_patterns)
-feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3, range_sma_48, top_patterns)
+# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3, range_sma_48, top_patterns)
 
+random.seed(0)
+# random.seed(1)
+# random.seed(2)
+# random.seed(3)
+# random.seed(4)
+
+# feature_set = all_samplers_feature_set_sampler.sample(size=10)
+feature_set = all_samplers_feature_set_sampler.sample(size=100)
+# feature_set = all_samplers_feature_set_sampler.sample(size=1000)
+# feature_set = all_samplers_feature_set_sampler.sample(size=2000)
 
 n_candles = 48
 
@@ -287,7 +301,7 @@ samples_every_n_candles = n_samples // n_candles
 # max_samples = n_samples_sqrt
 # max_samples = 1.00
 # max_samples = 0.50
-# max_samples = 0.25
+max_samples = 0.25
 # max_samples = 0.10
 # max_samples = 0.05
 # max_samples = 0.02
@@ -302,11 +316,14 @@ samples_every_n_candles = n_samples // n_candles
 # max_samples = 8192
 # max_samples = 4096
 # max_samples = 2048
-max_samples = 1024
+# max_samples = 1024
 # max_samples = 512
 # max_samples = 256
 # max_samples = 128
 # max_samples = 64
+# max_samples = samples_every_n_candles * 24
+# max_samples = samples_every_n_candles * 12
+# max_samples = samples_every_n_candles * 4
 # max_samples = samples_every_n_candles
 
 

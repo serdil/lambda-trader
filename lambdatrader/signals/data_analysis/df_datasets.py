@@ -147,7 +147,8 @@ class SplitDatasetDescriptor:
 
 class DFDataset:
 
-    def __init__(self, dfs, feature_df, value_df, feature_set, value_set, feature_mapping):
+    def __init__(self, dfs, feature_df, value_df, feature_set, value_set,
+                 feature_mapping, reverse_feature_mapping):
         self.dfs = dfs
         self.feature_df = feature_df
         self.value_df = value_df
@@ -156,6 +157,7 @@ class DFDataset:
         self.value_set = value_set
 
         self.feature_mapping = feature_mapping
+        self.reverse_feature_mapping = reverse_feature_mapping
 
         self.return_values = []
 
@@ -238,6 +240,7 @@ class DFDataset:
 
             feature_dfs = []
             feature_mapping = {}
+            reverse_feature_mapping = {}
 
             # print('start_date', pd.Timestamp(start_date, unit='s'))
             # print('end_date', pd.Timestamp(end_date, unit='s'))
@@ -260,6 +263,7 @@ class DFDataset:
                 feature_dfs.append(feature_df)
                 for col_name in feature_df.columns.values:
                     feature_mapping[col_name] = feature
+                reverse_feature_mapping[feature] = list(feature_df.columns.values)
 
             # feature_dfs = [f.compute(dfs) for f in feature_set.features]
 
@@ -293,7 +297,8 @@ class DFDataset:
 
             print('dataset comp time: {:.3f}s'.format(time.time() - comp_start_time))
 
-            return DFDataset(dfs, feature_df, value_df, feature_set, value_set, feature_mapping)
+            return DFDataset(dfs, feature_df, value_df, feature_set, value_set,
+                             feature_mapping, reverse_feature_mapping)
 
     @classmethod
     def _get_df_slices(cls, dfs, start_date, end_date):
@@ -320,12 +325,14 @@ class DFDataset:
     @classmethod
     def _interleave_datasets(cls, datasets):
         feature_mapping = datasets[0].feature_mapping
+        reverse_feature_mapping = datasets[0].reverse_feature_mapping
         feature_dfs = [ds.feature_df for ds in datasets]
         value_dfs = [ds.value_df for ds in datasets]
         feature_df = pd.concat(feature_dfs).sort_index()
         value_df = pd.concat(value_dfs).sort_index()
         return DFDataset(dfs=None, feature_df=feature_df, value_df=value_df,
-                         feature_set=None, value_set=None, feature_mapping=feature_mapping)
+                         feature_set=None, value_set=None, feature_mapping=feature_mapping,
+                         reverse_feature_mapping=reverse_feature_mapping)
 
     @property
     def feature_names(self):
@@ -386,6 +393,10 @@ class DFDataset:
 
     def add_feature_mapping(self):
         self.return_values.append(self.feature_mapping)
+        return self
+
+    def add_reverse_feature_mapping(self):
+        self.return_values.append(self.reverse_feature_mapping)
         return self
 
     def get(self):

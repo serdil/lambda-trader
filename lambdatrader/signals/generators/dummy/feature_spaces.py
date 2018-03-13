@@ -3,7 +3,7 @@ import random
 from lambdatrader.constants import M5, M15, H, H4, D
 from lambdatrader.indicator_functions import PAT_REC_INDICATORS
 from lambdatrader.signals.data_analysis.constants import (
-    OHLCV_LOW, OHLCV_CLOSE, OHLCV_HIGH, OHLCV_OPEN,
+    OHLCV_LOW, OHLCV_CLOSE, OHLCV_HIGH, OHLCV_OPEN, OHLCV_VOLUME,
 )
 from lambdatrader.signals.data_analysis.df_features import (
     DFFeatureSet, SMASelfCloseDelta, CandlestickPattern, BBandsSelfCloseDelta, BBandsNowCloseDelta,
@@ -96,7 +96,7 @@ ohlc_self_close_delta_sampler = FeatureSampler(
 volume_value_sampler = FeatureSampler(
     OHLCVValue,
     {
-        'mode': ParameterRange.set([OHLCV_OPEN, OHLCV_HIGH, OHLCV_LOW, OHLCV_CLOSE]),
+        'mode': ParameterRange.set([OHLCV_VOLUME]),
         'offset': ParameterRange.int_range(0, 10),
         'period': ParameterRange.set([M5, M15, H, H4, D])
     }

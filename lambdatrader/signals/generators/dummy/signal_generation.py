@@ -81,7 +81,7 @@ class SignalServer:
                     )
                     df = (DFDataset.
                           compute_from_descriptor(descriptor=dd,
-                                                  normalize=True,
+                                                  normalize=False,
                                                   error_on_missing=True)
                           .add_feature_df()
                           .get())[0]

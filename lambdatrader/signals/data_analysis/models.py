@@ -1,10 +1,9 @@
+import logging
+from math import sqrt
 from operator import itemgetter
 
-import logging
 import numpy as np
 import xgboost as xgb
-from math import sqrt, ceil
-
 from sklearn import metrics
 from sklearn.ensemble import RandomForestRegressor, BaggingRegressor
 from sklearn.tree import DecisionTreeRegressor
@@ -243,13 +242,14 @@ class BaggingDecisionTreeModel(BaseModel):
     def __init__(self,
                  dataset_descriptor: SplitDatasetDescriptor,
                  n_estimators=1000, max_samples=288, max_features='sqrt', dt_max_features='sqrt',
-                 random_state=0, obj_name='', n_jobs=-1, oob_score=False):
+                 max_depth=12, random_state=0, obj_name='', n_jobs=-1, oob_score=False):
         self.dataset_descriptor = dataset_descriptor
 
         self.n_estimators = n_estimators
         self.max_samples = max_samples
         self.max_features = max_features
         self.dt_max_features = dt_max_features
+        self.max_depth = max_depth
 
         self.random_state = random_state
         self.n_jobs = n_jobs
@@ -261,24 +261,29 @@ class BaggingDecisionTreeModel(BaseModel):
         self.forest = None
         self.feature_names = None
         self.feature_mapping = None
+        self.reverse_feature_mapping = None
         self.feature_importance = None
 
     def train(self):
         training_dd = self.dataset_descriptor.training
         # TODO: normalize was made False
-        (x, y, feature_names,
-         feature_mapping) = (DFDataset
-                             .compute_from_descriptor(training_dd,
-                                                      normalize=False,
-                                                      error_on_missing=False)
-                             .add_feature_values()
-                             .add_value_values(value_name=self.value_name)
-                             .add_feature_names()
-                             .add_feature_mapping()
-                             .get())
+        (x, y,
+         feature_names,
+         feature_mapping,
+         reverse_feature_mapping) = (DFDataset
+                                     .compute_from_descriptor(training_dd,
+                                                              normalize=False,
+                                                              error_on_missing=False)
+                                     .add_feature_values()
+                                     .add_value_values(value_name=self.value_name)
+                                     .add_feature_names()
+                                     .add_feature_mapping()
+                                     .add_reverse_feature_mapping()
+                                     .get())
 
         self.feature_names = feature_names
         self.feature_mapping = feature_mapping
+        self.reverse_feature_mapping = reverse_feature_mapping
 
         validation_dd = self.dataset_descriptor.validation
         val_x, val_y = (DFDataset
@@ -291,9 +296,6 @@ class BaggingDecisionTreeModel(BaseModel):
         print('train set size:', len(x))
         print('val set size:', len(val_x))
 
-        dtr = DecisionTreeRegressor(max_features=self.dt_max_features,
-                                    random_state=self.random_state)
-
         if self.max_features == 'sqrt':
             max_features = int(sqrt(len(feature_names)))
         else:
@@ -303,6 +305,10 @@ class BaggingDecisionTreeModel(BaseModel):
             max_samples = int(sqrt(len(x)))
         else:
             max_samples = self.max_samples
+
+        dtr = DecisionTreeRegressor(max_features=self.dt_max_features,
+                                    random_state=self.random_state,
+                                    max_depth=self.max_depth)
 
         self.forest = BaggingRegressor(base_estimator=dtr,
                                        n_estimators=self.n_estimators,
@@ -314,15 +320,20 @@ class BaggingDecisionTreeModel(BaseModel):
                                        verbose=True)
 
         self.forest.fit(x, y)
+
+        if self.oob_score:
+            print()
+            print('oob score {}: {}'.format(self.obj_name, self.forest.oob_score_))
+            print()
+
         try:
+            train_pred = self.forest.predict(x)
             val_pred = self.forest.predict(val_x)
 
-            if self.oob_score:
-                print()
-                print('oob score {}: {}'.format(self.obj_name, self.forest.oob_score_))
-                print()
+            self._print_metrics('\ntraining metrics', y, train_pred, self.obj_name)
 
-            self._print_val_set_metrics(val_y, val_pred, self.obj_name)
+            self._print_metrics('validation metrics', val_y, val_pred, self.obj_name)
+
             self._comp_feature_importance()
             self._print_feature_imp()
         except ValueError as e:
@@ -330,10 +341,10 @@ class BaggingDecisionTreeModel(BaseModel):
             logging.exception(e)
 
     @classmethod
-    def _print_val_set_metrics(cls, val_y, val_pred, obj_name):
-        print()
-        r2_score = metrics.r2_score(val_y, val_pred)
-        rmse = sqrt(metrics.mean_squared_error(val_y, val_pred))
+    def _print_metrics(cls, message, y_true, y_pred, obj_name):
+        print(message + ':')
+        r2_score = metrics.r2_score(y_true, y_pred)
+        rmse = sqrt(metrics.mean_squared_error(y_true, y_pred))
         print('r2 score {}:'.format(obj_name), r2_score)
         print('rmse {}:'.format(obj_name), rmse)
         print()
@@ -358,11 +369,26 @@ class BaggingDecisionTreeModel(BaseModel):
 
     def select_features_by_ratio(self, ratio):
         num_select = int((len(self.feature_names) * ratio))
-        selected = self.feature_importance[:num_select]
-        feature_objects = []
-        for name, _ in selected:
-            feature_objects.append(self.feature_mapping[name])
-        return FeatureSets.compose_remove_duplicates(DFFeatureSet(features=feature_objects))
+        num_discard = len(self.feature_names) - num_select
+        f_name_ranks = [(f_name, rank) for rank, (f_name, _) in enumerate(self.feature_importance)]
+        f_name_rank_mapping = dict(f_name_ranks)
+        feature_lowest_ranks = []
+        for feature, f_names in self.reverse_feature_mapping.items():
+            lowest_rank = min([f_name_rank_mapping[f_name] for f_name in f_names])
+            feature_lowest_ranks.append((feature, lowest_rank,))
+        feature_lowest_ranks = list(reversed(sorted(feature_lowest_ranks, key=itemgetter(1))))
+        num_discarded = 0
+        prune_index = 0
+        for i, (feature, lowest_rank) in enumerate(feature_lowest_ranks):
+            print('discarding {}, lowest rank: {}'.format(feature.name, lowest_rank))
+            num_discarded += len(self.reverse_feature_mapping[feature])
+            if num_discarded >= num_discard:
+                print('highest discarded rank:', lowest_rank)
+                prune_index = i
+                break
+        features = [feature for feature, _ in feature_lowest_ranks[prune_index+1:]]
+        return FeatureSets.compose_remove_duplicates(DFFeatureSet(features=features))
+
 
     @classmethod
     def _comp_feature_imp(cls, forest, feature_names):
@@ -400,3 +426,8 @@ class BaggingDecisionTreeModel(BaseModel):
     @property
     def value_name(self):
         return self.dataset_descriptor.first_value_name
+
+    @property
+    def feature_set(self):
+        return self.dataset_descriptor.training.feature_set
+

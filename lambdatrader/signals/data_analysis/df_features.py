@@ -1,3 +1,4 @@
+import random
 from operator import attrgetter
 
 import numpy as np
@@ -50,6 +51,22 @@ class DFFeatureSet:
     @property
     def feature_names(self):
         return [f.name for f in self.features]
+
+    @property
+    def num_features(self):
+        return len(self.features)
+
+    def shrink(self, ratio):
+        size = int(len(self.features) * ratio)
+        return self.shrink_to_size(size)
+
+    def shrink_to_size(self, size):
+        return DFFeatureSet(features=random.sample(self.features, size), sort=self.sort)
+
+    def sample(self, size=None):
+        if size is None:
+            size = len(self.features)
+        return random.sample(self.features, size)
 
 
 class BaseFeature:
