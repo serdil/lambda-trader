@@ -408,7 +408,7 @@ oob_score = False
 
 random_state = 5943923 + 0
 
-print('n_features', len(feature_set.features))
+print('n_features', feature_set.num_features)
 print('params:')
 pprint({
     'dt_max_features': dt_max_features,
@@ -608,7 +608,7 @@ elif selection_mode == 4:
         rf_cavg_model = cavg_model_with_feature_set(combined_features)
         bprint('[cavg] selection round')
         rf_cavg_model.train()
-        selected_features = rf_cavg_model.select_features_by_ratio(feature_selection_ratio)
+        selected_features = rf_cavg_model.select_features_by_number(num_total_features)
         rf_cavg_model = cavg_model_with_feature_set(selected_features)
         bprint('[cavg] round {} result (num_features: {})'.format(i, selected_features.num_features))
         rf_cavg_model.train()
@@ -623,7 +623,7 @@ elif selection_mode == 4:
         rf_max_model = max_model_with_feature_set(combined_features)
         bprint('[max] selection round')
         rf_max_model.train()
-        selected_features = rf_max_model.select_features_by_ratio(feature_selection_ratio)
+        selected_features = rf_max_model.select_features_by_number(num_total_features)
         rf_max_model = max_model_with_feature_set(selected_features)
         bprint('[max] round {} result (num_features: {})'.format(i, selected_features.num_features))
         rf_max_model.train()

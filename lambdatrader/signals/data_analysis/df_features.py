@@ -231,8 +231,9 @@ class IndicatorValue(LookbackFeature):
 
     @property
     def name(self):
-        return ('indicator_value_period_{}_indicator_{}_args_{}_offset_{}'
-                .format(self.period.name, self.indicator.name, join_list(self.args), self.offset))
+        return ('indicator_value_period_{}_indicator_{}_args_{}_offset_{}_output_{}'
+                .format(self.period.name, self.indicator.name,
+                        join_list(self.args), self.offset, self.output_col))
 
     @property
     def lookback(self):
@@ -267,8 +268,9 @@ class IndicatorSelfDelta(LookbackFeature):
 
     @property
     def name(self):
-        return ('indicator_self_delta_period_{}_indicator_{}_args_{}_offset_{}'
-                .format(self.period.name, self.indicator.name, join_list(self.args), self.offset))
+        return ('indicator_self_delta_period_{}_indicator_{}_args_{}_offset_{}_output_{}'
+                .format(self.period.name, self.indicator.name,
+                        join_list(self.args), self.offset, self.output_col))
 
     @property
     def lookback(self):
@@ -302,8 +304,9 @@ class IndicatorNowCloseDelta(LookbackFeature):
 
     @property
     def name(self):
-        return ('indicator_now_close_delta_period_{}_indicator_{}_args_{}_offset_{}'
-                .format(self.period.name, self.indicator.name, join_list(self.args), self.offset))
+        return ('indicator_now_close_delta_period_{}_indicator_{}_args_{}_offset_{}_output_{}'
+                .format(self.period.name, self.indicator.name,
+                        join_list(self.args), self.offset, self.output_col))
 
     @property
     def lookback(self):
@@ -337,8 +340,9 @@ class IndicatorSelfCloseDelta(LookbackFeature):
 
     @property
     def name(self):
-        return ('indicator_self_close_delta_period_{}_indicator_{}_args_{}_offset_{}'
-                .format(self.period.name, self.indicator.name, join_list(self.args), self.offset))
+        return ('indicator_self_close_delta_period_{}_indicator_{}_args_{}_offset_{}_output_{}'
+                .format(self.period.name, self.indicator.name,
+                        join_list(self.args), self.offset, self.output_col))
 
     @property
     def lookback(self):

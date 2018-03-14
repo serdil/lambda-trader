@@ -68,10 +68,16 @@ class FeatureSetSampler:
         self.feature_samplers = list(feature_samplers)
 
     def sample(self, size=100):
+        feature_names = set()
         features = []
         for _ in range(size):
-            feature_sampler = random.choice(self.feature_samplers)
-            features.append(feature_sampler.sample())
+            while True:
+                feature_sampler = random.choice(self.feature_samplers)
+                feature = feature_sampler.sample()
+                if feature.name not in feature_names:
+                    features.append(feature)
+                    feature_names.add(feature.name)
+                    break
         return FeatureSets.compose_remove_duplicates(DFFeatureSet(features=features))
 
 
