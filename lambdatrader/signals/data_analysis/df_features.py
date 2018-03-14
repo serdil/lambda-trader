@@ -69,6 +69,10 @@ class DFFeatureSet:
         return random.sample(self.features, size)
 
 
+class ArgumentError(ValueError):
+    pass
+
+
 class BaseFeature:
 
     @property
@@ -217,12 +221,13 @@ class OHLCVSelfCloseDelta(LookbackFeature):
 
 class IndicatorValue(LookbackFeature):
 
-    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5):
+    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5, output_col=None):
         self.indicator = indicator
         self.args = args
         self.offset = offset
         self.period = period
         self.longest_timeperiod = longest_timeperiod
+        self.output_col = output_col
 
     @property
     def name(self):
@@ -235,19 +240,30 @@ class IndicatorValue(LookbackFeature):
 
     def compute(self, dfs):
         df = dfs[self.period]
+        value = self.indicator.function()(df, *self.args).shift(self.offset)
+        if self.output_col is not None:
+            value = value.iloc[:,self.output_col:self.output_col+1]
         return to_ffilled_df_with_name(dfs[M5].index,
-                                       self.indicator.function()(df, *self.args).shift(self.offset),
+                                       value,
                                        self.name)
+
+    def assert_output_col_max(self, max_n_outputs):
+        if (self.output_col is not None and
+                (not isinstance(self.output_col, int)
+                 or self.output_col >= max_n_outputs
+                 or self.output_col < 0)):
+            raise ArgumentError('Invalid output_col')
 
 
 class IndicatorSelfDelta(LookbackFeature):
 
-    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5):
+    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5, output_col=None):
         self.indicator = indicator
         self.args = args
         self.offset = offset
         self.period = period
         self.longest_timeperiod = longest_timeperiod
+        self.output_col = output_col
 
     @property
     def name(self):
@@ -262,17 +278,27 @@ class IndicatorSelfDelta(LookbackFeature):
         df = dfs[self.period]
         ind_values = self.indicator.function()(df, *self.args)
         self_delta = (ind_values.diff(self.offset) / ind_values)
+        if self.output_col is not None:
+            self_delta = self_delta.iloc[:,self.output_col:self.output_col+1]
         return to_ffilled_df_with_name(dfs[M5].index, self_delta, self.name)
+
+    def assert_output_col_max(self, max_n_outputs):
+        if (self.output_col is not None and
+                (not isinstance(self.output_col, int)
+                 or self.output_col >= max_n_outputs
+                 or self.output_col < 0)):
+            raise ArgumentError('Invalid output_col')
 
 
 class IndicatorNowCloseDelta(LookbackFeature):
 
-    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5):
+    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5, output_col=None):
         self.indicator = indicator
         self.args = args
         self.offset = offset
         self.period = period
         self.longest_timeperiod = longest_timeperiod
+        self.output_col = output_col
 
     @property
     def name(self):
@@ -287,17 +313,27 @@ class IndicatorNowCloseDelta(LookbackFeature):
         df = dfs[self.period]
         close_delta = (self.indicator.function()(df, *self.args).shift(self.offset)
                        .rsub(df[OHLCV_CLOSE], axis=0).div(df[OHLCV_CLOSE], axis=0))
+        if self.output_col is not None:
+            close_delta = close_delta.iloc[:,self.output_col:self.output_col+1]
         return to_ffilled_df_with_name(dfs[M5].index, close_delta, self.name)
+
+    def assert_output_col_max(self, max_n_outputs):
+        if (self.output_col is not None and
+                (not isinstance(self.output_col, int)
+                 or self.output_col >= max_n_outputs
+                 or self.output_col < 0)):
+            raise ArgumentError('Invalid output_col')
 
 
 class IndicatorSelfCloseDelta(LookbackFeature):
 
-    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5):
+    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5, output_col=None):
         self.indicator = indicator
         self.args = args
         self.offset = offset
         self.period = period
         self.longest_timeperiod = longest_timeperiod
+        self.output_col = output_col
 
     @property
     def name(self):
@@ -313,15 +349,26 @@ class IndicatorSelfCloseDelta(LookbackFeature):
         shifted_close = df[OHLCV_CLOSE].shift(self.offset)
         close_delta = (self.indicator.function()(df, *self.args).shift(self.offset)
                        .rsub(shifted_close, axis=0).div(shifted_close, axis=0))
+        if self.output_col is not None:
+            close_delta = close_delta.iloc[:,self.output_col:self.output_col+1]
         return to_ffilled_df_with_name(dfs[M5].index, close_delta, self.name)
+
+    def assert_output_col_max(self, max_n_outputs):
+        if (self.output_col is not None and
+                (not isinstance(self.output_col, int)
+                 or self.output_col >= max_n_outputs
+                 or self.output_col < 0)):
+            raise ArgumentError('Invalid output_col')
 
 
 class MACDValue(IndicatorValue):
-    def __init__(self, fastperiod=12, slowperiod=26, signalperiod=9, offset=0, period=M5):
+    def __init__(self, fastperiod=12, slowperiod=26, signalperiod=9, offset=0, period=M5,
+                 output_col=None):
         longest_timeperiod = max(fastperiod, slowperiod, signalperiod)
         super().__init__(IndicatorEnum.MACD,
                          [fastperiod, slowperiod, signalperiod],
-                         offset, longest_timeperiod, period)
+                         offset, longest_timeperiod, period, output_col)
+        self.assert_output_col_max(3)
 
 
 class RSIValue(IndicatorValue):
@@ -331,17 +378,21 @@ class RSIValue(IndicatorValue):
 
 
 class BBandsNowCloseDelta(IndicatorNowCloseDelta):
-    def __init__(self, timeperiod=5, nbdevup=2, nbdevdn=2, matype=0, offset=0, period=M5):
+    def __init__(self, timeperiod=5, nbdevup=2, nbdevdn=2, matype=0, offset=0, period=M5,
+                 output_col=None):
         longest_timeperiod = timeperiod
         super().__init__(IndicatorEnum.BBANDS, [timeperiod, nbdevup, nbdevdn, matype],
-                         offset, longest_timeperiod, period)
+                         offset, longest_timeperiod, period, output_col)
+        self.assert_output_col_max(3)
 
 
 class BBandsSelfCloseDelta(IndicatorSelfCloseDelta):
-    def __init__(self, timeperiod=5, nbdevup=2, nbdevdn=2, matype=0, offset=0, period=M5):
+    def __init__(self, timeperiod=5, nbdevup=2, nbdevdn=2, matype=0, offset=0, period=M5,
+                 output_col=None):
         longest_timeperiod = timeperiod
         super().__init__(IndicatorEnum.BBANDS, [timeperiod, nbdevup, nbdevdn, matype],
-                         offset, longest_timeperiod, period)
+                         offset, longest_timeperiod, period, output_col)
+        self.assert_output_col_max(3)
 
 
 class CandlestickPattern(IndicatorValue):

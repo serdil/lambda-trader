@@ -6,8 +6,8 @@ from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.indicator_functions import IndicatorEnum
 from lambdatrader.signals.data_analysis.constants import OHLCV_CLOSE, OHLCV_OPEN
 from lambdatrader.signals.data_analysis.df_features import (
-    OHLCVNowCloseDelta, IndicatorValue, RSIValue, BBandsNowCloseDelta, MACDValue, DummyFeature,
-    RandomFeature, OHLCVSelfCloseDelta,
+    OHLCVNowCloseDelta, IndicatorValue, RSIValue, MACDValue, DummyFeature,
+    RandomFeature, OHLCVSelfCloseDelta, BBandsSelfCloseDelta,
 )
 from lambdatrader.utilities.utils import seconds
 
@@ -35,21 +35,30 @@ print(dfs[M5])
 #
 # print('sma')
 # print(indicator_value_feature.compute(dfs))
-#
-# rsi_feature = RSIValue()
-# bbands_feature = BBandsCloseDelta()
-# macd_feature = MACDValue()
-#
-#
+
+rsi_feature = RSIValue()
+bbands_feature = BBandsSelfCloseDelta()
+macd_feature = MACDValue()
+
 # print('rsi')
 # print(rsi_feature.compute(dfs))
 #
 # print('bbands')
 # print(bbands_feature.compute(dfs))
 #
+
 # print('macd')
-# print(macd_feature.compute(dfs))
+# macd_out = macd_feature.compute(dfs)
+# print(macd_out)
+
+# macd_out_1 = macd_out.iloc[:,1:2]
+# print('macd out 1')
+# print(macd_out_1)
 #
+# macd_out_1_filled = macd_out_1.fillna(0)
+# print('macd out 1 filled')
+# print(macd_out_1_filled)
+
 # bbands_h = BBandsCloseDelta(period=H)
 # print('bbands H')
 # print(bbands_h.compute(dfs))
@@ -69,6 +78,10 @@ print(dfs[M5])
 # print('close self close delta')
 # print(close_self_close_delta.compute(dfs))
 
-open_self_close_delta = OHLCVSelfCloseDelta(OHLCV_OPEN, offset=0, period=M5)
-print('open self close delta')
-print(open_self_close_delta.compute(dfs))
+# open_self_close_delta = OHLCVSelfCloseDelta(OHLCV_OPEN, offset=0, period=M5)
+# print('open self close delta')
+# print(open_self_close_delta.compute(dfs))
+
+# macd_output_1 = MACDValue(output_col=1)
+# print('macd output 1')
+# print(macd_output_1.compute(dfs))

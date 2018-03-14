@@ -369,7 +369,10 @@ class BaggingDecisionTreeModel(BaseModel):
 
     def select_features_by_ratio(self, ratio):
         num_select = int((len(self.feature_names) * ratio))
-        num_discard = len(self.feature_names) - num_select
+        return self.select_features_by_number(num_select)
+
+    def select_features_by_number(self, n_select):
+        num_discard = len(self.feature_names) - n_select
         f_name_ranks = [(f_name, rank) for rank, (f_name, _) in enumerate(self.feature_importance)]
         f_name_rank_mapping = dict(f_name_ranks)
         feature_lowest_ranks = []
@@ -386,7 +389,7 @@ class BaggingDecisionTreeModel(BaseModel):
                 print('highest discarded rank:', lowest_rank)
                 prune_index = i
                 break
-        features = [feature for feature, _ in feature_lowest_ranks[prune_index+1:]]
+        features = [feature for feature, _ in feature_lowest_ranks[prune_index + 1:]]
         return FeatureSets.compose_remove_duplicates(DFFeatureSet(features=features))
 
 

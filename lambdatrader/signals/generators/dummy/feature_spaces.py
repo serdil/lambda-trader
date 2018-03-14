@@ -137,7 +137,8 @@ bbands_self_close_delta_sampler = FeatureSampler(
         'nbdevdn': ParameterRange.int_range(1, 10),
         'matype': ParameterRange.int_range(0, 3),
         'offset': ParameterRange.int_range(0, 10),
-        'period': ParameterRange.set([M5, M15, H, H4, D])
+        'period': ParameterRange.set([M5, M15, H, H4, D]),
+        'output_col': ParameterRange.int_range(0, 2)
     }
 )
 
@@ -149,7 +150,8 @@ bbands_now_close_delta_sampler = FeatureSampler(
         'nbdevdn': ParameterRange.int_range(1, 10),
         'matype': ParameterRange.int_range(0, 3),
         'offset': ParameterRange.int_range(0, 10),
-        'period': ParameterRange.set([M5, M15, H, H4, D])
+        'period': ParameterRange.set([M5, M15, H, H4, D]),
+        'output_col': ParameterRange.int_range(0, 2)
     }
 )
 
@@ -169,7 +171,8 @@ macd_value_sampler = FeatureSampler(
         'slowperiod': ParameterRange.int_range(2, 50),
         'signalperiod': ParameterRange.int_range(2, 50),
         'offset': ParameterRange.int_range(0, 10),
-        'period': ParameterRange.set([M5, M15, H, H4, D])
+        'period': ParameterRange.set([M5, M15, H, H4, D]),
+        'output_col': ParameterRange.int_range(0, 2)
     }
 )
 
