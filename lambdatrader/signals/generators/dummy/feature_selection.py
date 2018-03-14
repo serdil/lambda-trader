@@ -284,7 +284,7 @@ selection_mode = 4
 
 feature_selection_ratio = 0.90
 
-feature_selection_target_level = 10
+feature_selection_target_level = 5
 
 num_total_features = 100
 
@@ -296,7 +296,7 @@ value_set_cavg = DFFeatureSet(features=[CloseAvgReturn(n_candles=n_candles)])
 
 value_set_max = DFFeatureSet(features=[MaxReturn(n_candles=n_candles)])
 
-c_thr = 0.01
+c_thr = 0.02
 m_thr = 0.02
 
 
