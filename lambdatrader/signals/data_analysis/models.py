@@ -383,7 +383,7 @@ class BaggingDecisionTreeModel(BaseModel):
         num_discarded = 0
         prune_index = 0
         for i, (feature, lowest_rank) in enumerate(feature_lowest_ranks):
-            print('discarding {}, lowest rank: {}'.format(feature.name, lowest_rank))
+            # print('discarding {}, lowest rank: {}'.format(feature.name, lowest_rank))
             num_discarded += len(self.reverse_feature_mapping[feature])
             if num_discarded >= num_discard:
                 print('highest discarded rank:', lowest_rank)

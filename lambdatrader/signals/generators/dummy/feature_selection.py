@@ -114,11 +114,11 @@ else:
 
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=30//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=60//n_p)
-# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=200//n_p)
+split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=200//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=500//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=1000//n_p)
 
-split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=50//n_p, t=200//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=50//n_p, t=200//n_p)
 
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=10//n_p, t=30//n_p)
 
@@ -284,7 +284,7 @@ selection_mode = 4
 
 feature_selection_ratio = 0.90
 
-feature_selection_target_level = 5
+feature_selection_target_level = 10
 
 num_total_features = 100
 
