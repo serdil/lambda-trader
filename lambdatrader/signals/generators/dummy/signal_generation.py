@@ -18,7 +18,7 @@ from lambdatrader.models.tradesignal import (
 from lambdatrader.signals.data_analysis.df_datasets import (
     DFDataset, SingleValueDatasetDescriptor,
 )
-from lambdatrader.signals.data_analysis.df_values import CloseAvgReturn, MaxReturn
+from lambdatrader.signals.data_analysis.df_values import CloseAvgReturn, MaxReturn, CloseReturn
 from lambdatrader.signals.data_analysis.factories import ValueSets
 from lambdatrader.signals.data_analysis.models import NotTrainedException
 from lambdatrader.signals.generators.generators.base import BaseSignalGenerator
@@ -142,6 +142,39 @@ class CloseAvgReturnMaxReturnSignalConverter(SignalConverter):
         tp_vec = np.full(n, np.nan)
 
         if self.tp_mode == self.TP_MODE__CAVG_PRED:
+            tp_vec[signal] = cavg[signal]
+        elif self.tp_mode == self.TP_MODE__MAX_PRED:
+            tp_vec[signal] = _max[signal]
+
+        timeout = self.n_candles * M5.seconds()
+
+        return TradeSignalVector.compute_with_fixed_timeout(signal, tp_vec, timeout)
+
+
+class CloseReturnMaxReturnSignalConverter(SignalConverter):
+    TP_MODE__MAX_PRED = 'max_pred'
+    TP_MODE__CLOSE_PRED = 'close_pred'
+
+    def __init__(self, n_candles=48, c_thr=0.02, m_thr=0.02, tp_mode=TP_MODE__MAX_PRED):
+        self.n_candles = n_candles
+        self.c_thr = c_thr
+        self.m_thr = m_thr
+        self.tp_mode = tp_mode
+
+    def convert(self, model_output_dict):
+        cavg_return_name = CloseReturn(n_candles=self.n_candles).name
+        max_return_name = MaxReturn(n_candles=self.n_candles).name
+
+        cavg = model_output_dict[cavg_return_name]
+        _max = model_output_dict[max_return_name]
+
+        n = len(cavg)
+
+        signal = np.logical_and(cavg > self.c_thr, _max > self.m_thr)
+
+        tp_vec = np.full(n, np.nan)
+
+        if self.tp_mode == self.TP_MODE__CLOSE_PRED:
             tp_vec[signal] = cavg[signal]
         elif self.tp_mode == self.TP_MODE__MAX_PRED:
             tp_vec[signal] = _max[signal]

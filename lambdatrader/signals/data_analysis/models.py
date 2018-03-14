@@ -74,11 +74,11 @@ class XGBSplitDatasetModel(BaseModel):
     def train(self):
         dd = self.dataset_descriptor
 
-        dtrain = XGBDMatrixDataset.compute(descriptor=dd.training, normalize=True,
+        dtrain = XGBDMatrixDataset.compute(descriptor=dd.training, normalize=False,
                                            error_on_missing=False).dmatrix
-        dval = XGBDMatrixDataset.compute(descriptor=dd.validation, normalize=True,
+        dval = XGBDMatrixDataset.compute(descriptor=dd.validation, normalize=False,
                                          error_on_missing=False).dmatrix
-        dtest = XGBDMatrixDataset.compute(descriptor=dd.test, normalize=True,
+        dtest = XGBDMatrixDataset.compute(descriptor=dd.test, normalize=False,
                                           error_on_missing=False).dmatrix
 
         pred, real, bst = (self._train_xgb_with_dmatrices(dtrain, dval, dtest,

@@ -4,14 +4,15 @@ from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
 from lambdatrader.signals.data_analysis.df_values import CloseAvgReturn, MaxReturn
 from lambdatrader.signals.data_analysis.factories import SplitDateRanges, FeatureSets, ValueSets
 from lambdatrader.signals.data_analysis.models import XGBSplitDatasetModel
+from lambdatrader.signals.generators.dummy.feature_spaces import ohlcv_sampler, all_sampler
 
 from lambdatrader.signals.generators.factories import Pairs
 
-xgb_training_pairs = Pairs.all_pairs(); interleaved = True
+# xgb_training_pairs = Pairs.all_pairs(); interleaved = True
 # xgb_training_pairs = Pairs.n_pairs(); interleaved = True
 # xgb_training_pairs = ['BTC_ETH']; interleaved = False
 # xgb_training_pairs = ['BTC_XMR']; interleaved = False
-# xgb_training_pairs = ['BTC_LTC']; interleaved = False
+xgb_training_pairs = ['BTC_LTC']; interleaved = False
 # xgb_training_pairs = ['BTC_XRP']; interleaved = False
 # xgb_training_pairs = ['BTC_STR']; interleaved = False
 # xgb_training_pairs = ['BTC_RADS']; interleaved = False
@@ -23,8 +24,8 @@ xgb_training_pairs = Pairs.all_pairs(); interleaved = True
 
 # xgb_split_date_range = SplitDateRanges.january_3_days_test_3_days_val_7_days_train()
 # xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_20_days_train()
-# xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_160_days_train()
-xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_360_days_train()
+xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_160_days_train()
+# xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_360_days_train()
 # xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_500_days_train()
 # xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_rest_train()
 
@@ -44,8 +45,14 @@ xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_360_days
 # xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=200)
 # xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=500)
 
+# feature_sampler = ohlcv_sampler
+feature_sampler = all_sampler
 
-feature_set = FeatureSets.get_all_periods_last_ten_ohlcv_now_delta()
+# feature_set = FeatureSets.get_all_periods_last_ten_ohlcv_now_delta()
+
+# feature_set = feature_sampler.sample(size=10)
+# feature_set = feature_sampler.sample(size=100)
+feature_set = feature_sampler.sample(size=1000)
 
 xgb_n_candles = 48
 value_set_cavg = DFFeatureSet(features=[CloseAvgReturn(n_candles=xgb_n_candles)])
@@ -53,10 +60,10 @@ value_set_cavg = DFFeatureSet(features=[CloseAvgReturn(n_candles=xgb_n_candles)]
 
 value_set_max = DFFeatureSet(features=[MaxReturn(n_candles=xgb_n_candles)])
 
-xgb_model_per_pair = True
+xgb_model_per_pair = False
 
-xgb_c_thr = 0.03
-xgb_m_thr = 0.03
+xgb_c_thr = 0.01
+xgb_m_thr = 0.01
 
 cavg_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
     pairs=xgb_training_pairs,
@@ -107,9 +114,9 @@ xgb_params = {
     'base_score': 0,
     'eval_metric': 'rmse',
 
-    'eta': 0.05,
+    'eta': 0.01,
     'gamma': 0,
-    'max_depth': 2,
+    'max_depth': 4,
     'min_child_weight': 1,
     'max_delta_step': 0,
     'subsample': 1,

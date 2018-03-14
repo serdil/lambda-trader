@@ -85,7 +85,7 @@ ohlc_now_close_delta_sampler = FeatureSampler(
     OHLCVNowCloseDelta,
     {
         'mode': ParameterRange.set([OHLCV_OPEN, OHLCV_HIGH, OHLCV_LOW, OHLCV_CLOSE]),
-        'offset': ParameterRange.int_range(0, 10),
+        'offset': ParameterRange.int_range(0, 50),
         'period': ParameterRange.set([M5, M15, H, H4, D])
     }
 )
@@ -94,7 +94,7 @@ ohlc_self_close_delta_sampler = FeatureSampler(
     OHLCVSelfCloseDelta,
     {
         'mode': ParameterRange.set([OHLCV_OPEN, OHLCV_HIGH, OHLCV_LOW, OHLCV_CLOSE]),
-        'offset': ParameterRange.int_range(0, 10),
+        'offset': ParameterRange.int_range(0, 50),
         'period': ParameterRange.set([M5, M15, H, H4, D])
     }
 )
@@ -103,7 +103,7 @@ volume_value_sampler = FeatureSampler(
     OHLCVValue,
     {
         'mode': ParameterRange.set([OHLCV_VOLUME]),
-        'offset': ParameterRange.int_range(0, 10),
+        'offset': ParameterRange.int_range(0, 50),
         'period': ParameterRange.set([M5, M15, H, H4, D])
     }
 )
@@ -182,6 +182,10 @@ macd_value_sampler = FeatureSampler(
     }
 )
 
+ohlcv_samplers = [ohlc_now_close_delta_sampler,
+                  ohlc_self_close_delta_sampler,
+                  volume_value_sampler]
+
 all_samplers = [ohlc_now_close_delta_sampler,
                 ohlc_self_close_delta_sampler,
                 volume_value_sampler,
@@ -193,4 +197,6 @@ all_samplers = [ohlc_now_close_delta_sampler,
                 rsi_value_sampler,
                 macd_value_sampler]
 
-all_samplers_feature_set_sampler = FeatureSetSampler(all_samplers)
+
+ohlcv_sampler = FeatureSetSampler(ohlcv_samplers)
+all_sampler = FeatureSetSampler(all_samplers)

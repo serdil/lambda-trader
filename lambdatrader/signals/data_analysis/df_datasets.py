@@ -295,7 +295,7 @@ class DFDataset:
             feature_df = feature_df.loc[start_date_timestamp:end_date_timestamp]
             value_df = value_df.loc[start_date_timestamp:end_date_timestamp]
 
-            print('dataset comp time: {:.3f}s'.format(time.time() - comp_start_time))
+            # print('dataset comp time: {:.3f}s'.format(time.time() - comp_start_time))
 
             return DFDataset(dfs, feature_df, value_df, feature_set, value_set,
                              feature_mapping, reverse_feature_mapping)

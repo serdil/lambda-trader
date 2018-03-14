@@ -500,20 +500,26 @@ class SplitDateRanges:
         )
 
     @classmethod
-    def date_n_days_test_m_days_val_k_days_train(cls, date, test_days, val_days, train_days):
+    def date_n_days_test_m_days_val_k_days_train(cls, date, test_days, val_days, train_days,
+                                                 gap_seconds=48*300):
+        test_end = date
         test_start = Dates.n_days_before_date(date, test_days)
-        val_start = Dates.n_days_before_date(date, test_days + val_days)
-        train_start = Dates.n_days_before_date(date, test_days + val_days + train_days)
+        val_end = test_start - gap_seconds
+        val_start = Dates.n_days_before_date(val_end, val_days)
+        train_end = val_start - gap_seconds
+        train_start = Dates.n_days_before_date(train_end, train_days)
         return SplitDateRange(
-            train_dr=DateRange(train_start, val_start),
-            val_dr=DateRange(val_start, test_start),
-            test_dr=DateRange(test_start, date)
+            train_dr=DateRange(train_start, train_end),
+            val_dr=DateRange(val_start, val_end),
+            test_dr=DateRange(test_start, test_end)
         )
 
     @classmethod
-    def jan_n_days_test_m_days_val_k_days_train(cls, test_days, v, t):
+    def jan_n_days_test_m_days_val_k_days_train(cls, test_days, v, t,
+                                                gap_seconds=48*300):
         return cls.date_n_days_test_m_days_val_k_days_train(Dates.feb_1(),
-                                                            test_days, v, t)
+                                                            test_days, v, t,
+                                                            gap_seconds=gap_seconds)
 
 
 class SplitDatasetDescriptors:
