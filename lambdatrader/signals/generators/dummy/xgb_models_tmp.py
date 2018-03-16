@@ -10,7 +10,7 @@ from lambdatrader.signals.generators.dummy.feature_spaces import ohlcv_sampler, 
 
 from lambdatrader.signals.generators.factories import Pairs
 
-random.seed(0)
+# random.seed(0)
 # random.seed(1)
 # random.seed(2)
 # random.seed(3)
@@ -194,9 +194,9 @@ xgb_params = {
     'max_leaves': 0,
     'max_bin': 256,
 
-    # 'lambda': 1,
-    # 'alpha': 0,
-    # 'updater': 'grow_colmaker,prune',
+    'lambda': 1,
+    'alpha': 0,
+    'updater': 'grow_colmaker,prune',
 
     # 'sample_type': 'uniform',
     # 'normalize_type': 'tree',
@@ -204,8 +204,8 @@ xgb_params = {
     # 'one_drop': 0,
     # 'skip_drop': 0.00,
 
-    'reg_lambda': 0,
-    'reg_alpha': 0,
+    # 'reg_lambda': 0,
+    # 'reg_alpha': 0,
     # 'updater': 'shotgun'
 }
 
