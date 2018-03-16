@@ -87,6 +87,16 @@ class XGBSplitDatasetModel(BaseModel):
                                                           self.early_stopping_rounds,
                                                           self.obj_name))
         self.bst = bst
+
+        y_train_pred = self.bst.predict(dtrain)
+        y_train_true = dtrain.get_label()
+
+        y_val_pred = self.bst.predict(dval)
+        y_val_true = dval.get_label()
+
+        self._print_metrics('\ntraining metrics', y_train_true, y_train_pred, self.obj_name)
+        self._print_metrics('\nvalidation metrics', y_val_true, y_val_pred, self.obj_name)
+
         return pred, real
 
     def _get_dmatrices(self):
@@ -132,6 +142,15 @@ class XGBSplitDatasetModel(BaseModel):
         except XGBoostError:
             pred = bst.predict(dtest)
         return pred, real, bst
+
+    @classmethod
+    def _print_metrics(cls, message, y_true, y_pred, obj_name):
+        print(message + ':')
+        r2_score = metrics.r2_score(y_true, y_pred)
+        rmse = sqrt(metrics.mean_squared_error(y_true, y_pred))
+        print('r2 score {}:'.format(obj_name), r2_score)
+        print('rmse {}:'.format(obj_name), rmse)
+        print()
 
     def save(self):
         raise NotImplementedError

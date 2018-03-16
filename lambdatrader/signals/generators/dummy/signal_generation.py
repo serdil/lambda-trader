@@ -49,6 +49,10 @@ class SignalServer:
                             model.train()
                 except DataError:
                     print('DataError while training ', pair)
+                except Exception as e:
+                    # TODO tmp handling
+                    if str(e).find('inputs are all NaN') >= 0:
+                        pass
         else:
             for model in self.models:
                 model.train()

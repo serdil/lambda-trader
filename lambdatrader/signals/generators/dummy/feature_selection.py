@@ -19,6 +19,7 @@ from lambdatrader.signals.generators.dummy.feature_spaces import (
 )
 from lambdatrader.signals.generators.dummy.signal_generation import (
     CloseAvgReturnMaxReturnSignalConverter, SignalServer, ModelPredSignalGenerator,
+    CloseReturnMaxReturnSignalConverter,
 )
 from lambdatrader.signals.generators.factories import Pairs
 
@@ -39,10 +40,10 @@ random.seed(0)
 # training_pairs = Pairs.all_pairs()[25:30]; interleaved = True
 # training_pairs = Pairs.all_pairs()[20:25]; interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 40); interleaved = True
-training_pairs = random.sample(Pairs.all_pairs(), 20); interleaved = True
+# training_pairs = random.sample(Pairs.all_pairs(), 20); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 15); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 10); interleaved = True
-# training_pairs = random.sample(Pairs.all_pairs(), 5); interleaved = True
+training_pairs = random.sample(Pairs.all_pairs(), 5); interleaved = True
 # training_pairs = random.sample(Pairs.all_pairs(), 1); interleaved = True
 # training_pairs = Pairs.n_pairs(); interleaved = True
 # training_pairs = ['BTC_ETH']; interleaved = False
@@ -117,166 +118,26 @@ else:
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=30//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=60//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=200//n_p)
-split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=500//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=500//n_p)
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20//n_p, t=1000//n_p)
 
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=50//n_p, t=200//n_p)
 
 # split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=10//n_p, t=30//n_p)
 
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=10, t=120//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=10, t=200//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=10, t=500//n_p)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=10, t=2000//n_p)
+
+split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=10, t=100)
+
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=100)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=200)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=400)
+# split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=20, t=800)
+
 fs = FeatureSets
-
-nd_5 = fs.get_all_periods_last_n_ohlcv_now_delta(5)
-nd_10 = fs.get_all_periods_last_n_ohlcv_now_delta(10)
-nd_20 = fs.get_all_periods_last_n_ohlcv_now_delta(20)
-nd_30 = fs.get_all_periods_last_n_ohlcv_now_delta(30)
-nd_100 = fs.get_all_periods_last_n_ohlcv_now_delta(100)
-
-sd_5 = fs.get_all_periods_last_n_ohlcv_self_delta(5)
-sd_10 = fs.get_all_periods_last_n_ohlcv_self_delta(10)
-sd_20 = fs.get_all_periods_last_n_ohlcv_self_delta(20)
-sd_30 = fs.get_all_periods_last_n_ohlcv_self_delta(30)
-sd_100 = fs.get_all_periods_last_n_ohlcv_self_delta(100)
-
-bb_20_1 = fs.get_bbands_timeperiod_last_n(timeperiod=20, n=1)
-bb_20_2 = fs.get_bbands_timeperiod_last_n(timeperiod=20, n=2)
-bb_20_3 = fs.get_bbands_timeperiod_last_n(timeperiod=20, n=3)
-bb_20_5 = fs.get_bbands_timeperiod_last_n(timeperiod=20, n=5)
-
-bb_5_3 = fs.get_bbands_timeperiod_last_n(timeperiod=5, n=3)
-bb_7_3 = fs.get_bbands_timeperiod_last_n(timeperiod=7, n=3)
-bb_10_3 = fs.get_bbands_timeperiod_last_n(timeperiod=10, n=3)
-bb_30_3 = fs.get_bbands_timeperiod_last_n(timeperiod=30, n=3)
-bb_40_3 = fs.get_bbands_timeperiod_last_n(timeperiod=40, n=3)
-bb_60_3 = fs.get_bbands_timeperiod_last_n(timeperiod=60, n=3)
-range_bb_24 = fs.compose_remove_duplicates(*[fs.get_bbands_timeperiod_last_n(i, 1) for i in range(2, 24)])
-range_bb_48 = fs.compose_remove_duplicates(*[fs.get_bbands_timeperiod_last_n(i, 1) for i in range(2, 48)])
-range_bb_96 = fs.compose_remove_duplicates(*[fs.get_bbands_timeperiod_last_n(i, 1) for i in range(2, 96)])
-bb_range_50s5 = fs.compose_remove_duplicates(*[fs.get_bbands_timeperiod_last_n(i, 1) for i in range(2, 50, 5)])
-
-macd_last_3 = fs.get_macd_last_n(3)
-macd_last_5 = fs.get_macd_last_n(5)
-
-rsi_last_3 = fs.get_rsi_last_n(3)
-rsi_last_5 = fs.get_rsi_last_n(5)
-rsi_last_10 = fs.get_rsi_last_n(10)
-
-rsi_7_5 = fs.get_rsi_timeperiod_last_n(7, 5)
-rsi_14_5 = fs.get_rsi_timeperiod_last_n(14, 5)
-rsi_28_5 = fs.get_rsi_timeperiod_last_n(28, 5)
-
-sma_5_3 = fs.get_sma_timeperiod_self_close_delta_last_n(5, 3)
-sma_13_3 = fs.get_sma_timeperiod_self_close_delta_last_n(13, 3)
-sma_21_3 = fs.get_sma_timeperiod_self_close_delta_last_n(21, 3)
-sma_50_3 = fs.get_sma_timeperiod_self_close_delta_last_n(50, 3)
-sma_100_3 = fs.get_sma_timeperiod_self_close_delta_last_n(100, 3)
-sma_200_3 = fs.get_sma_timeperiod_self_close_delta_last_n(200, 3)
-
-range_sma_12 = fs.compose_remove_duplicates(*[fs.get_sma_timeperiod_self_close_delta_last_n(i, 1) for i in range(2, 12)])
-range_sma_24 = fs.compose_remove_duplicates(*[fs.get_sma_timeperiod_self_close_delta_last_n(i, 1) for i in range(2, 24)])
-range_sma_48 = fs.compose_remove_duplicates(*[fs.get_sma_timeperiod_self_close_delta_last_n(i, 1) for i in range(2, 48)])
-range_sma_10 = fs.compose_remove_duplicates(*[fs.get_sma_timeperiod_self_close_delta_last_n(i, 1) for i in range(2, 48)])
-sma_range_100s5 = fs.compose_remove_duplicates(*[fs.get_sma_timeperiod_self_close_delta_last_n(i, 1) for i in range(2, 100, 5)])
-
-patterns = fs.get_all_candlestick_patterns_last_n()
-
-top_pat_inds = [IndicatorEnum.CDLHIKKAKE, IndicatorEnum.CDLSHORTLINE,
-                IndicatorEnum.CDLCLOSINGMARUBOZU, IndicatorEnum.CDLBELTHOLD,
-                IndicatorEnum.CDLHIGHWAVE, IndicatorEnum.CDLDOJI, IndicatorEnum.CDLSPINNINGTOP]
-
-hikkake = fs.get_candlestick_patterns_last_n([IndicatorEnum.CDLHIKKAKE])
-longline = fs.get_candlestick_patterns_last_n([IndicatorEnum.CDLLONGLINE])
-shortline = fs.get_candlestick_patterns_last_n([IndicatorEnum.CDLSHORTLINE])
-closingmarubozu = fs.get_candlestick_patterns_last_n([IndicatorEnum.CDLCLOSINGMARUBOZU])
-belthold = fs.get_candlestick_patterns_last_n([IndicatorEnum.CDLBELTHOLD])
-highwave = fs.get_candlestick_patterns_last_n([IndicatorEnum.CDLHIGHWAVE])
-doji = fs.get_candlestick_patterns_last_n([IndicatorEnum.CDLDOJI])
-spinningtop = fs.get_candlestick_patterns_last_n([IndicatorEnum.CDLSPINNINGTOP])
-
-top_patterns = fs.compose_remove_duplicates(hikkake, longline, shortline, closingmarubozu,
-                                            belthold, highwave, doji, spinningtop)
-
-# feature_set = nd_100
-# feature_set = nd_30
-# feature_set = nd_20
-# feature_set = nd_10
-# feature_set = nd_5
-# feature_set = sd_100
-# feature_set = sd_30
-# feature_set = sd_20
-# feature_set = sd_10
-# feature_set = sd_5
-# feature_set = fs.compose_remove_duplicates(nd_5, sd_5)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10)
-# feature_set = fs.compose_remove_duplicates(nd_20, sd_20)
-# feature_set = fs.compose_remove_duplicates(nd_100, sd_100)
-
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10)
-
-# feature_set = bb_5_3
-# feature_set = bb_7_3
-# feature_set = bb_10_3
-# feature_set = bb_20_3
-# feature_set = bb_30_3
-# feature_set = range_bb_24
-# feature_set = range_bb_48
-# feature_set = bb_range_50s5
-# feature_set = fs.compose_remove_duplicates(bb_5_3, bb_7_3)
-# feature_set = fs.compose_remove_duplicates(bb_5_3, bb_10_3)
-# feature_set = fs.compose_remove_duplicates(bb_5_3, bb_20_3)
-# feature_set = fs.compose_remove_duplicates(bb_5_3, bb_10_3, bb_20_3)
-# feature_set = fs.compose_remove_duplicates(bb_5_3, bb_10_3, bb_20_3, bb_30_3)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_range_50s5)
-
-# feature_set = rsi_7_5
-# feature_set = rsi_14_5
-# feature_set = rsi_28_5
-# feature_set = fs.compose_remove_duplicates(rsi_7_5, rsi_14_5)
-# feature_set = fs.compose_remove_duplicates(rsi_7_5, rsi_14_5, rsi_28_5)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, rsi_14_5)
-
-# feature_set = macd_last_3
-# feature_set = macd_last_5
-
-# feature_set = sma_5_3
-# feature_set = sma_13_3
-# feature_set = sma_21_3
-# feature_set = sma_50_3
-# feature_set = sma_100_3
-# feature_set = sma_200_3
-# feature_set = range_sma_12
-# feature_set = range_sma_24
-# feature_set = range_sma_48
-# feature_set = sma_range_100s5
-# feature_set = fs.compose_remove_duplicates(sma_5_3, sma_13_3)
-# feature_set = fs.compose_remove_duplicates(sma_5_3, sma_13_3, sma_21_3)
-# feature_set = fs.compose_remove_duplicates(sma_5_3, sma_13_3, sma_21_3, sma_50_3)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, sma_5_3, sma_13_3, sma_21_3, sma_50_3)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, range_sma_48)
-
-# feature_set = hikkake
-# feature_set = longline
-# feature_set = shortline
-# feature_set = closingmarubozu
-# feature_set = belthold
-# feature_set = highwave
-# feature_set = doji
-# feature_set = spinningtop
-# feature_set = top_patterns
-# feature_set = patterns
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, top_patterns)
-
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10)
-# feature_set = fs.compose_remove_duplicates(bb_5_3, bb_20_3)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3, top_patterns)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, bb_range_50s5, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3, range_sma_48, top_patterns)
-# feature_set = fs.compose_remove_duplicates(nd_10, sd_10, bb_5_3, bb_20_3, sma_5_3, sma_13_3, sma_21_3, sma_50_3, sma_100_3, sma_200_3, range_sma_48, top_patterns)
 
 # --------------- saved ------------------------
 # seed=0 num_pairs=20 t_v_t=20,20/n_p,200/n_p selection_mode=4 feature_selection_ratio={.9, .7} total_features=20 max_depth=4 max_samples=every_n_candles n_estimators=100
@@ -286,7 +147,7 @@ top_patterns = fs.compose_remove_duplicates(hikkake, longline, shortline, closin
 # seed=0 num_pairs=20 t_v_t=20,20/n_p,500/n_p selection_mode=4 feature_selection_ratio={.9, .7} total_features=20 max_depth=4 max_samples=every_n_candles n_estimators=100
 
 
-# ? n_estimators=500
+# ? n_estimators=500 +
 # ? max_depth=6
 # ? max_samples=0.25
 # --------------- saved ------------------------
@@ -303,18 +164,18 @@ select_max = True
 # feature_sampler = ohlcv_sampler
 feature_sampler = all_sampler
 
-feature_selection_ratio = 0.70
+feature_selection_ratio = 0.95
 
-feature_selection_target_level = 10
+feature_selection_target_level = 50
 
-num_total_features = 20
+num_total_features = 500
 
 feature_set = feature_sampler.sample(size=num_total_features)
 
 n_candles = 48
 
-# value_set_cavg = DFFeatureSet(features=[CloseAvgReturn(n_candles=n_candles)])
-value_set_cavg = DFFeatureSet(features=[CloseReturn(n_candles=n_candles)])
+value_set_close = DFFeatureSet(features=[CloseAvgReturn(n_candles=n_candles)])
+# value_set_close = DFFeatureSet(features=[CloseReturn(n_candles=n_candles)])
 
 value_set_max = DFFeatureSet(features=[MaxReturn(n_candles=n_candles)])
 
@@ -375,9 +236,9 @@ max_depth = 4
 # n_estimators = 4000
 # n_estimators = 2000
 # n_estimators = 1600
-n_estimators = 1000
+# n_estimators = 1000
 # n_estimators = 800
-# n_estimators = 500
+n_estimators = 500
 # n_estimators = 400
 # n_estimators = 200
 # n_estimators = 100
@@ -432,21 +293,32 @@ random_state = 5943923 + 0
 
 print('n_features', feature_set.num_features)
 print('params:')
-pass
+
+val_set_size = (split_date_range.validation.end - split_date_range.validation.start) // M5.seconds()
+train_set_size = (split_date_range.training.end - split_date_range.training.start) // M5.seconds()
+
 pprint({
+    'n_candles': n_candles,
+    'train_set_size': train_set_size,
+    'val_set_size': val_set_size,
+    'selection_mode': selection_mode,
+    'num_total_features': num_total_features,
+    'feature_selection_ratio': feature_selection_ratio,
+    'n_features': feature_set.num_features,
+    'max_depth': max_depth,
     'dt_max_features': dt_max_features,
     'max_features': max_features,
     'max_samples': max_samples,
-    'n_est': n_estimators,
+    'n_estimators': n_estimators,
     'random_state:': random_state,
 })
 
 print('training pairs:', training_pairs)
 
-cavg_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
+close_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
     pairs=training_pairs,
     feature_set=feature_set,
-    value_set=value_set_cavg,
+    value_set=value_set_close,
     split_date_range=split_date_range,
     exchanges=(POLONIEX,),
     interleaved=interleaved
@@ -461,14 +333,14 @@ max_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_dat
     interleaved=interleaved
 )
 
-pair_cavg_datasets = {}
+pair_close_datasets = {}
 pair_max_datasets = {}
 
 for pair in training_pairs:
-    pair_cavg_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
+    pair_close_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
         pairs=[pair],
         feature_set=feature_set,
-        value_set=value_set_cavg,
+        value_set=value_set_close,
         split_date_range=split_date_range,
         exchanges=(POLONIEX,),
         interleaved=False
@@ -481,18 +353,18 @@ for pair in training_pairs:
         exchanges=(POLONIEX,),
         interleaved=False
     )
-    pair_cavg_datasets[pair] = pair_cavg_dataset
+    pair_close_datasets[pair] = pair_close_dataset
     pair_max_datasets[pair] = pair_max_dataset
 
-rf_cavg_model = BaggingDecisionTreeModel(
-    dataset_descriptor=cavg_dataset,
+rf_close_model = BaggingDecisionTreeModel(
+    dataset_descriptor=close_dataset,
     n_estimators=n_estimators,
     max_samples=max_samples,
     max_features=max_features,
     dt_max_features=dt_max_features,
     max_depth=max_depth,
     random_state=random_state,
-    obj_name='cavg',
+    obj_name='close',
     oob_score=oob_score
 )
 
@@ -513,15 +385,15 @@ def bprint(string):
     print('======================' + string.upper() + '======================')
 
 
-def cavg_model_with_feature_set(feature_set):
-    cavg_dataset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
-        pairs=training_pairs, feature_set=feature_set, value_set=value_set_cavg,
+def close_model_with_feature_set(feature_set):
+    close_datset = SplitDatasetDescriptor.create_single_value_with_train_val_test_date_ranges(
+        pairs=training_pairs, feature_set=feature_set, value_set=value_set_close,
         split_date_range=split_date_range, exchanges=(POLONIEX,), interleaved=interleaved)
-    cavg_model = BaggingDecisionTreeModel(dataset_descriptor=cavg_dataset,
+    close_model = BaggingDecisionTreeModel(dataset_descriptor=close_datset,
         n_estimators=n_estimators, max_samples=max_samples, max_features=max_features,
         dt_max_features=dt_max_features, max_depth=max_depth, random_state=random_state,
-        obj_name='cavg', oob_score=oob_score)
-    return cavg_model
+        obj_name='close', oob_score=oob_score)
+    return close_model
 
 
 def max_model_with_feature_set(feature_set):
@@ -536,16 +408,16 @@ def max_model_with_feature_set(feature_set):
 
 
 if selection_mode == 0:
-    rf_cavg_model.train()
+    rf_close_model.train()
     rf_max_model.train()
     for i in range(feature_selection_target_level):
-        selected_features = rf_cavg_model.select_features_by_ratio(feature_selection_ratio)
+        selected_features = rf_close_model.select_features_by_ratio(feature_selection_ratio)
         num_new_features = num_total_features - len(selected_features.features)
         new_features = feature_sampler.sample(size=num_new_features)
         selected_feature_set = fs.compose_remove_duplicates(selected_features, new_features)
-        print('cavg round {} num_features:'.format(i), len(selected_feature_set.features))
-        rf_cavg_model = cavg_model_with_feature_set(selected_feature_set)
-        rf_cavg_model.train()
+        print('close round {} num_features:'.format(i), len(selected_feature_set.features))
+        rf_close_model = close_model_with_feature_set(selected_feature_set)
+        rf_close_model.train()
     for i in range(feature_selection_target_level):
         selected_features = rf_max_model.select_features_by_ratio(feature_selection_ratio)
         num_new_features = len(selected_features.features)
@@ -555,14 +427,14 @@ if selection_mode == 0:
         max_model_with_feature_set(max_feature_set)
         rf_max_model.train()
 elif selection_mode == 1:
-    rf_cavg_model.train()
+    rf_close_model.train()
     rf_max_model.train()
     for i in range(feature_selection_target_level):
-        selected_features = rf_cavg_model.select_features_by_ratio(feature_selection_ratio)
+        selected_features = rf_close_model.select_features_by_ratio(feature_selection_ratio)
         selected_feature_set = fs.compose_remove_duplicates(selected_features)
-        print('cavg round {} num_features:'.format(i), len(selected_feature_set.features))
-        rf_cavg_model = cavg_model_with_feature_set(selected_feature_set)
-        rf_cavg_model.train()
+        print('close round {} num_features:'.format(i), len(selected_feature_set.features))
+        rf_close_model = close_model_with_feature_set(selected_feature_set)
+        rf_close_model.train()
     for i in range(feature_selection_target_level):
         selected_features = rf_max_model.select_features_by_ratio(feature_selection_ratio)
         max_feature_set = fs.compose_remove_duplicates(selected_features)
@@ -570,20 +442,20 @@ elif selection_mode == 1:
         rf_max_model = max_model_with_feature_set(max_feature_set)
         rf_max_model.train()
 elif selection_mode == 2:
-    rf_cavg_model.train()
-    orig_features = rf_cavg_model.feature_set
+    rf_close_model.train()
+    orig_features = rf_close_model.feature_set
     for i in range(feature_selection_target_level):
-        selected_features = rf_cavg_model.select_features_by_ratio(feature_selection_ratio)
+        selected_features = rf_close_model.select_features_by_ratio(feature_selection_ratio)
         shrinked_features = orig_features.shrink_to_size(selected_features.num_features)
-        print('cavg round {} num_features:'.format(i), len(selected_features.features))
-        rf_cavg_model = cavg_model_with_feature_set(selected_features)
-        shrinked_cavg_model = cavg_model_with_feature_set(shrinked_features)
+        print('close round {} num_features:'.format(i), len(selected_features.features))
+        rf_close_model = close_model_with_feature_set(selected_features)
+        shrinked_close_model = close_model_with_feature_set(shrinked_features)
         print()
         print('selected model:')
-        rf_cavg_model.train()
+        rf_close_model.train()
         print()
         print('shrinked model:')
-        shrinked_cavg_model.train()
+        shrinked_close_model.train()
 elif selection_mode == 3:
     num_features = int(num_total_features / feature_selection_ratio)
     level_features = [[] for _ in range(feature_selection_target_level+1)]
@@ -596,44 +468,44 @@ elif selection_mode == 3:
                 features = DFFeatureSet(features=level_features[level][:num_features])
                 features_deduped = fs.compose_remove_duplicates(features)
                 level_features[level] = level_features[level][num_features:]
-                rf_cavg_model = cavg_model_with_feature_set(features_deduped)
-                rf_cavg_model.train()
-                selected_features = rf_cavg_model.select_features_by_ratio(feature_selection_ratio)
+                rf_close_model = close_model_with_feature_set(features_deduped)
+                rf_close_model.train()
+                selected_features = rf_close_model.select_features_by_ratio(feature_selection_ratio)
                 level_features[level+1].extend(selected_features.sample())
                 break
             elif level == 0:
                 bprint('level 0')
                 fresh_features = feature_sampler.sample(size=num_features)
-                rf_cavg_model = cavg_model_with_feature_set(fresh_features)
-                rf_cavg_model.train()
-                selected_features = rf_cavg_model.select_features_by_ratio(feature_selection_ratio)
+                rf_close_model = close_model_with_feature_set(fresh_features)
+                rf_close_model.train()
+                selected_features = rf_close_model.select_features_by_ratio(feature_selection_ratio)
                 level_features[level+1].extend(selected_features.sample())
 
     for i in range(feature_selection_target_level):
-        orig_features = rf_cavg_model.feature_set
-        selected_features = rf_cavg_model.select_features_by_ratio(feature_selection_ratio)
-        print('cavg round {} num_features:'.format(i), len(selected_features.features))
-        rf_cavg_model = cavg_model_with_feature_set(selected_features)
+        orig_features = rf_close_model.feature_set
+        selected_features = rf_close_model.select_features_by_ratio(feature_selection_ratio)
+        print('close round {} num_features:'.format(i), len(selected_features.features))
+        rf_close_model = close_model_with_feature_set(selected_features)
         print()
         print('selected model:')
-        rf_cavg_model.train()
+        rf_close_model.train()
 elif selection_mode == 4:
     if select_close:
-        bprint('[cavg] initial model')
-        rf_cavg_model.train()
+        bprint('[close] initial model')
+        rf_close_model.train()
         for i in range(feature_selection_target_level):
-            cur_features = rf_cavg_model.feature_set
+            cur_features = rf_close_model.feature_set
             cur_num_features = cur_features.num_features
             num_new_features = int(num_total_features / feature_selection_ratio - cur_num_features)
             new_features = feature_sampler.sample(size=num_new_features)
             combined_features = fs.compose_remove_duplicates(cur_features, new_features)
-            rf_cavg_model = cavg_model_with_feature_set(combined_features)
-            bprint('[cavg] selection round')
-            rf_cavg_model.train()
-            selected_features = rf_cavg_model.select_features_by_number(num_total_features)
-            rf_cavg_model = cavg_model_with_feature_set(selected_features)
-            bprint('[cavg] round {} result (num_features: {})'.format(i, selected_features.num_features))
-            rf_cavg_model.train()
+            rf_close_model = close_model_with_feature_set(combined_features)
+            bprint('[close] selection round')
+            rf_close_model.train()
+            selected_features = rf_close_model.select_features_by_number(num_total_features)
+            rf_close_model = close_model_with_feature_set(selected_features)
+            bprint('[close] round {} result (num_features: {})'.format(i, selected_features.num_features))
+            rf_close_model.train()
     if select_max:
         bprint('[max] initial model')
         rf_max_model.train()
@@ -652,20 +524,20 @@ elif selection_mode == 4:
             rf_max_model.train()
 
 
-models = [rf_cavg_model, rf_max_model]
+models = [rf_close_model, rf_max_model]
 
 pair_models = {}
 
 for pair in training_pairs:
-    pair_cavg_model = BaggingDecisionTreeModel(
-        dataset_descriptor=pair_cavg_datasets[pair],
+    pair_close_model = BaggingDecisionTreeModel(
+        dataset_descriptor=pair_close_datasets[pair],
         n_estimators=n_estimators,
         max_samples=max_samples,
         max_features=max_features,
         dt_max_features=dt_max_features,
         max_depth=max_depth,
         random_state=random_state,
-        obj_name='cavg',
+        obj_name='close',
         oob_score=oob_score
     )
 
@@ -681,7 +553,7 @@ for pair in training_pairs:
         oob_score=oob_score
     )
 
-    pair_models[pair] = [pair_cavg_model, pair_max_model]
+    pair_models[pair] = [pair_close_model, pair_max_model]
 
 
 # pairs = Pairs.all_pairs()
@@ -701,8 +573,11 @@ c_thr = c_thr
 m_thr = m_thr
 
 signal_converter = CloseAvgReturnMaxReturnSignalConverter(c_thr=c_thr,
-                                                          m_thr=m_thr,
-                                                          n_candles=n_candles)
+                                                          m_thr=m_thr, n_candles=n_candles)
+
+# signal_converter = CloseReturnMaxReturnSignalConverter(c_thr=c_thr,
+#                                                        m_thr=m_thr,
+#                                                        n_candles=n_candles)
 signal_server = SignalServer(models=models,
                              signal_converter=signal_converter,
                              pairs=pairs,

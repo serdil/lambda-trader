@@ -476,6 +476,15 @@ class SplitDateRanges:
         )
 
     @classmethod
+    def january_20_days_test_20_days_val_1000_days_train(cls):
+        december_20_timestamp = date_str_to_timestamp('2017-12-20')
+        return SplitDateRange(
+            train_dr=DateRange(december_20_timestamp - seconds(days=1000), december_20_timestamp),
+            val_dr=DateRange.from_str('2017-12-20', '2018-01-10'),
+            test_dr=DateRanges.january_last_20_days()
+        )
+
+    @classmethod
     def january_20_days_test_20_days_val_rest_train(cls):
         return SplitDateRange(
             train_dr=DateRange.from_str(None, '2017-12-20'),
