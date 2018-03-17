@@ -118,7 +118,7 @@ num_features = 100
 feature_set = feature_sampler.sample(size=num_features)
 
 feat_sel_n_target = feature_sampler.sample(size=num_features)
-feat_sel_ratio = 0.70
+feat_sel_ratio = 0.50
 feat_sel_n_rounds = 10
 
 xgb_n_candles = 48
@@ -176,7 +176,7 @@ xgb_params = {
 close_params = xgb_params.copy()
 
 num_round = 1000
-early_stopping_rounds = 10
+early_stopping_rounds = 3
 
 max_params = xgb_params.copy()
 max_params.update({

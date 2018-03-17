@@ -108,7 +108,7 @@ class XGBSplitDatasetModel(BaseModel):
         self._print_metrics('\ntraining metrics', y_train_true, y_train_pred, self.obj_name)
         self._print_metrics('\nvalidation metrics', y_val_true, y_val_pred, self.obj_name)
 
-        self._comp_feature_imp_f_score()
+        self._comp_feature_imp_gain()
         self._print_feature_imp()
 
         return pred, real
@@ -157,7 +157,11 @@ class XGBSplitDatasetModel(BaseModel):
         self.feature_importance.extend([(f_name, 0) for f_name in zero_set])
 
     def _comp_feature_imp_gain(self):
-        pass
+        gain_dict = self.bst.get_score(importance_type='gain')
+        self.feature_importance = list(reversed(sorted(gain_dict.items(), key=itemgetter(1))))
+        nonzero_set = set(gain_dict.keys())
+        zero_set = set(self.feature_names) - nonzero_set
+        self.feature_importance.extend([(f_name, 0) for f_name in zero_set])
 
     def _comp_feature_imp_permutation(self):
         pass
