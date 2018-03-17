@@ -226,8 +226,6 @@ class LearningTask:
         return self
 
     def execute(self):
-        random.seed(0)
-
         if not self.train_pairs_interleaved or self.model_per_pair:
             raise NotImplementedError
 

@@ -410,9 +410,14 @@ LIBSVM_BATCH_SIZE = 10000
 
 class XGBDMatrixDataset:
 
-    def __init__(self, descriptor, dmatrix):
+    def __init__(self, descriptor, dmatrix,
+                 feature_mapping, reverse_feature_mapping):
         self.descriptor = descriptor
         self.dmatrix = dmatrix
+
+        self.feature_names = dmatrix.feature_names
+        self.feature_mapping = feature_mapping
+        self.reverse_feature_mapping = reverse_feature_mapping
 
     @classmethod
     def save_buffer(cls, descriptor: SingleValueDatasetDescriptor,
@@ -476,29 +481,39 @@ class XGBDMatrixDataset:
     def compute(cls, descriptor: SingleValueDatasetDescriptor,
                 normalize=True, error_on_missing=True):
         value_name = descriptor.value_set.features[0].name
-        x, y = (DFDataset
-                .compute_from_descriptor(descriptor=descriptor,
-                                         normalize=normalize,
-                                         error_on_missing=error_on_missing)
-                .add_feature_values()
-                .add_value_values(value_name=value_name)
-                .get())
+        (x, y,
+         feature_mapping,
+         reverse_feature_mapping) = (DFDataset
+                                     .compute_from_descriptor(descriptor=descriptor,
+                                                              normalize=normalize,
+                                                              error_on_missing=error_on_missing)
+                                     .add_feature_values()
+                                     .add_value_values(value_name=value_name)
+                                     .add_feature_mapping()
+                                     .add_reverse_feature_mapping()
+                                     .get())
 
         dmatrix = xgb.DMatrix(data=x, label=y, feature_names=descriptor.feature_names)
-        return XGBDMatrixDataset(descriptor=descriptor, dmatrix=dmatrix)
+        return XGBDMatrixDataset(descriptor=descriptor, dmatrix=dmatrix,
+                                 feature_mapping=feature_mapping,
+                                 reverse_feature_mapping=reverse_feature_mapping)
 
     @classmethod
     def load_libsvm_cached(cls, descriptor: SingleValueDatasetDescriptor):
         data_and_cache = '{}#{}'.format(cls._get_libsvm_file_path(descriptor),
                                         cls._get_cache_path(descriptor))
         dmatrix = xgb.DMatrix(data_and_cache)
-        return XGBDMatrixDataset(descriptor, dmatrix)
+        return XGBDMatrixDataset(descriptor, dmatrix,
+                                 feature_mapping=None,
+                                 reverse_feature_mapping=None)
 
     @classmethod
     def load_buffer(cls, descriptor: SingleValueDatasetDescriptor):
         buffer_path = cls._get_buffer_file_path(descriptor)
         dmatrix = xgb.DMatrix(buffer_path, feature_names=descriptor.feature_names)
-        return XGBDMatrixDataset(descriptor, dmatrix)
+        return XGBDMatrixDataset(descriptor, dmatrix,
+                                 feature_mapping=None,
+                                 reverse_feature_mapping=None)
 
 
 class DateRange:

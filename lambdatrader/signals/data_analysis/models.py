@@ -69,13 +69,24 @@ class XGBSplitDatasetModel(BaseModel):
         self.use_saved_buffer = use_saved_buffer
         self.use_saved_libsvm_cache = use_saved_libsvm_cache
 
+        # assigned during training
         self.bst = None
+        self.feature_names = None
+        self.feature_mapping = None
+        self.reverse_feature_mapping = None
+        self.feature_importance = None
 
     def train(self):
         dd = self.dataset_descriptor
 
-        dtrain = XGBDMatrixDataset.compute(descriptor=dd.training, normalize=False,
-                                           error_on_missing=False).dmatrix
+        train_dmatrix_dataset = XGBDMatrixDataset.compute(descriptor=dd.training,
+                                                          normalize=False,
+                                                          error_on_missing=False)
+        self.feature_names = train_dmatrix_dataset.feature_names
+        self.feature_mapping = train_dmatrix_dataset.feature_mapping
+        self.reverse_feature_mapping = train_dmatrix_dataset.reverse_feature_mapping
+
+        dtrain = train_dmatrix_dataset.dmatrix
         dval = XGBDMatrixDataset.compute(descriptor=dd.validation, normalize=False,
                                          error_on_missing=False).dmatrix
         dtest = XGBDMatrixDataset.compute(descriptor=dd.test, normalize=False,
@@ -97,17 +108,20 @@ class XGBSplitDatasetModel(BaseModel):
         self._print_metrics('\ntraining metrics', y_train_true, y_train_pred, self.obj_name)
         self._print_metrics('\nvalidation metrics', y_val_true, y_val_pred, self.obj_name)
 
+        self._comp_feature_imp_f_score()
+        self._print_feature_imp()
+
         return pred, real
 
     def _get_dmatrices(self):
         dd = self.dataset_descriptor
 
         if not self.use_saved:
-            dtrain = XGBDMatrixDataset.compute(descriptor=dd.training, normalize=True,
+            dtrain = XGBDMatrixDataset.compute(descriptor=dd.training, normalize=False,
                                                error_on_missing=False).dmatrix
-            dval = XGBDMatrixDataset.compute(descriptor=dd.validation, normalize=True,
+            dval = XGBDMatrixDataset.compute(descriptor=dd.validation, normalize=False,
                                              error_on_missing=False).dmatrix
-            dtest = XGBDMatrixDataset.compute(descriptor=dd.test, normalize=True,
+            dtest = XGBDMatrixDataset.compute(descriptor=dd.test, normalize=False,
                                               error_on_missing=False).dmatrix
         elif self.use_saved_buffer:
             dtrain = XGBDMatrixDataset.load_buffer(descriptor=dd.training).dmatrix
@@ -127,14 +141,6 @@ class XGBSplitDatasetModel(BaseModel):
         bst = xgb.train(params=params, dtrain=dtrain, num_boost_round=num_round, evals=watchlist,
                         early_stopping_rounds=early_stopping_rounds, obj=self.custom_obj)
 
-        feature_importances = bst.get_fscore()
-
-        print()
-        print('feature importances {}:'.format(obj_name))
-        for f_name, imp in list(reversed(sorted(feature_importances.items(), key=itemgetter(1))))[
-                           :10]:
-            print(f_name, ':', imp)
-
         real = dtest.get_label()
 
         try:
@@ -142,6 +148,48 @@ class XGBSplitDatasetModel(BaseModel):
         except XGBoostError:
             pred = bst.predict(dtest)
         return pred, real, bst
+
+    def _comp_feature_imp_f_score(self):
+        fscore_dict = self.bst.get_fscore()
+        self.feature_importance = list(reversed(sorted(fscore_dict.items(), key=itemgetter(1))))
+
+    def _comp_feature_imp_gain(self):
+        pass
+
+    def _comp_feature_imp_permutation(self):
+        pass
+
+    def _print_feature_imp(self):
+        print()
+        print('feature importances {}:'.format(self.obj_name))
+        for f_name, imp in self.feature_importance[:10]:
+            print(f_name, ':', imp)
+        print()
+
+    def select_features_by_ratio(self, ratio):
+        num_select = int((len(self.feature_names) * ratio))
+        return self.select_features_by_number(num_select)
+
+    def select_features_by_number(self, n_select):
+        num_discard = len(self.feature_names) - n_select
+        f_name_ranks = [(f_name, rank) for rank, (f_name, _) in enumerate(self.feature_importance)]
+        f_name_rank_mapping = dict(f_name_ranks)
+        feature_lowest_ranks = []
+        for feature, f_names in self.reverse_feature_mapping.items():
+            lowest_rank = min([f_name_rank_mapping[f_name] for f_name in f_names])
+            feature_lowest_ranks.append((feature, lowest_rank,))
+        feature_lowest_ranks = list(reversed(sorted(feature_lowest_ranks, key=itemgetter(1))))
+        num_discarded = 0
+        prune_index = 0
+        for i, (feature, lowest_rank) in enumerate(feature_lowest_ranks):
+            # print('discarding {}, lowest rank: {}'.format(feature.name, lowest_rank))
+            num_discarded += len(self.reverse_feature_mapping[feature])
+            if num_discarded >= num_discard:
+                print('highest discarded rank:', lowest_rank)
+                prune_index = i
+                break
+        features = [feature for feature, _ in feature_lowest_ranks[prune_index + 1:]]
+        return FeatureSets.compose_remove_duplicates(DFFeatureSet(features=features))
 
     @classmethod
     def _print_metrics(cls, message, y_true, y_pred, obj_name):
