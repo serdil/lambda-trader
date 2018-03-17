@@ -152,6 +152,9 @@ class XGBSplitDatasetModel(BaseModel):
     def _comp_feature_imp_f_score(self):
         fscore_dict = self.bst.get_fscore()
         self.feature_importance = list(reversed(sorted(fscore_dict.items(), key=itemgetter(1))))
+        nonzero_set = set(fscore_dict.keys())
+        zero_set = set(self.feature_names) - nonzero_set
+        self.feature_importance.extend([(f_name, 0) for f_name in zero_set])
 
     def _comp_feature_imp_gain(self):
         pass
