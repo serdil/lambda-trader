@@ -4,6 +4,7 @@ from operator import itemgetter
 
 import numpy as np
 import xgboost as xgb
+from eli5.permutation_importance import get_score_importances
 from sklearn import metrics
 from sklearn.ensemble import RandomForestRegressor, BaggingRegressor
 from sklearn.tree import DecisionTreeRegressor
@@ -108,7 +109,7 @@ class XGBSplitDatasetModel(BaseModel):
         self._print_metrics('\ntraining metrics', y_train_true, y_train_pred, self.obj_name)
         self._print_metrics('\nvalidation metrics', y_val_true, y_val_pred, self.obj_name)
 
-        self._comp_feature_imp_gain()
+        self._comp_feature_imp_permutation()
         self._print_feature_imp()
 
         return pred, real
@@ -164,7 +165,23 @@ class XGBSplitDatasetModel(BaseModel):
         self.feature_importance.extend([(f_name, 0) for f_name in zero_set])
 
     def _comp_feature_imp_permutation(self):
-        pass
+        def score(x, y):
+            x_dmatrix = DMatrix(x, feature_names=self.feature_names)
+            y_pred = self.bst.predict(x_dmatrix)
+            return metrics.r2_score(y_true=y, y_pred=y_pred)
+
+        val_x, val_y = (DFDataset
+                        .compute_from_descriptor(self.dataset_descriptor.validation,
+                                                 normalize=False,
+                                                 error_on_missing=False)
+                        .add_feature_values()
+                        .add_value_values(value_name=self.value_name)
+                        .get())
+
+        base_score, score_decreases = get_score_importances(score, val_x, val_y)
+        imp_list = list(np.mean(score_decreases, axis=0))
+        imp_tuples = list(zip(self.feature_names, imp_list))
+        self.feature_importance = list(reversed(sorted(imp_tuples, key=itemgetter(1))))
 
     def _print_feature_imp(self):
         print()

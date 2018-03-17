@@ -113,12 +113,12 @@ feature_sampler = all_sampler
 # feature_set = feature_sampler.sample(size=500)
 # feature_set = feature_sampler.sample(size=1000)
 
-num_features = 100
+num_features = 10
 
 feature_set = feature_sampler.sample(size=num_features)
 
 feat_sel_n_target = feature_sampler.sample(size=num_features)
-feat_sel_ratio = 0.50
+feat_sel_ratio = 0.70
 feat_sel_n_rounds = 10
 
 xgb_n_candles = 48
