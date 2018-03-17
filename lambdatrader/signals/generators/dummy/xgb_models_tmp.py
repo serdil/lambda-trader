@@ -123,7 +123,8 @@ value_set_close = DFFeatureSet(features=[CloseAvgReturn(n_candles=xgb_n_candles)
 
 value_set_max = DFFeatureSet(features=[MaxReturn(n_candles=xgb_n_candles)])
 
-xgb_model_per_pair = False
+xgb_model_per_pair = True
+# xgb_model_per_pair = False
 
 xgb_c_thr = 0.01
 xgb_m_thr = 0.02

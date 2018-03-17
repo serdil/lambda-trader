@@ -87,7 +87,6 @@ class LearningTask:
 
         self.apply_defaults()
 
-
     def apply_defaults(self):
         self.set_model_per_pair(True)
         self.set_train_pairs(Pairs.eth())
@@ -105,10 +104,13 @@ class LearningTask:
         self.set_xgb_n_rounds(1000)
         self.set_xgb_esr(10)
 
+        return self
+
     def set_n_candles(self, n_candles):
         self.n_candles = n_candles
         self.close_value_set = DFFeatureSet(features=[CloseAvgReturn(n_candles=self.n_candles)])
         self.max_value_set = DFFeatureSet(features=[MaxReturn(n_candles=self.n_candles)])
+        return self
 
     def set_model_per_pair(self, model_per_pair: bool):
         self.model_per_pair = model_per_pair
@@ -142,51 +144,66 @@ class LearningTask:
         self.set_train_date_range(date_ranges.training)
         self.set_val_date_range(date_ranges.validation)
         self.set_test_date_range(date_ranges.test)
+        return self
 
     def set_feature_set(self, feature_set):
         self.feature_set = feature_set
+        return self
 
     def set_c_thr(self, c_thr):
         self.c_thr = c_thr
+        return self
 
     def set_m_thr(self, m_thr):
         self.m_thr = m_thr
+        return self
 
     def set_shrinking_feat_sel(self):
         self.select_features = True
         self.feat_sel_mode = self.FEAT_SEL_SHR
+        return self
 
     def set_grow_shr_feat_sel(self):
         self.select_features = True
         self.feat_sel_mode = self.FEAT_SEL_GROW_SHR
+        return self
 
     def set_hier_feat_sel(self):
         self.select_features = True
         self.feat_sel_mode = self.FEAT_SEL_HIER
+        return self
 
     def set_feat_sel_n_target_feat(self, n_target_feat):
         self.n_target_feat = n_target_feat
+        return self
 
     def set_feat_sel_sel_ratio(self, sel_ratio):
         self.sel_ratio = sel_ratio
+        return self
 
     def set_feat_sel_n_rounds(self, feat_sel_n_rounds):
         self.feat_sel_n_rounds = feat_sel_n_rounds
+        return self
 
     def use_xgb_model(self):
         self.model_to_use = self.MODEL_XGB
+        return self
 
     def set_xgb_booster_params(self, booster_params):
         self.xgb_booster_params = booster_params
+        return self
 
     def set_xgb_n_rounds(self, n_rounds):
         self.xgb_n_rounds = n_rounds
+        return self
 
     def set_xgb_esr(self, early_stopping_rounds):
         self.xgb_esr = early_stopping_rounds
+        return self
 
     def set_rdt_model(self):
         self.model_to_use = self.MODEL_RDT
+        return self
 
     def execute(self):
         pass

@@ -45,10 +45,10 @@ account = BacktestingAccount(market_info=market_info, balances={'BTC': 100})
 # pairs = Pairs.n_pairs()
 # pairs = Pairs.all_pairs()
 # pairs = Pairs.eth()
-pairs = Pairs.xrp()
+# pairs = Pairs.xrp()
 
 
-# pairs = xgb_training_pairs
+pairs = xgb_training_pairs
 start_date = xgb_split_date_range.test.start + xgb_n_candles * M5.seconds()
 end_date = xgb_split_date_range.test.end
 n_candles = xgb_n_candles
