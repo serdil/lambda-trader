@@ -110,6 +110,9 @@ class XGBSplitDatasetModel(BaseModel):
         self._print_metrics('\nvalidation metrics', y_val_true, y_val_pred, self.obj_name)
 
         self._comp_feature_imp_permutation()
+        # self._comp_feature_imp_gain()
+        # self._comp_feature_imp_f_score()
+
         self._print_feature_imp()
 
         return pred, real
@@ -239,7 +242,7 @@ class XGBSplitDatasetModel(BaseModel):
         return self.predict_dmatrix(dmatrix)
 
     def predict_df(self, df):
-        dmatrix = DMatrix(df.values, feature_names=self.dataset_descriptor.training.feature_names)
+        dmatrix = DMatrix(df.values, feature_names=df.columns.values)
         return self.predict_dmatrix(dmatrix)
 
     def predict_dmatrix(self, dmatrix):
