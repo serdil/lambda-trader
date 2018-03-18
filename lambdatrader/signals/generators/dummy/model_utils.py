@@ -1,4 +1,6 @@
 import random
+from collections import defaultdict
+from operator import itemgetter
 from typing import List
 
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
@@ -65,6 +67,7 @@ class LearningTask:
     FEAT_SEL_SHR = 'shrinking'
     FEAT_SEL_GROW_SHR = 'growing_shrinking'
     FEAT_SEL_HIER = 'hierarchical'
+    FEAT_SEL_SCORE_BAG = 'score_bag'
 
     MODEL_XGB = 'xgb'
     MODEL_RDT = 'rdt'
@@ -192,6 +195,11 @@ class LearningTask:
     def set_hier_feat_sel(self):
         self.select_features = True
         self.feat_sel_mode = self.FEAT_SEL_HIER
+        return self
+
+    def set_score_bag_feat_sel(self):
+        self.select_features = True
+        self.feat_sel_mode = self.FEAT_SEL_SCORE_BAG
         return self
 
     def set_feat_sel_n_target_feat(self, n_target_feat):
@@ -382,6 +390,74 @@ class LearningTask:
                             close_model.train()
                             selected_features = close_model.select_features_by_ratio(self.sel_ratio)
                             level_features[level+1].extend(selected_features.sample())
+            elif self.feat_sel_mode == self.FEAT_SEL_SCORE_BAG:
+                self._bprint('score bag feature selection')
+                batch_size = self.n_target_feat
+                close_feat_scores = defaultdict(lambda: float('-inf'))
+                for i in range(self.feat_sel_n_rounds):
+                    batch_fs = self.feat_sampler.sample(size=batch_size)
+                    close_model = self._replace_model_feature_set(close_model, batch_fs)
+                    self._bprint('[close] round {} batch'.format(i))
+                    close_model.train()
+                    feat_imp = close_model.get_feature_imp()
+                    for feature, imp in feat_imp:
+                        close_feat_scores[feature] = max(close_feat_scores[feature], imp)
+                    feat_scores_sorted = list(reversed(sorted(close_feat_scores.items(),
+                                                              key=itemgetter(1))))
+                    best_features = [feat for feat, _ in feat_scores_sorted[:self.n_target_feat]]
+                    best_fs = fs.compose_remove_duplicates(DFFeatureSet(features=best_features))
+                    close_model = self._replace_model_feature_set(close_model, best_fs)
+                    self._bprint('[close] round {} best'.format(i))
+                    close_model.train()
+
+                    # shr_n_feat = int(self.n_target_feat * self.sel_ratio)
+                    # new_n_feat = self.n_target_feat - shr_n_feat
+                    # new_features = self.feat_sampler.sample(size=new_n_feat)
+                    # mixed_features = best_features[:shr_n_feat] + new_features.features
+                    # mixed_fs = fs.compose_remove_duplicates(DFFeatureSet(features=mixed_features))
+                    # print('mixed FeatureSet size:', len(mixed_fs.features))
+                    # close_model = self._replace_model_feature_set(close_model, mixed_fs)
+                    # self._bprint('round {} mixed'.format(i))
+                    # close_model.train()
+                    # feat_imp = close_model.get_feature_imp()
+                    # for feature, imp in feat_imp:
+                    #     feat_scores[feature] = max(feat_scores[feature], imp)
+                    # feat_scores_sorted = list(reversed(sorted(feat_scores.items(),
+                    #                                           key=itemgetter(1))))
+                    #
+                    # best_features = [feat for feat, _ in feat_scores_sorted[:self.n_target_feat]]
+                    # best_fs = fs.compose_remove_duplicates(DFFeatureSet(features=best_features))
+                    # close_model = self._replace_model_feature_set(close_model, best_fs)
+                    # self._bprint('round {} best after mixed'.format(i))
+                    # close_model.train()
+
+                    # feat_imp = close_model.get_feature_imp()
+                    # for feature, imp in feat_imp:
+                    #     feat_scores[feature] = max(feat_scores[feature], imp)
+                    # feat_scores_sorted = list(reversed(sorted(feat_scores.items(),
+                    #                                           key=itemgetter(1))))
+                    # best_features = [feat for feat, _ in feat_scores_sorted[:self.n_target_feat]]
+                    # best_fs = fs.compose_remove_duplicates(DFFeatureSet(features=best_features))
+                    # close_model = self._replace_model_feature_set(close_model, best_fs)
+                    # self._bprint('round {} best after best'.format(i))
+                    # close_model.train()
+
+                max_feat_scores = defaultdict(lambda: float('-inf'))
+                for i in range(self.feat_sel_n_rounds):
+                    batch_fs = self.feat_sampler.sample(size=batch_size)
+                    max_model = self._replace_model_feature_set(max_model, batch_fs)
+                    self._bprint('[max] round {} batch'.format(i))
+                    max_model.train()
+                    feat_imp = max_model.get_feature_imp()
+                    for feature, imp in feat_imp:
+                        max_feat_scores[feature] = max(max_feat_scores[feature], imp)
+                    feat_scores_sorted = list(
+                        reversed(sorted(max_feat_scores.items(), key=itemgetter(1))))
+                    best_features = [feat for feat, _ in feat_scores_sorted[:self.n_target_feat]]
+                    best_fs = fs.compose_remove_duplicates(DFFeatureSet(features=best_features))
+                    max_model = self._replace_model_feature_set(max_model, best_fs)
+                    self._bprint('[max] round {} best'.format(i))
+                    max_model.train()
             else:
                 raise NotImplementedError
 

@@ -77,6 +77,12 @@ class XGBSplitDatasetModel(BaseModel):
         self.reverse_feature_mapping = None
         self.feature_importance = None
 
+        self.train_r2_score = None
+        self.train_rmse = None
+
+        self.val_r2_score = None
+        self.val_rmse = None
+
     def train(self):
         dd = self.dataset_descriptor
 
@@ -106,10 +112,27 @@ class XGBSplitDatasetModel(BaseModel):
         y_val_pred = self.bst.predict(dval)
         y_val_true = dval.get_label()
 
-        self._print_metrics('\ntraining metrics', y_train_true, y_train_pred, self.obj_name)
-        self._print_metrics('\nvalidation metrics', y_val_true, y_val_pred, self.obj_name)
+        y_test_pred = self.bst.predict(dtest)
+        y_test_true = dtest.get_label()
 
-        self._comp_feature_imp_permutation()
+        self.train_r2_score = metrics.r2_score(y_train_true, y_train_pred)
+        self.train_rmse = sqrt(metrics.mean_squared_error(y_train_true, y_train_pred))
+
+        self.val_r2_score = metrics.r2_score(y_val_true, y_val_pred)
+        self.val_rmse = sqrt(metrics.mean_squared_error(y_val_true, y_val_pred))
+
+        self.test_r2_score = metrics.r2_score(y_test_true, y_test_pred)
+        self.test_rmse = sqrt(metrics.mean_squared_error(y_test_true, y_test_pred))
+
+        self._print_metrics('\ntraining metrics',
+                            self.train_r2_score, self.train_rmse, self.obj_name)
+        self._print_metrics('\nvalidation metrics',
+                            self.val_r2_score, self.val_rmse, self.obj_name)
+        self._print_metrics('\ntest metrics',
+                            self.test_r2_score, self.test_rmse, self.obj_name)
+
+        # self._comp_feature_imp_permutation()
+        self._comp_feature_imp_score_plus_permutation()
         # self._comp_feature_imp_gain()
         # self._comp_feature_imp_f_score()
 
@@ -186,6 +209,11 @@ class XGBSplitDatasetModel(BaseModel):
         imp_tuples = list(zip(self.feature_names, imp_list))
         self.feature_importance = list(reversed(sorted(imp_tuples, key=itemgetter(1))))
 
+    def _comp_feature_imp_score_plus_permutation(self):
+        self._comp_feature_imp_permutation()
+        self.feature_importance = [(f_name, score+self.val_r2_score)
+                                   for f_name, score in self.feature_importance]
+
     def _print_feature_imp(self):
         print()
         print('feature importances {}:'.format(self.obj_name))
@@ -218,11 +246,14 @@ class XGBSplitDatasetModel(BaseModel):
         features = [feature for feature, _ in feature_lowest_ranks[prune_index + 1:]]
         return FeatureSets.compose_remove_duplicates(DFFeatureSet(features=features))
 
+    def get_feature_imp(self):
+        feature_imp_tuples = [(self.feature_mapping[f_name], imp)
+                              for f_name, imp in self.feature_importance]
+        return feature_imp_tuples
+
     @classmethod
-    def _print_metrics(cls, message, y_true, y_pred, obj_name):
+    def _print_metrics(cls, message, r2_score, rmse, obj_name):
         print(message + ':')
-        r2_score = metrics.r2_score(y_true, y_pred)
-        rmse = sqrt(metrics.mean_squared_error(y_true, y_pred))
         print('r2 score {}:'.format(obj_name), r2_score)
         print('rmse {}:'.format(obj_name), rmse)
         print()
