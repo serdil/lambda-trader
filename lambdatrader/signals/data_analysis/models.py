@@ -181,7 +181,7 @@ class XGBSplitDatasetModel(BaseModel):
                         .add_value_values(value_name=self.value_name)
                         .get())
 
-        base_score, score_decreases = get_score_importances(score, val_x, val_y)
+        base_score, score_decreases = get_score_importances(score, val_x, val_y, n_iter=10)
         imp_list = list(np.mean(score_decreases, axis=0))
         imp_tuples = list(zip(self.feature_names, imp_list))
         self.feature_importance = list(reversed(sorted(imp_tuples, key=itemgetter(1))))

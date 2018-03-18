@@ -355,6 +355,32 @@ class LearningTask:
                     self._bprint('[max] round {} result (num_features: {})'
                                  .format(i, selected_features.num_features))
                     max_model.train()
+            elif self.feat_sel_mode == self.FEAT_SEL_HIER:
+                num_features = int(self.n_target_feat / self.sel_ratio)
+                level_features = [[] for _ in range(self.feat_sel_n_rounds + 1)]
+                last_reached_level = 0
+                while last_reached_level < self.feat_sel_n_rounds:
+                    for level in range(self.feat_sel_n_rounds, -1, -1):
+                        if float(len(level_features[level])) >= num_features:
+                            last_reached_level = max(level, last_reached_level)
+                            self._bprint('level {}'.format(level))
+                            features = DFFeatureSet(features=level_features[level][:num_features])
+                            features_deduped = fs.compose_remove_duplicates(features)
+                            level_features[level] = level_features[level][num_features:]
+                            close_model = self._replace_model_feature_set(close_model,
+                                                                          features_deduped)
+                            close_model.train()
+                            selected_features = close_model.select_features_by_ratio(self.sel_ratio)
+                            level_features[level+1].extend(selected_features.sample())
+                            break
+                        elif level == 0:
+                            self._bprint('level 0')
+                            fresh_features = self.feat_sampler.sample(size=num_features)
+                            close_model = self._replace_model_feature_set(close_model,
+                                                                          fresh_features)
+                            close_model.train()
+                            selected_features = close_model.select_features_by_ratio(self.sel_ratio)
+                            level_features[level+1].extend(selected_features.sample())
             else:
                 raise NotImplementedError
 

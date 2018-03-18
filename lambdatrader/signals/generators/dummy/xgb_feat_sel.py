@@ -119,7 +119,7 @@ feature_set = feature_sampler.sample(size=num_features)
 
 feat_sel_n_target = feature_sampler.sample(size=num_features)
 feat_sel_ratio = 0.90
-feat_sel_n_rounds = 10
+feat_sel_n_rounds = 100
 
 xgb_n_candles = 48
 value_set_close = DFFeatureSet(features=[CloseAvgReturn(n_candles=xgb_n_candles)])
@@ -183,21 +183,24 @@ max_params.update({
     'eta': close_params['eta'] * 2
 })
 
-(LearningTask()
- .apply_defaults()
- .set_n_candles(xgb_n_candles)
- .set_train_val_test_date_ranges(xgb_split_date_range)
- .set_train_pairs(xgb_training_pairs)
- .set_val_pairs(xgb_training_pairs)
- .set_test_pairs(xgb_training_pairs)
- .set_feature_set(feature_set)
- .set_xgb_n_rounds(num_round)
- .set_xgb_esr(early_stopping_rounds)
- .set_c_thr(xgb_c_thr)
- .set_m_thr(xgb_m_thr)
- .set_xgb_booster_params(xgb_params)
- .set_grow_shr_feat_sel()
- .set_feat_sel_n_target_feat(num_features)
- .set_feat_sel_sel_ratio(feat_sel_ratio)
- .set_feat_sel_n_rounds(feat_sel_n_rounds)
- .execute())
+lt = (LearningTask()
+      .apply_defaults()
+      .set_n_candles(xgb_n_candles)
+      .set_train_val_test_date_ranges(xgb_split_date_range)
+      .set_train_pairs(xgb_training_pairs)
+      .set_val_pairs(xgb_training_pairs)
+      .set_test_pairs(xgb_training_pairs)
+      .set_feature_set(feature_set)
+      .set_xgb_n_rounds(num_round)
+      .set_xgb_esr(early_stopping_rounds)
+      .set_c_thr(xgb_c_thr)
+      .set_m_thr(xgb_m_thr)
+      .set_xgb_booster_params(xgb_params)
+      .set_feat_sel_n_target_feat(num_features)
+      .set_feat_sel_sel_ratio(feat_sel_ratio)
+      .set_feat_sel_n_rounds(feat_sel_n_rounds))
+
+# lt.set_grow_shr_feat_sel()
+lt.set_hier_feat_sel()
+
+lt.execute()
