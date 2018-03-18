@@ -6,7 +6,7 @@ from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
 from lambdatrader.signals.data_analysis.df_values import CloseAvgReturn, MaxReturn, CloseReturn
 from lambdatrader.signals.data_analysis.factories import SplitDateRanges, FeatureSets, ValueSets
 from lambdatrader.signals.data_analysis.models import XGBSplitDatasetModel
-from lambdatrader.signals.generators.dummy.feature_spaces import ohlcv_sampler, all_sampler
+from lambdatrader.signals.generators.dummy.feature_spaces import fs_sampler_ohlcv, fs_sampler_all
 
 from lambdatrader.signals.generators.factories import Pairs
 
@@ -106,7 +106,7 @@ xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_rest_tra
 # xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=500)
 
 # feature_sampler = ohlcv_sampler
-feature_sampler = all_sampler
+feature_sampler = fs_sampler_all
 
 # feature_set = FeatureSets.get_all_periods_last_ten_ohlcv_now_delta()
 

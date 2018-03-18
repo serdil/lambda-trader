@@ -14,7 +14,7 @@ from lambdatrader.signals.data_analysis.df_values import CloseAvgReturn, MaxRetu
 from lambdatrader.signals.data_analysis.factories import SplitDateRanges, FeatureSets
 from lambdatrader.signals.data_analysis.models import BaggingDecisionTreeModel
 from lambdatrader.signals.generators.dummy.backtest_util import do_backtest
-from lambdatrader.signals.generators.dummy.feature_spaces import all_sampler
+from lambdatrader.signals.generators.dummy.feature_spaces import fs_sampler_all
 from lambdatrader.signals.generators.dummy.signal_generation import (
     CloseAvgReturnMaxReturnSignalConverter, SignalServer, ModelPredSignalGenerator,
 )
@@ -278,7 +278,7 @@ random.seed(0)
 # random.seed(4)
 
 # feature_set = all_samplers_feature_set_sampler.sample(size=10)
-feature_set = all_sampler.sample(size=100)
+feature_set = fs_sampler_all.sample(size=100)
 # feature_set = all_samplers_feature_set_sampler.sample(size=1000)
 # feature_set = all_samplers_feature_set_sampler.sample(size=2000)
 

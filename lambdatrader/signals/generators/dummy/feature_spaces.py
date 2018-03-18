@@ -182,11 +182,15 @@ macd_value_sampler = FeatureSampler(
     }
 )
 
-ohlcv_samplers = [ohlc_now_close_delta_sampler,
+samplers_volume_value = [volume_value_sampler]
+
+samplers_ohlc_self_close_delta = [ohlc_self_close_delta_sampler]
+
+samplers_ohlcv = [ohlc_now_close_delta_sampler,
                   ohlc_self_close_delta_sampler,
                   volume_value_sampler]
 
-all_samplers = [ohlc_now_close_delta_sampler,
+samplers_all = [ohlc_now_close_delta_sampler,
                 ohlc_self_close_delta_sampler,
                 volume_value_sampler,
                 sma_self_close_delta_sampler,
@@ -198,5 +202,7 @@ all_samplers = [ohlc_now_close_delta_sampler,
                 macd_value_sampler]
 
 
-ohlcv_sampler = FeatureSetSampler(ohlcv_samplers)
-all_sampler = FeatureSetSampler(all_samplers)
+fs_sampler_volume_value = FeatureSetSampler(samplers_volume_value)
+fs_sampler_ohlc_self_close_delta = FeatureSetSampler(samplers_ohlc_self_close_delta)
+fs_sampler_ohlcv = FeatureSetSampler(samplers_ohlcv)
+fs_sampler_all = FeatureSetSampler(samplers_all)

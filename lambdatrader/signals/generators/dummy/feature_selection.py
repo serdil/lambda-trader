@@ -15,7 +15,7 @@ from lambdatrader.signals.data_analysis.factories import SplitDateRanges, Featur
 from lambdatrader.signals.data_analysis.models import BaggingDecisionTreeModel
 from lambdatrader.signals.generators.dummy.backtest_util import do_backtest
 from lambdatrader.signals.generators.dummy.feature_spaces import (
-    all_sampler, ohlcv_sampler,
+    fs_sampler_all, fs_sampler_ohlcv,
 )
 from lambdatrader.signals.generators.dummy.signal_generation import (
     CloseAvgReturnMaxReturnSignalConverter, SignalServer, ModelPredSignalGenerator,
@@ -162,7 +162,7 @@ select_close = True
 select_max = True
 
 # feature_sampler = ohlcv_sampler
-feature_sampler = all_sampler
+feature_sampler = fs_sampler_all
 
 feature_selection_ratio = 0.95
 
