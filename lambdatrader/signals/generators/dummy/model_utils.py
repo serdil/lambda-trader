@@ -18,6 +18,7 @@ from lambdatrader.signals.data_analysis.models import XGBSplitDatasetModel
 from lambdatrader.signals.generators.dummy.backtest_util import do_backtest
 from lambdatrader.signals.generators.dummy.feature_spaces import (
     fs_sampler_all, fs_sampler_ohlcv, fs_sampler_ohlc_self_close_delta, fs_sampler_volume_value,
+    FeatureSetSampler,
 )
 from lambdatrader.signals.generators.dummy.signal_generation import (
     CloseAvgReturnMaxReturnSignalConverter, SignalServer, ModelPredSignalGenerator,
@@ -104,12 +105,9 @@ class LearningTask:
         self.sel_ratio = None
         self.feat_sel_n_rounds = None
 
-        self.apply_defaults()
+        self.feat_sampler = None
 
-        # self.feat_sampler = fs_sampler_volume_value
-        # self.feat_sampler = fs_sampler_ohlc_self_close_delta
-        # self.feat_sampler = fs_sampler_ohlcv
-        self.feat_sampler = fs_sampler_all
+        self.apply_defaults()
 
     def apply_defaults(self):
         self.set_model_per_pair(False)
@@ -128,6 +126,8 @@ class LearningTask:
         self.set_xgb_booster_params(DEFAULT_XGB_BOOSTER_PARAMS)
         self.set_xgb_n_rounds(1000)
         self.set_xgb_esr(10)
+
+        self.set_feat_sampler(fs_sampler_all)
 
         return self
 
@@ -237,6 +237,10 @@ class LearningTask:
 
     def set_rdt_model(self):
         self.model_to_use = self.MODEL_RDT
+        return self
+
+    def set_feat_sampler(self, feat_sampler: FeatureSetSampler):
+        self.feat_sampler = feat_sampler
         return self
 
     def execute(self):

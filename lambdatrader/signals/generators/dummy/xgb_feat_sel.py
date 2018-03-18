@@ -3,7 +3,9 @@ import random
 from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
 from lambdatrader.signals.data_analysis.df_values import CloseAvgReturn, MaxReturn
 from lambdatrader.signals.data_analysis.factories import SplitDateRanges
-from lambdatrader.signals.generators.dummy.feature_spaces import fs_sampler_all, fs_sampler_ohlcv
+from lambdatrader.signals.generators.dummy.feature_spaces import (
+    fs_sampler_all, fs_sampler_ohlcv, fs_sampler_all_old,
+)
 from lambdatrader.signals.generators.dummy.model_utils import LearningTask
 
 random.seed(0)
@@ -199,6 +201,9 @@ lt = (LearningTask()
       .set_feat_sel_n_target_feat(num_features)
       .set_feat_sel_sel_ratio(feat_sel_ratio)
       .set_feat_sel_n_rounds(feat_sel_n_rounds))
+
+# lt.set_feat_sampler(fs_sampler_all_old)
+lt.set_feat_sampler(fs_sampler_all)
 
 # lt.set_grow_shr_feat_sel()
 # lt.set_hier_feat_sel()

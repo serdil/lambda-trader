@@ -8,6 +8,7 @@ from lambdatrader.signals.data_analysis.constants import (
 from lambdatrader.signals.data_analysis.df_features import (
     DFFeatureSet, SMASelfCloseDelta, CandlestickPattern, BBandsSelfCloseDelta, BBandsNowCloseDelta,
     RSIValue, MACDValue, SMANowCloseDelta, OHLCVNowCloseDelta, OHLCVSelfCloseDelta, OHLCVValue,
+    BBandsBandWidth, CandlestickTipToTipSize, CandlestickBodySize,
 )
 from lambdatrader.signals.data_analysis.factories import FeatureSets
 
@@ -182,6 +183,34 @@ macd_value_sampler = FeatureSampler(
     }
 )
 
+bbands_band_width_sampler = FeatureSampler(
+    BBandsBandWidth,
+    {
+        'timeperiod': ParameterRange.int_range(2, 50),
+        'nbdevup': ParameterRange.int_range(1, 10),
+        'nbdevdn': ParameterRange.int_range(1, 10),
+        'matype': ParameterRange.int_range(0, 3),
+        'offset': ParameterRange.int_range(0, 10),
+        'period': ParameterRange.set([M5, M15, H, H4, D])
+    }
+)
+
+cs_tip_to_tip_size_sampler = FeatureSampler(
+    CandlestickTipToTipSize,
+    {
+        'offset': ParameterRange.int_range(0, 50),
+        'period': ParameterRange.set([M5, M15, H, H4, D])
+    }
+)
+
+cs_body_size_sampler = FeatureSampler(
+    CandlestickBodySize,
+    {
+        'offset': ParameterRange.int_range(0, 50),
+        'period': ParameterRange.set([M5, M15, H, H4, D])
+    }
+)
+
 samplers_volume_value = [volume_value_sampler]
 
 samplers_ohlc_self_close_delta = [ohlc_self_close_delta_sampler]
@@ -189,6 +218,17 @@ samplers_ohlc_self_close_delta = [ohlc_self_close_delta_sampler]
 samplers_ohlcv = [ohlc_now_close_delta_sampler,
                   ohlc_self_close_delta_sampler,
                   volume_value_sampler]
+
+samplers_all_old = [ohlc_now_close_delta_sampler,
+                    ohlc_self_close_delta_sampler,
+                    volume_value_sampler,
+                    sma_self_close_delta_sampler,
+                    sma_now_close_delta_sampler,
+                    cs_pattern_sampler,
+                    bbands_self_close_delta_sampler,
+                    bbands_now_close_delta_sampler,
+                    rsi_value_sampler,
+                    macd_value_sampler]
 
 samplers_all = [ohlc_now_close_delta_sampler,
                 ohlc_self_close_delta_sampler,
@@ -199,10 +239,14 @@ samplers_all = [ohlc_now_close_delta_sampler,
                 bbands_self_close_delta_sampler,
                 bbands_now_close_delta_sampler,
                 rsi_value_sampler,
-                macd_value_sampler]
+                macd_value_sampler,
+                bbands_band_width_sampler,
+                cs_tip_to_tip_size_sampler,
+                cs_body_size_sampler]
 
 
 fs_sampler_volume_value = FeatureSetSampler(samplers_volume_value)
 fs_sampler_ohlc_self_close_delta = FeatureSetSampler(samplers_ohlc_self_close_delta)
 fs_sampler_ohlcv = FeatureSetSampler(samplers_ohlcv)
+fs_sampler_all_old = FeatureSetSampler(samplers_all_old)
 fs_sampler_all = FeatureSetSampler(samplers_all)
