@@ -176,7 +176,7 @@ xgb_params = {
 close_params = xgb_params.copy()
 
 num_round = 1000
-early_stopping_rounds = 10
+early_stopping_rounds = 3
 
 max_params = xgb_params.copy()
 max_params.update({
