@@ -3,11 +3,14 @@ from operator import attrgetter
 
 import numpy as np
 import pandas as pd
+from typing import List
 
 from lambdatrader.constants import M5
 from lambdatrader.exceptions import ArgumentError
 from lambdatrader.indicator_functions import IndicatorEnum
-from lambdatrader.signals.data_analysis.constants import OHLCV_CLOSE
+from lambdatrader.signals.data_analysis.constants import (
+    OHLCV_CLOSE, OHLCV_LOW, OHLCV_HIGH, OHLCV_OPEN,
+)
 from lambdatrader.signals.data_analysis.utils import join_list
 
 
@@ -387,6 +390,18 @@ class BBandsNowCloseDelta(IndicatorNowCloseDelta):
         self.assert_output_col_max(3)
 
 
+class SymmetricBBandsNowCloseDelta(BBandsNowCloseDelta):
+    def __init__(self, timeperiod=5, nbdev=2, matype=0, offset=0, period=M5,
+                 output_col=None):
+        super().__init__(timeperiod=timeperiod,
+                         nbdevup=nbdev,
+                         nbdevdn=nbdev,
+                         matype=matype,
+                         offset=offset,
+                         period=period,
+                         output_col=output_col)
+
+
 class BBandsSelfCloseDelta(IndicatorSelfCloseDelta):
     def __init__(self, timeperiod=5, nbdevup=2, nbdevdn=2, matype=0, offset=0, period=M5,
                  output_col=None):
@@ -394,6 +409,18 @@ class BBandsSelfCloseDelta(IndicatorSelfCloseDelta):
         super().__init__(IndicatorEnum.BBANDS, [timeperiod, nbdevup, nbdevdn, matype],
                          offset, longest_timeperiod, period, output_col)
         self.assert_output_col_max(3)
+
+
+class SymmetricBBandsSelfCloseDelta(BBandsSelfCloseDelta):
+    def __init__(self, timeperiod=5, nbdev=2, matype=0, offset=0, period=M5,
+                 output_col=None):
+        super().__init__(timeperiod=timeperiod,
+                         nbdevup=nbdev,
+                         nbdevdn=nbdev,
+                         matype=matype,
+                         offset=offset,
+                         period=period,
+                         output_col=output_col)
 
 
 class CandlestickPattern(IndicatorValue):
@@ -412,3 +439,82 @@ class SMANowCloseDelta(IndicatorNowCloseDelta):
     def __init__(self, timeperiod=30, offset=0, period=M5):
         longest_timeperiod = timeperiod
         super().__init__(IndicatorEnum.SMA, [timeperiod], offset, longest_timeperiod, period)
+
+
+class LinearFeatureCombination(LookbackFeature):
+    def __init__(self, features: List[LookbackFeature], coef: List[float]):
+        if len(features) != len(coef):
+            raise ArgumentError
+        self.features = features
+        self.coef = coef
+
+    @property
+    def name(self):
+        feature_names_str = join_list([f.name for f in self.features])
+        coef_str = join_list(self.coef)
+        return 'linear_comb_features_{}_coef_{}'.format(feature_names_str, coef_str)
+
+    @property
+    def lookback(self):
+        return max([f.lookback for f in self.features])
+
+    def compute(self, dfs):
+        coef_dfs = [f.compute(dfs) * coef for coef, f in zip(self.coef, self.features)]
+        for df in coef_dfs:
+            df.columns = list(range(df.shape[1]))
+        sum_df = sum(coef_dfs)
+        return to_ffilled_df_with_name(dfs[M5].index, sum_df, self.name)
+
+
+class AbsValue(LookbackFeature):
+    def __init__(self, feature: LookbackFeature):
+        self.feature = feature
+
+    @property
+    def name(self):
+        return 'abs_value_feature_{}'.format(self.feature.name)
+
+    @property
+    def lookback(self):
+        return self.feature.lookback
+
+    def compute(self, dfs):
+        df_abs = self.feature.compute(dfs).abs()
+        return to_ffilled_df_with_name(dfs[M5].index, df_abs, self.name)
+
+
+class BBandsBandWidth(LinearFeatureCombination):
+    def __init__(self, timeperiod=5, nbdevup=2, nbdevdn=2, matype=0, offset=0, period=M5):
+        lower_band_delta = BBandsSelfCloseDelta(timeperiod=timeperiod,
+                                                nbdevup=nbdevup,
+                                                nbdevdn=nbdevdn,
+                                                matype=matype,
+                                                offset=offset,
+                                                period=period,
+                                                output_col=2)
+        upper_band_delta = BBandsSelfCloseDelta(timeperiod=timeperiod,
+                                                nbdevup=nbdevup,
+                                                nbdevdn=nbdevdn,
+                                                matype=matype,
+                                                offset=offset,
+                                                period=period,
+                                                output_col=0)
+        super().__init__(features=[lower_band_delta, upper_band_delta],
+                         coef=[1, -1])
+
+
+class CandlestickTipToTipSize(LinearFeatureCombination):
+    def __init__(self, offset=0, period=M5):
+        low_delta = OHLCVSelfCloseDelta(mode=OHLCV_LOW, offset=offset, period=period)
+        high_delta = OHLCVSelfCloseDelta(mode=OHLCV_HIGH, offset=offset, period=period)
+        super().__init__(features=[low_delta, high_delta],
+                         coef=[1, -1])
+
+
+class CandlestickBodySize(AbsValue):
+    def __init__(self, offset=0, period=M5):
+        close_delta = OHLCVSelfCloseDelta(mode=OHLCV_CLOSE, offset=offset, period=period)
+        open_delta = OHLCVSelfCloseDelta(mode=OHLCV_OPEN, offset=offset, period=period)
+        close_minus_open = LinearFeatureCombination(features=[close_delta, open_delta],
+                                                    coef=[1, -1])
+        super().__init__(feature=close_minus_open)

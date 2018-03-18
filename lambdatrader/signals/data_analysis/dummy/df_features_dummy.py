@@ -6,8 +6,9 @@ from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.indicator_functions import IndicatorEnum
 from lambdatrader.signals.data_analysis.constants import OHLCV_CLOSE, OHLCV_OPEN
 from lambdatrader.signals.data_analysis.df_features import (
-    OHLCVNowCloseDelta, IndicatorValue, RSIValue, MACDValue, DummyFeature,
-    RandomFeature, OHLCVSelfCloseDelta, BBandsSelfCloseDelta,
+    OHLCVNowCloseDelta, IndicatorValue, RSIValue, MACDValue, DummyFeature, RandomFeature,
+    OHLCVSelfCloseDelta, BBandsSelfCloseDelta, BBandsBandWidth, CandlestickTipToTipSize,
+    CandlestickBodySize,
 )
 from lambdatrader.utilities.utils import seconds
 
@@ -85,3 +86,19 @@ macd_feature = MACDValue()
 # macd_output_1 = MACDValue(output_col=1)
 # print('macd output 1')
 # print(macd_output_1.compute(dfs))
+
+# bbands_self_close_delta = BBandsSelfCloseDelta()
+# print('bbands self close delta')
+# print(bbands_self_close_delta.compute(dfs))
+#
+# bbands_band_width = BBandsBandWidth()
+# print('bbands band width')
+# print(bbands_band_width.compute(dfs))
+
+# cs_tip_to_tip_size = CandlestickTipToTipSize()
+# print('cs tip to tip size')
+# print(cs_tip_to_tip_size.compute(dfs))
+#
+# cs_body_size = CandlestickBodySize()
+# print('cs body size')
+# print(cs_body_size.compute(dfs))
