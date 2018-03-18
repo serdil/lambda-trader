@@ -131,8 +131,8 @@ class XGBSplitDatasetModel(BaseModel):
         self._print_metrics('\ntest metrics',
                             self.test_r2_score, self.test_rmse, self.obj_name)
 
-        self._comp_feature_imp_permutation()
-        # self._comp_feature_imp_score_plus_permutation()
+        # self._comp_feature_imp_permutation()
+        self._comp_feature_imp_score_plus_permutation()
         # self._comp_feature_imp_gain()
         # self._comp_feature_imp_f_score()
 
