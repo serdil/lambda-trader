@@ -1,0 +1,20 @@
+# training_interleaved=True model_per_pair=True
+
+ignore test_pairs
+train separate model on train_pairs for every model in val_pairs. validate on val_pair
+test on val_pairs
+
+# training_interleaved=True model_per_pair=False
+
+train single model on train_pairs, validate on val_pairs
+test on test_pairs
+
+# training_interleaved=False model_per_pair=True
+
+ignore train_pairs and test_pairs
+train separate model on val_pair for each pair in val_pairs. validate on val_pair
+test on val_pairs
+
+# training_interleaved=False model_per_pair=False
+
+illegal arguments

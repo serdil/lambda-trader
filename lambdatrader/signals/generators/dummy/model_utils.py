@@ -4,6 +4,7 @@ from typing import List
 from lambdatrader.backtesting.marketinfo import BacktestingMarketInfo
 from lambdatrader.candlestick_stores.cachingstore import ChunkCachingCandlestickStore
 from lambdatrader.constants import M5
+from lambdatrader.exceptions import ArgumentError
 from lambdatrader.exchanges.enums import POLONIEX
 from lambdatrader.signals.data_analysis.df_datasets import (
     DateRange, SplitDateRange, DatasetDescriptor, SplitDatasetDescriptor,
@@ -228,6 +229,16 @@ class LearningTask:
     def execute(self):
         if not self.train_pairs_interleaved or self.model_per_pair:
             raise NotImplementedError
+
+        if self.train_pairs_interleaved and self.model_per_pair:
+            self.test_pairs = None
+        elif self.train_pairs_interleaved and not self.model_per_pair:
+            pass
+        elif not self.train_pairs_interleaved and self.model_per_pair:
+            self.train_pairs = None
+            self.test_pairs = None
+        elif not self.train_pairs_interleaved and not self.model_per_pair:
+            raise ArgumentError
 
         c_train_dataset = DatasetDescriptor(pairs=self.train_pairs,
                                             feature_set=self.feature_set,

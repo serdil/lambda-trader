@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from lambdatrader.constants import M5
+from lambdatrader.exceptions import ArgumentError
 from lambdatrader.indicator_functions import IndicatorEnum
 from lambdatrader.signals.data_analysis.constants import OHLCV_CLOSE
 from lambdatrader.signals.data_analysis.utils import join_list
@@ -67,10 +68,6 @@ class DFFeatureSet:
         if size is None:
             size = len(self.features)
         return random.sample(self.features, size)
-
-
-class ArgumentError(ValueError):
-    pass
 
 
 class BaseFeature:
