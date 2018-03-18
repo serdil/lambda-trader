@@ -16,7 +16,9 @@ from lambdatrader.signals.data_analysis.df_values import CloseAvgReturn, MaxRetu
 from lambdatrader.signals.data_analysis.factories import SplitDateRanges, FeatureSets
 from lambdatrader.signals.data_analysis.models import XGBSplitDatasetModel
 from lambdatrader.signals.generators.dummy.backtest_util import do_backtest
-from lambdatrader.signals.generators.dummy.feature_spaces import fs_sampler_all, fs_sampler_ohlcv
+from lambdatrader.signals.generators.dummy.feature_spaces import (
+    fs_sampler_all, fs_sampler_ohlcv, fs_sampler_ohlc_self_close_delta, fs_sampler_volume_value,
+)
 from lambdatrader.signals.generators.dummy.signal_generation import (
     CloseAvgReturnMaxReturnSignalConverter, SignalServer, ModelPredSignalGenerator,
 )
@@ -104,6 +106,8 @@ class LearningTask:
 
         self.apply_defaults()
 
+        # self.feat_sampler = fs_sampler_volume_value
+        # self.feat_sampler = fs_sampler_ohlc_self_close_delta
         # self.feat_sampler = fs_sampler_ohlcv
         self.feat_sampler = fs_sampler_all
 
