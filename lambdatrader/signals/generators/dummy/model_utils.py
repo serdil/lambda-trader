@@ -364,6 +364,7 @@ class LearningTask:
                         if float(len(level_features[level])) >= num_features:
                             last_reached_level = max(level, last_reached_level)
                             self._bprint('level {}'.format(level))
+                            random.shuffle(level_features[level])
                             features = DFFeatureSet(features=level_features[level][:num_features])
                             features_deduped = fs.compose_remove_duplicates(features)
                             level_features[level] = level_features[level][num_features:]
