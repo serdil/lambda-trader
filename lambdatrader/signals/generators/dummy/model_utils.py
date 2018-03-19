@@ -416,8 +416,9 @@ class LearningTask:
                     best_features = [feat for feat, _ in feat_scores_sorted[:self.n_target_feat]]
                     best_fs = fs.compose_remove_duplicates(DFFeatureSet(features=best_features))
                     close_model = self._replace_model_feature_set(close_model, best_fs)
-                    self._bprint('[close] round {} best'.format(i))
-                    close_model.train()
+                    if i != 0:
+                        self._bprint('[close] round {} best'.format(i))
+                        close_model.train()
 
                 max_feat_scores = defaultdict(lambda: float('-inf'))
                 for i in range(self.feat_sel_n_rounds):
