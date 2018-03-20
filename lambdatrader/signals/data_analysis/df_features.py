@@ -246,6 +246,40 @@ class Mult(BinaryOpFeature):
         return self.f1.compute_raw(dfs) * self.f2.compute_raw(dfs)
 
 
+class FeatureFeature(LookbackFeature):
+    def __init__(self, feature):
+        self.feature = feature
+
+    @property
+    def name(self):
+        return self.feature.name
+
+    @property
+    def lookback(self):
+        return self.feature.lookback
+
+    def compute_raw(self, dfs):
+        return self.feature.compute_raw(dfs)
+
+
+class NormDiff(FeatureFeature):
+    def __init__(self, f1, f2):
+        diff = Diff(f1, f2)
+        diff_div = Div(diff, f1)
+        super().__init__(diff_div)
+
+
+class ShiftedNormDiff(NormDiff):
+    def __init__(self, f1, f2, offset):
+        shifted_f2 = Shifted(f2, offset=offset)
+        super().__init__(f1, shifted_f2)
+
+
+class ShiftedSelfNormDiff(ShiftedNormDiff):
+    def __init__(self, feature, offset):
+        super().__init__(feature, feature, offset=offset)
+
+
 class UnaryOpFeature(LookbackFeature):
     def __init__(self, feature):
         self.feature = feature
@@ -281,7 +315,6 @@ class ConstMult(LookbackFeature):
 
     def compute_raw(self, dfs):
         return self.constant * self.feature.compute_raw(dfs)
-
 
 
 class OHLCVNowSelfDelta(LookbackFeature):
