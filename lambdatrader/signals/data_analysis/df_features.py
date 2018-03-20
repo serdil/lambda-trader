@@ -95,11 +95,7 @@ class LookbackFeature(BaseFeature):
 
     @property
     def period(self):
-        return self._period
-
-    @period.setter
-    def period(self, value):
-        self._period = value
+        raise NotImplementedError
 
     def compute(self, dfs, normalize=True):
         raw_df = self.compute_raw(dfs)
@@ -111,16 +107,26 @@ class LookbackFeature(BaseFeature):
     def compute_raw(self, dfs):
         raise NotImplementedError
 
+    @staticmethod
+    def assert_periods_equal(*features):
+        expected_period = features[0].period
+        if not all((f.period is expected_period for f in features)):
+            raise ArgumentError
+
 
 class DummyFeature(LookbackFeature):
+
+    @property
+    def name(self):
+        return 'dummy_feature'
 
     @property
     def lookback(self):
         return 0
 
     @property
-    def name(self):
-        return 'dummy_feature'
+    def period(self):
+        return M5
 
     def compute_raw(self, dfs):
         zero_series = pd.Series(np.zeros(len(dfs[M5])), index=dfs[M5].index)
@@ -137,6 +143,10 @@ class RandomFeature(LookbackFeature):
     def lookback(self):
         return 0
 
+    @property
+    def period(self):
+        return M5
+
     def compute_raw(self, dfs):
         random_series = pd.Series(np.random.rand(len(dfs[M5])), index=dfs[M5].index)
         return random_series
@@ -146,7 +156,7 @@ class OHLCVValue(LookbackFeature):
     def __init__(self, mode, offset, period=M5):
         self.mode = mode
         self.offset = offset
-        self.period = period
+        self._period = period
 
     @property
     def name(self):
@@ -157,6 +167,10 @@ class OHLCVValue(LookbackFeature):
     @property
     def lookback(self):
         return self.period.seconds() * self.offset
+
+    @property
+    def period(self):
+        return self._period
 
     def compute_raw(self, dfs):
         return dfs[self.period]
@@ -183,7 +197,11 @@ class Shifted(LookbackFeature):
 
     @property
     def lookback(self):
-        return self.feature.lookback + self.offset * self.feature.period
+        return self.feature.lookback + self.offset * self.period
+
+    @property
+    def period(self):
+        return self.feature.period
 
     def compute_raw(self, dfs):
         return self.feature.compute_raw(dfs).shift(self.offset)
@@ -191,6 +209,8 @@ class Shifted(LookbackFeature):
 
 class BinaryOpFeature(LookbackFeature):
     def __init__(self, f1, f2):
+        self.assert_periods_equal(f1, f2)
+
         self.f1 = f1
         self.f2 = f2
 
@@ -201,6 +221,10 @@ class BinaryOpFeature(LookbackFeature):
     @property
     def op_name(self):
         raise NotImplementedError
+
+    @property
+    def period(self):
+        return self.f1.period
 
     @property
     def lookback(self):
@@ -258,12 +282,18 @@ class FeatureFeature(LookbackFeature):
     def lookback(self):
         return self.feature.lookback
 
+    @property
+    def period(self):
+        return self.feature.period
+
     def compute_raw(self, dfs):
         return self.feature.compute_raw(dfs)
 
 
 class NormDiff(FeatureFeature):
     def __init__(self, f1, f2):
+        self.assert_periods_equal(f1, f2)
+
         diff = Diff(f1, f2)
         diff_div = Div(diff, f1)
         super().__init__(diff_div)
@@ -271,6 +301,8 @@ class NormDiff(FeatureFeature):
 
 class ShiftedNormDiff(NormDiff):
     def __init__(self, f1, f2, offset):
+        self.assert_periods_equal(f1, f2)
+
         shifted_f2 = Shifted(f2, offset=offset)
         super().__init__(f1, shifted_f2)
 
@@ -296,6 +328,10 @@ class UnaryOpFeature(LookbackFeature):
     def lookback(self):
         return self.feature.lookback
 
+    @property
+    def period(self):
+        return self.feature.period
+
     def compute_raw(self, dfs):
         raise NotImplementedError
 
@@ -313,6 +349,10 @@ class ConstMult(LookbackFeature):
     def lookback(self):
         return self.feature.lookback
 
+    @property
+    def period(self):
+        return self.feature.period
+
     def compute_raw(self, dfs):
         return self.constant * self.feature.compute_raw(dfs)
 
@@ -321,7 +361,7 @@ class OHLCVNowSelfDelta(LookbackFeature):
     def __init__(self, mode, offset, period=M5):
         self.mode = mode
         self.offset = offset
-        self.period = period
+        self._period = period
 
     @property
     def name(self):
@@ -332,6 +372,10 @@ class OHLCVNowSelfDelta(LookbackFeature):
     @property
     def lookback(self):
         return self.period.seconds() * self.offset
+
+    @property
+    def period(self):
+        return self._period
 
     def compute_raw(self, dfs):
         df = dfs[self.period]
@@ -344,7 +388,7 @@ class OHLCVNowCloseDelta(LookbackFeature):
     def __init__(self, mode, offset, period=M5):
         self.mode = mode
         self.offset = offset
-        self.period = period
+        self._period = period
 
     @property
     def name(self):
@@ -355,6 +399,10 @@ class OHLCVNowCloseDelta(LookbackFeature):
     @property
     def lookback(self):
         return self.period.seconds() * self.offset
+
+    @property
+    def period(self):
+        return self._period
 
     def compute_raw(self, dfs):
         df = dfs[self.period]
@@ -367,7 +415,7 @@ class OHLCVSelfCloseDelta(LookbackFeature):
     def __init__(self, mode, offset, period=M5):
         self.mode = mode
         self.offset = offset
-        self.period = period
+        self._period = period
 
     @property
     def name(self):
@@ -378,6 +426,10 @@ class OHLCVSelfCloseDelta(LookbackFeature):
     @property
     def lookback(self):
         return self.period.seconds() * self.offset
+
+    @property
+    def period(self):
+        return self._period
 
     def compute_raw(self, dfs):
         df = dfs[self.period]
@@ -394,7 +446,7 @@ class IndicatorValue(LookbackFeature):
         self.indicator = indicator
         self.args = args
         self.offset = offset
-        self.period = period
+        self._period = period
         self.longest_timeperiod = longest_timeperiod
         self.output_col = output_col
 
@@ -407,6 +459,10 @@ class IndicatorValue(LookbackFeature):
     @property
     def lookback(self):
         return (self.longest_timeperiod + self.offset) * self.period.seconds()
+
+    @property
+    def period(self):
+        return self._period
 
     def compute_raw(self, dfs):
         df = dfs[self.period]
@@ -429,7 +485,7 @@ class IndicatorSelfDelta(LookbackFeature):
         self.indicator = indicator
         self.args = args
         self.offset = offset
-        self.period = period
+        self._period = period
         self.longest_timeperiod = longest_timeperiod
         self.output_col = output_col
 
@@ -442,6 +498,10 @@ class IndicatorSelfDelta(LookbackFeature):
     @property
     def lookback(self):
         return (self.longest_timeperiod + self.offset) * self.period.seconds()
+
+    @property
+    def period(self):
+        return self._period
 
     def compute_raw(self, dfs):
         df = dfs[self.period]
@@ -465,7 +525,7 @@ class IndicatorNowCloseDelta(LookbackFeature):
         self.indicator = indicator
         self.args = args
         self.offset = offset
-        self.period = period
+        self._period = period
         self.longest_timeperiod = longest_timeperiod
         self.output_col = output_col
 
@@ -478,6 +538,10 @@ class IndicatorNowCloseDelta(LookbackFeature):
     @property
     def lookback(self):
         return (self.longest_timeperiod + self.offset) * self.period.seconds()
+
+    @property
+    def period(self):
+        return self._period
 
     def compute_raw(self, dfs):
         df = dfs[self.period]
@@ -501,7 +565,7 @@ class IndicatorSelfCloseDelta(LookbackFeature):
         self.indicator = indicator
         self.args = args
         self.offset = offset
-        self.period = period
+        self._period = period
         self.longest_timeperiod = longest_timeperiod
         self.output_col = output_col
 
@@ -514,6 +578,10 @@ class IndicatorSelfCloseDelta(LookbackFeature):
     @property
     def lookback(self):
         return (self.longest_timeperiod + self.offset) * self.period.seconds()
+
+    @property
+    def period(self):
+        return self._period
 
     def compute_raw(self, dfs):
         df = dfs[self.period]
@@ -610,6 +678,8 @@ class SMANowCloseDelta(IndicatorNowCloseDelta):
 
 class LinearFeatureCombination(LookbackFeature):
     def __init__(self, features: List[LookbackFeature], coef: List[float]):
+        self.assert_periods_equal(*features)
+
         if len(features) != len(coef):
             raise ArgumentError
         self.features = features
@@ -625,8 +695,12 @@ class LinearFeatureCombination(LookbackFeature):
     def lookback(self):
         return max([f.lookback for f in self.features])
 
+    @property
+    def period(self):
+        return self.features[0].period
+
     def compute_raw(self, dfs):
-        coef_dfs = [f.compute(dfs) * coef for coef, f in zip(self.coef, self.features)]
+        coef_dfs = [f.compute_raw(dfs) * coef for coef, f in zip(self.coef, self.features)]
         for df in coef_dfs:
             df.columns = list(range(df.shape[1]))
         sum_df = sum(coef_dfs)
@@ -645,8 +719,12 @@ class AbsValue(LookbackFeature):
     def lookback(self):
         return self.feature.lookback
 
+    @property
+    def period(self):
+        return self.feature.period
+
     def compute_raw(self, dfs):
-        df_abs = self.feature.compute(dfs).abs()
+        df_abs = self.feature.compute_raw(dfs).abs()
         return df_abs
 
 
@@ -685,3 +763,46 @@ class CandlestickBodySize(AbsValue):
         close_minus_open = LinearFeatureCombination(features=[close_delta, open_delta],
                                                     coef=[1, -1])
         super().__init__(feature=close_minus_open)
+
+
+class IndicatorValueOnFeature(LookbackFeature):
+
+    def __init__(self, feature,
+                 indicator, args, offset, longest_timeperiod, output_col=None):
+        self.feature = feature
+
+        self.indicator = indicator
+        self.args = args
+        self.offset = offset
+        self.longest_timeperiod = longest_timeperiod
+        self.output_col = output_col
+
+    @property
+    def name(self):
+        return ('indicator_value_on_feature_'
+                'feature_{}_indicator_{}_args_{}_offset_{}_output_{}'
+                .format(self.feature.name, self.indicator.name,
+                        join_list(self.args), self.offset, self.output_col))
+
+    @property
+    def lookback(self):
+        return self.feature.lookback + \
+               (self.longest_timeperiod + self.offset) * self.feature.period.seconds()
+
+    @property
+    def period(self):
+        return self.feature.period
+
+    def compute_raw(self, dfs):
+        ind_input = self.feature.compute_raw(dfs)
+        value = self.indicator.function()(ind_input, *self.args).shift(self.offset)
+        if self.output_col is not None:
+            value = value.iloc[:,self.output_col:self.output_col+1]
+        return value
+
+    def assert_output_col_max(self, max_n_outputs):
+        if (self.output_col is not None and
+                (not isinstance(self.output_col, int)
+                 or self.output_col >= max_n_outputs
+                 or self.output_col < 0)):
+            raise ArgumentError('Invalid output_col')
