@@ -93,7 +93,22 @@ class LookbackFeature(BaseFeature):
     def lookback(self):
         raise NotImplementedError
 
-    def compute(self, dfs):
+    @property
+    def period(self):
+        return self._period
+
+    @period.setter
+    def period(self, value):
+        self._period = value
+
+    def compute(self, dfs, normalize=True):
+        raw_df = self.compute_raw(dfs)
+        if normalize:
+            return to_ffilled_df_with_name(dfs[M5].index, raw_df, self.name)
+        else:
+            return raw_df
+
+    def compute_raw(self, dfs):
         raise NotImplementedError
 
 
@@ -107,9 +122,9 @@ class DummyFeature(LookbackFeature):
     def name(self):
         return 'dummy_feature'
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         zero_series = pd.Series(np.zeros(len(dfs[M5])), index=dfs[M5].index)
-        return to_ffilled_df_with_name(dfs[M5].index, zero_series, self.name)
+        return zero_series
 
 
 class RandomFeature(LookbackFeature):
@@ -122,9 +137,9 @@ class RandomFeature(LookbackFeature):
     def lookback(self):
         return 0
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         random_series = pd.Series(np.random.rand(len(dfs[M5])), index=dfs[M5].index)
-        return to_ffilled_df_with_name(dfs[M5].index, random_series, self.name)
+        return random_series
 
 
 class OHLCVValue(LookbackFeature):
@@ -143,9 +158,130 @@ class OHLCVValue(LookbackFeature):
     def lookback(self):
         return self.period.seconds() * self.offset
 
-    def compute(self, dfs):
-        df = dfs[self.period]
-        return to_ffilled_df_with_name(dfs[M5].index, df[self.mode].shift(self.offset), self.name)
+    def compute_raw(self, dfs):
+        return dfs[self.period]
+
+
+class ShiftedCloseValue(OHLCVValue):
+    def __init__(self, offset=0, period=M5):
+        super().__init__(mode=OHLCV_CLOSE, offset=offset, period=period)
+
+
+class CloseValue(ShiftedCloseValue):
+    def __init__(self, period=M5):
+        super().__init__(offset=0, period=period)
+
+
+class Shifted(LookbackFeature):
+    def __init__(self, feature: LookbackFeature, offset=0):
+        self.feature = feature
+        self.offset = offset
+
+    @property
+    def name(self):
+        return 'shifted_offset_{}_feature_{}'.format(self.offset, self.feature.name)
+
+    @property
+    def lookback(self):
+        return self.feature.lookback + self.offset * self.feature.period
+
+    def compute_raw(self, dfs):
+        return self.feature.compute_raw(dfs).shift(self.offset)
+
+
+class BinaryOpFeature(LookbackFeature):
+    def __init__(self, f1, f2):
+        self.f1 = f1
+        self.f2 = f2
+
+    @property
+    def name(self):
+        return '{}_f1_{}_f2_{}'.format(self.op_name, self.f1.name, self.f2.name)
+
+    @property
+    def op_name(self):
+        raise NotImplementedError
+
+    @property
+    def lookback(self):
+        return max(self.f1.lookback, self.f2.lookback)
+
+    def compute_raw(self, dfs):
+        raise NotImplementedError
+
+
+class Sum(BinaryOpFeature):
+    @property
+    def op_name(self):
+        return 'sum'
+
+    def compute_raw(self, dfs):
+        return self.f1.compute_raw(dfs) + self.f2.compute_raw(dfs)
+
+
+class Diff(BinaryOpFeature):
+    @property
+    def op_name(self):
+        return 'diff'
+
+    def compute_raw(self, dfs):
+        return self.f1.compute_raw(dfs) - self.f2.compute_raw(dfs)
+
+
+class Div(BinaryOpFeature):
+    @property
+    def op_name(self):
+        return 'div'
+
+    def compute_raw(self, dfs):
+        return self.f1.compute_raw(dfs) / self.f2.compute_raw(dfs)
+
+
+class Mult(BinaryOpFeature):
+    @property
+    def op_name(self):
+        return 'mult'
+
+    def compute_raw(self, dfs):
+        return self.f1.compute_raw(dfs) * self.f2.compute_raw(dfs)
+
+
+class UnaryOpFeature(LookbackFeature):
+    def __init__(self, feature):
+        self.feature = feature
+
+    @property
+    def name(self):
+        return '{}_feature_{}'.format(self.op_name, self.feature.name)
+
+    @property
+    def op_name(self):
+        raise NotImplementedError
+
+    @property
+    def lookback(self):
+        return self.feature.lookback
+
+    def compute_raw(self, dfs):
+        raise NotImplementedError
+
+
+class ConstMult(LookbackFeature):
+    def __init__(self, feature, constant):
+        self.feature = feature
+        self.constant = constant
+
+    @property
+    def name(self):
+        return 'const_mult_const_{}_feature_{}'.format(self.constant, self.feature.name)
+
+    @property
+    def lookback(self):
+        return self.feature.lookback
+
+    def compute_raw(self, dfs):
+        return self.constant * self.feature.compute_raw(dfs)
+
 
 
 class OHLCVNowSelfDelta(LookbackFeature):
@@ -164,10 +300,10 @@ class OHLCVNowSelfDelta(LookbackFeature):
     def lookback(self):
         return self.period.seconds() * self.offset
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         df = dfs[self.period]
         self_delta = df[self.mode].diff(self.offset) / df[self.mode]
-        return to_ffilled_df_with_name(dfs[M5].index, self_delta, self.name)
+        return self_delta
 
 
 class OHLCVNowCloseDelta(LookbackFeature):
@@ -187,10 +323,10 @@ class OHLCVNowCloseDelta(LookbackFeature):
     def lookback(self):
         return self.period.seconds() * self.offset
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         df = dfs[self.period]
         close_delta = (df[OHLCV_CLOSE] - df[self.mode].shift(self.offset)) / df[OHLCV_CLOSE]
-        return to_ffilled_df_with_name(dfs[M5].index, close_delta, self.name)
+        return close_delta
 
 
 class OHLCVSelfCloseDelta(LookbackFeature):
@@ -210,13 +346,13 @@ class OHLCVSelfCloseDelta(LookbackFeature):
     def lookback(self):
         return self.period.seconds() * self.offset
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         df = dfs[self.period]
         close = df[OHLCV_CLOSE]
         shifted_close = close.shift(self.offset)
         shifted_mode = df[self.mode].shift(self.offset)
         self_close_delta = (shifted_close - shifted_mode) / shifted_close
-        return to_ffilled_df_with_name(dfs[M5].index, self_close_delta, self.name)
+        return self_close_delta
 
 
 class IndicatorValue(LookbackFeature):
@@ -239,14 +375,12 @@ class IndicatorValue(LookbackFeature):
     def lookback(self):
         return (self.longest_timeperiod + self.offset) * self.period.seconds()
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         df = dfs[self.period]
         value = self.indicator.function()(df, *self.args).shift(self.offset)
         if self.output_col is not None:
             value = value.iloc[:,self.output_col:self.output_col+1]
-        return to_ffilled_df_with_name(dfs[M5].index,
-                                       value,
-                                       self.name)
+        return value
 
     def assert_output_col_max(self, max_n_outputs):
         if (self.output_col is not None and
@@ -276,13 +410,13 @@ class IndicatorSelfDelta(LookbackFeature):
     def lookback(self):
         return (self.longest_timeperiod + self.offset) * self.period.seconds()
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         df = dfs[self.period]
         ind_values = self.indicator.function()(df, *self.args)
         self_delta = (ind_values.diff(self.offset) / ind_values)
         if self.output_col is not None:
             self_delta = self_delta.iloc[:,self.output_col:self.output_col+1]
-        return to_ffilled_df_with_name(dfs[M5].index, self_delta, self.name)
+        return self_delta
 
     def assert_output_col_max(self, max_n_outputs):
         if (self.output_col is not None and
@@ -312,13 +446,13 @@ class IndicatorNowCloseDelta(LookbackFeature):
     def lookback(self):
         return (self.longest_timeperiod + self.offset) * self.period.seconds()
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         df = dfs[self.period]
         close_delta = (self.indicator.function()(df, *self.args).shift(self.offset)
                        .rsub(df[OHLCV_CLOSE], axis=0).div(df[OHLCV_CLOSE], axis=0))
         if self.output_col is not None:
             close_delta = close_delta.iloc[:,self.output_col:self.output_col+1]
-        return to_ffilled_df_with_name(dfs[M5].index, close_delta, self.name)
+        return close_delta
 
     def assert_output_col_max(self, max_n_outputs):
         if (self.output_col is not None and
@@ -348,14 +482,14 @@ class IndicatorSelfCloseDelta(LookbackFeature):
     def lookback(self):
         return (self.longest_timeperiod + self.offset) * self.period.seconds()
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         df = dfs[self.period]
         shifted_close = df[OHLCV_CLOSE].shift(self.offset)
         close_delta = (self.indicator.function()(df, *self.args).shift(self.offset)
                        .rsub(shifted_close, axis=0).div(shifted_close, axis=0))
         if self.output_col is not None:
             close_delta = close_delta.iloc[:,self.output_col:self.output_col+1]
-        return to_ffilled_df_with_name(dfs[M5].index, close_delta, self.name)
+        return close_delta
 
     def assert_output_col_max(self, max_n_outputs):
         if (self.output_col is not None and
@@ -458,12 +592,12 @@ class LinearFeatureCombination(LookbackFeature):
     def lookback(self):
         return max([f.lookback for f in self.features])
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         coef_dfs = [f.compute(dfs) * coef for coef, f in zip(self.coef, self.features)]
         for df in coef_dfs:
             df.columns = list(range(df.shape[1]))
         sum_df = sum(coef_dfs)
-        return to_ffilled_df_with_name(dfs[M5].index, sum_df, self.name)
+        return sum_df
 
 
 class AbsValue(LookbackFeature):
@@ -478,9 +612,9 @@ class AbsValue(LookbackFeature):
     def lookback(self):
         return self.feature.lookback
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         df_abs = self.feature.compute(dfs).abs()
-        return to_ffilled_df_with_name(dfs[M5].index, df_abs, self.name)
+        return df_abs
 
 
 class BBandsBandWidth(LinearFeatureCombination):
