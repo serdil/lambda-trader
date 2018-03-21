@@ -2,6 +2,7 @@ import random
 from operator import attrgetter
 
 import numpy as np
+import pandas
 import pandas as pd
 from typing import List
 
@@ -116,6 +117,9 @@ class LookbackFeature(BaseFeature):
 
 class DummyFeature(LookbackFeature):
 
+    def __init__(self, period=M5):
+        self._period = period
+
     @property
     def name(self):
         return 'dummy_feature'
@@ -126,7 +130,7 @@ class DummyFeature(LookbackFeature):
 
     @property
     def period(self):
-        return M5
+        return self._period
 
     def compute_raw(self, dfs):
         zero_series = pd.Series(np.zeros(len(dfs[M5])), index=dfs[M5].index)
@@ -134,6 +138,9 @@ class DummyFeature(LookbackFeature):
 
 
 class RandomFeature(LookbackFeature):
+
+    def __init__(self, period=M5):
+        self._period = period
 
     @property
     def name(self):
@@ -145,7 +152,7 @@ class RandomFeature(LookbackFeature):
 
     @property
     def period(self):
-        return M5
+        return self._period
 
     def compute_raw(self, dfs):
         random_series = pd.Series(np.random.rand(len(dfs[M5])), index=dfs[M5].index)
@@ -312,6 +319,12 @@ class ShiftedSelfNormDiff(ShiftedNormDiff):
         super().__init__(feature, feature, offset=offset)
 
 
+class ConstMult(FeatureFeature):
+    def __init__(self, feature, constant):
+        const_mult = Mult(feature, Constant(constant, period=feature.period))
+        super().__init__(const_mult)
+
+
 class UnaryOpFeature(LookbackFeature):
     def __init__(self, feature):
         self.feature = feature
@@ -336,25 +349,64 @@ class UnaryOpFeature(LookbackFeature):
         raise NotImplementedError
 
 
-class ConstMult(LookbackFeature):
-    def __init__(self, feature, constant):
-        self.feature = feature
+class Sin(UnaryOpFeature):
+    @property
+    def op_name(self):
+        return 'sin'
+
+    def compute_raw(self, dfs):
+        return np.sin(self.feature.compute_raw(dfs))
+
+
+class Cos(UnaryOpFeature):
+    @property
+    def op_name(self):
+        return 'cos'
+
+    def compute_raw(self, dfs):
+        return np.cos(self.feature.compute_raw(dfs))
+
+
+class Square(UnaryOpFeature):
+    @property
+    def op_name(self):
+        return 'square'
+
+    def compute_raw(self, dfs):
+        df = self.feature.compute_raw(dfs)
+        return df * df
+
+
+class Cube(UnaryOpFeature):
+    @property
+    def op_name(self):
+        return 'square'
+
+    def compute_raw(self, dfs):
+        df = self.feature.compute_raw(dfs)
+        return df * df * df
+
+
+class Constant(LookbackFeature):
+    def __init__(self, constant, period=M5):
         self.constant = constant
+        self._period = period
 
     @property
     def name(self):
-        return 'const_mult_const_{}_feature_{}'.format(self.constant, self.feature.name)
+        return 'constant_{}'.format(self.constant)
 
     @property
     def lookback(self):
-        return self.feature.lookback
+        return 0
 
     @property
     def period(self):
-        return self.feature.period
+        return self._period
 
     def compute_raw(self, dfs):
-        return self.constant * self.feature.compute_raw(dfs)
+        df = dfs[self.period]
+        return pandas.Series(self.constant, index=df.index)
 
 
 class OHLCVNowSelfDelta(LookbackFeature):
@@ -702,7 +754,7 @@ class LinearFeatureCombination(LookbackFeature):
     def compute_raw(self, dfs):
         coef_dfs = [f.compute_raw(dfs) * coef for coef, f in zip(self.coef, self.features)]
         for df in coef_dfs:
-            df.columns = list(range(df.shape[1]))
+            df.columns = ['0']
         sum_df = sum(coef_dfs)
         return sum_df
 
@@ -806,3 +858,6 @@ class IndicatorValueOnFeature(LookbackFeature):
                  or self.output_col >= max_n_outputs
                  or self.output_col < 0)):
             raise ArgumentError('Invalid output_col')
+
+
+# TODO: add indicator features on features
