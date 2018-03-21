@@ -206,7 +206,7 @@ class Shifted(LookbackFeature):
 
     @property
     def lookback(self):
-        return self.feature.lookback + self.offset * self.period
+        return self.feature.lookback + self.offset * self.period.seconds()
 
     @property
     def period(self):

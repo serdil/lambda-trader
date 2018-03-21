@@ -1,6 +1,7 @@
 import random
 
 from lambdatrader.constants import M5, M15, H, H4, D
+from lambdatrader.exceptions import ArgumentError
 from lambdatrader.indicator_functions import PAT_REC_INDICATORS
 from lambdatrader.signals.data_analysis.constants import (
     OHLCV_LOW, OHLCV_CLOSE, OHLCV_HIGH, OHLCV_OPEN, OHLCV_VOLUME,
@@ -9,7 +10,8 @@ from lambdatrader.signals.data_analysis.df_features import (
     DFFeatureSet, SMASelfCloseDelta, CandlestickPattern, BBandsSelfCloseDelta, BBandsNowCloseDelta,
     RSIValue, MACDValue, SMANowCloseDelta, OHLCVNowCloseDelta, OHLCVSelfCloseDelta, OHLCVValue,
     BBandsBandWidth, CandlestickTipToTipSize, CandlestickBodySize, LinearFeatureCombination,
-    PolynomialFeatureCombination,
+    PolynomialFeatureCombination, ShiftedCloseValue, CloseValue, Shifted, Sum, Diff, Div, Mult,
+    NormDiff, ShiftedNormDiff, ConstMult, Sin, Cos, Square, Cube, Constant, ShiftedSelfNormDiff,
 )
 from lambdatrader.signals.data_analysis.factories import FeatureSets
 
@@ -31,11 +33,13 @@ class ParameterRange:
         self.start = start
         self.end = end
 
-    def sample(self):
+    def sample(self, period=None):
         if self.use_space:
             return random.choice(self.space)
         elif self.use_fss:
-            return self.fss.sample(size=1).features[0]
+            if period is None:
+                raise ArgumentError
+            return self.fss.sample(size=1, period=period).features[0]
         elif self.parameter_type == int:
             return random.randint(self.start, self.end)
         elif self.parameter_type == float:
@@ -49,6 +53,10 @@ class ParameterRange:
 
     @classmethod
     def float_range(cls, start: float, end: float):
+        if isinstance(start, int):
+            start = float(start)
+        if isinstance(end, int):
+            end = float(end)
         return ParameterRange(float, start, end)
 
     @classmethod
@@ -56,7 +64,7 @@ class ParameterRange:
         return ParameterRange(space=elements)
 
     @classmethod
-    def features(cls, feature_set_sampler: FeatureSetSampler):
+    def features(cls, feature_set_sampler):
         return ParameterRange(feature_set_sampler=feature_set_sampler)
 
 
@@ -76,7 +84,7 @@ class ParamRangeFeatureSampler(BaseFeatureSampler):
     def _get_kwargs(self, period):
         kwargs = {'period': period}
         for param_name, param_range in self.parameter_ranges.items():
-            kwargs[param_name] = param_range.sample()
+            kwargs[param_name] = param_range.sample(period=period)
         return kwargs
 
 
@@ -89,8 +97,8 @@ class LinearFeatureCombinationFeatureSampler(BaseFeatureSampler):
 
     def sample(self, period=M5):
         n_features = self.n_features_range.sample()
-        features = [self.features.sample() for _ in n_features]
-        coef = [self.coef_range.sample() for _ in n_features]
+        features = [self.features.sample(period=period) for _ in range(n_features)]
+        coef = [self.coef_range.sample() for _ in range(n_features)]
         return LinearFeatureCombination(features=features, coef=coef, period=period)
 
 
@@ -103,8 +111,8 @@ class PolynomialFeatureCombinationFeatureSampler(BaseFeatureSampler):
 
     def sample(self, period=M5):
         n_features = self.n_features_range.sample()
-        features = [self.features.sample() for _ in n_features]
-        exp = [self.exp_range.sample() for _ in n_features]
+        features = [self.features.sample(period=period) for _ in range(n_features)]
+        exp = [self.exp_range.sample() for _ in range(n_features)]
         return PolynomialFeatureCombination(features=features, exp=exp, period=period)
 
 
@@ -113,12 +121,17 @@ class FeatureSetSampler:
         self.feature_samplers = list(feature_samplers)
         self.periods = periods
 
-    def sample(self, size=100):
+    def sample(self, size=100, period=None):
+        if period is None:
+            rand_period = True
+        else:
+            rand_period = False
         feature_names = set()
         features = []
         for _ in range(size):
             while True:
-                period = random.choice(self.periods)
+                if rand_period:
+                    period = random.choice(self.periods)
                 feature_sampler = random.choice(self.feature_samplers)
                 feature = feature_sampler.sample(period=period)
                 if feature.name not in feature_names:
@@ -247,6 +260,179 @@ cs_body_size_sampler = ParamRangeFeatureSampler(
     }
 )
 
+volume_now_close_delta_sampler = ParamRangeFeatureSampler(
+    OHLCVNowCloseDelta,
+    {
+        'mode': ParameterRange.set([OHLCV_VOLUME]),
+        'offset': ParameterRange.int_range(0, 50),
+    }
+)
+
+volume_self_close_delta_sampler = ParamRangeFeatureSampler(
+    OHLCVSelfCloseDelta,
+    {
+        'mode': ParameterRange.set([OHLCV_VOLUME]),
+        'offset': ParameterRange.int_range(0, 50),
+    }
+)
+
+ohlcv_value_sampler = ParamRangeFeatureSampler(
+    OHLCVValue,
+    {
+        'mode': ParameterRange.set([OHLCV_OPEN, OHLCV_HIGH, OHLCV_LOW, OHLCV_CLOSE, OHLCV_VOLUME]),
+        'offset': ParameterRange.int_range(0, 50),
+    }
+)
+
+shifted_close_value_sampler = ParamRangeFeatureSampler(
+    ShiftedCloseValue,
+    {
+        'offset': ParameterRange.int_range(0, 50),
+    }
+)
+
+close_value_sampler = ParamRangeFeatureSampler(
+    CloseValue,
+    {
+    }
+)
+
+shifted_sampler = ParamRangeFeatureSampler(
+    Shifted,
+    {
+        'feature': ParameterRange.features(feature_set_sampler_for_param_range),
+        'offset': ParameterRange.int_range(0, 50)
+    }
+)
+
+sum_sampler = ParamRangeFeatureSampler(
+    Sum,
+    {
+        'f1': ParameterRange.features(feature_set_sampler_for_param_range),
+        'f2': ParameterRange.features(feature_set_sampler_for_param_range)
+    }
+)
+
+diff_sampler = ParamRangeFeatureSampler(
+    Diff,
+    {
+        'f1': ParameterRange.features(feature_set_sampler_for_param_range),
+        'f2': ParameterRange.features(feature_set_sampler_for_param_range)
+    }
+)
+
+div_sampler = ParamRangeFeatureSampler(
+    Div,
+    {
+        'f1': ParameterRange.features(feature_set_sampler_for_param_range),
+        'f2': ParameterRange.features(feature_set_sampler_for_param_range)
+    }
+)
+
+mult_sampler = ParamRangeFeatureSampler(
+    Mult,
+    {
+        'f1': ParameterRange.features(feature_set_sampler_for_param_range),
+        'f2': ParameterRange.features(feature_set_sampler_for_param_range)
+    }
+)
+
+norm_diff_sampler = ParamRangeFeatureSampler(
+    NormDiff,
+    {
+        'f1': ParameterRange.features(feature_set_sampler_for_param_range),
+        'f2': ParameterRange.features(feature_set_sampler_for_param_range)
+    }
+)
+
+shifted_norm_diff_sampler = ParamRangeFeatureSampler(
+    ShiftedNormDiff,
+    {
+        'f1': ParameterRange.features(feature_set_sampler_for_param_range),
+        'f2': ParameterRange.features(feature_set_sampler_for_param_range),
+        'offset': ParameterRange.int_range(0, 50)
+    }
+)
+
+shifted_self_norm_diff_sampler = ParamRangeFeatureSampler(
+    ShiftedSelfNormDiff,
+    {
+        'feature': ParameterRange.features(feature_set_sampler_for_param_range),
+        'offset': ParameterRange.int_range(0, 50)
+    }
+)
+
+small_const_mult_sampler = ParamRangeFeatureSampler(
+    ConstMult,
+    {
+        'feature': ParameterRange.features(feature_set_sampler_for_param_range),
+        'constant': ParameterRange.float_range(-10, 10)
+    }
+)
+
+large_const_mult_sampler = ParamRangeFeatureSampler(
+    ConstMult,
+    {
+        'feature': ParameterRange.features(feature_set_sampler_for_param_range),
+        'constant': ParameterRange.float_range(-10000, 10000)
+    }
+)
+
+sin_sampler = ParamRangeFeatureSampler(
+    Sin,
+    {
+        'feature': ParameterRange.features(feature_set_sampler_for_param_range)
+    }
+)
+
+cos_sampler = ParamRangeFeatureSampler(
+    Cos,
+    {
+        'feature': ParameterRange.features(feature_set_sampler_for_param_range)
+    }
+)
+
+square_sampler = ParamRangeFeatureSampler(
+    Square,
+    {
+        'feature': ParameterRange.features(feature_set_sampler_for_param_range)
+    }
+)
+
+cube_sampler = ParamRangeFeatureSampler(
+    Cube,
+    {
+        'feature': ParameterRange.features(feature_set_sampler_for_param_range)
+    }
+)
+
+small_constant_sampler = ParamRangeFeatureSampler(
+    Constant,
+    {
+        'constant': ParameterRange.float_range(-10, 10)
+    }
+)
+
+large_constant_sampler = ParamRangeFeatureSampler(
+    Constant,
+    {
+        'constant': ParameterRange.float_range(-10000, 10000)
+    }
+)
+
+linear_comb_sampler = LinearFeatureCombinationFeatureSampler(
+    n_features_range=ParameterRange.int_range(2, 5),
+    coef_range=ParameterRange.float_range(-100, 100),
+    features=ParameterRange.features(feature_set_sampler_for_param_range)
+)
+
+
+polynomial_comb_samper = PolynomialFeatureCombinationFeatureSampler(
+    n_features_range=ParameterRange.int_range(2, 5),
+    exp_range=ParameterRange.float_range(0, 4),
+    features=ParameterRange.features(feature_set_sampler_for_param_range)
+)
+
 samplers_volume_value = [volume_value_sampler]
 
 samplers_ohlc_self_close_delta = [ohlc_self_close_delta_sampler]
@@ -264,21 +450,49 @@ samplers_all_old = [ohlc_now_close_delta_sampler,
                     bbands_self_close_delta_sampler,
                     bbands_now_close_delta_sampler,
                     rsi_value_sampler,
-                    macd_value_sampler]
+                    macd_value_sampler,
+                    bbands_band_width_sampler,
+                    cs_tip_to_tip_size_sampler,
+                    cs_body_size_sampler]
 
-samplers_all = [ohlc_now_close_delta_sampler,
-                ohlc_self_close_delta_sampler,
-                volume_value_sampler,
-                sma_self_close_delta_sampler,
-                sma_now_close_delta_sampler,
-                cs_pattern_sampler,
-                bbands_self_close_delta_sampler,
-                bbands_now_close_delta_sampler,
-                rsi_value_sampler,
-                macd_value_sampler,
-                bbands_band_width_sampler,
-                cs_tip_to_tip_size_sampler,
-                cs_body_size_sampler]
+samplers_all = [
+    ohlc_now_close_delta_sampler,
+    ohlc_self_close_delta_sampler,
+    volume_value_sampler,
+    sma_self_close_delta_sampler,
+    sma_now_close_delta_sampler,
+    cs_pattern_sampler,
+    bbands_self_close_delta_sampler,
+    bbands_now_close_delta_sampler,
+    rsi_value_sampler,
+    macd_value_sampler,
+    bbands_band_width_sampler,
+    cs_tip_to_tip_size_sampler,
+    cs_body_size_sampler,
+    volume_now_close_delta_sampler,
+    volume_self_close_delta_sampler,
+    ohlcv_value_sampler,
+    shifted_close_value_sampler,
+    close_value_sampler,
+    shifted_sampler,
+    sum_sampler,
+    diff_sampler,
+    div_sampler,
+    mult_sampler,
+    norm_diff_sampler,
+    shifted_norm_diff_sampler,
+    shifted_self_norm_diff_sampler,
+    small_const_mult_sampler,
+    large_const_mult_sampler,
+    sin_sampler,
+    cos_sampler,
+    square_sampler,
+    cube_sampler,
+    small_constant_sampler,
+    large_constant_sampler,
+    linear_comb_sampler,
+    polynomial_comb_samper
+]
 
 feature_set_sampler_for_param_range.feature_samplers = samplers_all
 
