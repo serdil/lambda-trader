@@ -6,6 +6,8 @@ import pandas
 import pandas as pd
 from typing import List
 
+from functools import reduce
+
 from lambdatrader.constants import M5
 from lambdatrader.exceptions import ArgumentError
 from lambdatrader.indicator_functions import IndicatorEnum
@@ -194,7 +196,7 @@ class CloseValue(ShiftedCloseValue):
 
 
 class Shifted(LookbackFeature):
-    def __init__(self, feature: LookbackFeature, offset=0):
+    def __init__(self, feature: LookbackFeature, offset=0, period=None):
         self.feature = feature
         self.offset = offset
 
@@ -215,7 +217,7 @@ class Shifted(LookbackFeature):
 
 
 class BinaryOpFeature(LookbackFeature):
-    def __init__(self, f1, f2):
+    def __init__(self, f1, f2, period=None):
         self.assert_periods_equal(f1, f2)
 
         self.f1 = f1
@@ -278,7 +280,7 @@ class Mult(BinaryOpFeature):
 
 
 class FeatureFeature(LookbackFeature):
-    def __init__(self, feature):
+    def __init__(self, feature, period=None):
         self.feature = feature
 
     @property
@@ -298,7 +300,7 @@ class FeatureFeature(LookbackFeature):
 
 
 class NormDiff(FeatureFeature):
-    def __init__(self, f1, f2):
+    def __init__(self, f1, f2, period=None):
         self.assert_periods_equal(f1, f2)
 
         diff = Diff(f1, f2)
@@ -307,7 +309,7 @@ class NormDiff(FeatureFeature):
 
 
 class ShiftedNormDiff(NormDiff):
-    def __init__(self, f1, f2, offset):
+    def __init__(self, f1, f2, offset, period=None):
         self.assert_periods_equal(f1, f2)
 
         shifted_f2 = Shifted(f2, offset=offset)
@@ -315,18 +317,18 @@ class ShiftedNormDiff(NormDiff):
 
 
 class ShiftedSelfNormDiff(ShiftedNormDiff):
-    def __init__(self, feature, offset):
+    def __init__(self, feature, offset, period=None):
         super().__init__(feature, feature, offset=offset)
 
 
 class ConstMult(FeatureFeature):
-    def __init__(self, feature, constant):
+    def __init__(self, feature, constant, period=None):
         const_mult = Mult(feature, Constant(constant, period=feature.period))
         super().__init__(const_mult)
 
 
 class UnaryOpFeature(LookbackFeature):
-    def __init__(self, feature):
+    def __init__(self, feature, period=None):
         self.feature = feature
 
     @property
@@ -729,7 +731,7 @@ class SMANowCloseDelta(IndicatorNowCloseDelta):
 
 
 class LinearFeatureCombination(LookbackFeature):
-    def __init__(self, features: List[LookbackFeature], coef: List[float]):
+    def __init__(self, features: List[LookbackFeature], coef: List[float], period=None):
         self.assert_periods_equal(*features)
 
         if len(features) != len(coef):
@@ -759,8 +761,39 @@ class LinearFeatureCombination(LookbackFeature):
         return sum_df
 
 
+class PolynomialFeatureCombination(LookbackFeature):
+    def __init__(self, features: List[LookbackFeature], exp: List[float], period=None):
+        self.assert_periods_equal(*features)
+
+        if len(features) != len(exp):
+            raise ArgumentError
+        self.features = features
+        self.exp = exp
+
+    @property
+    def name(self):
+        feature_names_str = join_list([f.name for f in self.features])
+        exp_str = join_list(self.exp)
+        return 'polynomial_comp_features_{}_exp_{}'.format(feature_names_str, exp_str)
+
+    @property
+    def lookback(self):
+        return max([f.lookback for f in self.features])
+
+    @property
+    def period(self):
+        return self.features[0].period
+
+    def compute_raw(self, dfs):
+        exp_dfs = [f.compute_raw(dfs) ** coef for coef, f in zip(self.exp, self.features)]
+        for df in exp_dfs:
+            df.columns = ['0']
+        mult_df = reduce(lambda a, b: a*b, exp_dfs)
+        return mult_df
+
+
 class AbsValue(LookbackFeature):
-    def __init__(self, feature: LookbackFeature):
+    def __init__(self, feature: LookbackFeature, period=None):
         self.feature = feature
 
     @property
@@ -820,7 +853,7 @@ class CandlestickBodySize(AbsValue):
 class IndicatorValueOnFeature(LookbackFeature):
 
     def __init__(self, feature,
-                 indicator, args, offset, longest_timeperiod, output_col=None):
+                 indicator, args, offset, longest_timeperiod, output_col=None, period=None):
         self.feature = feature
 
         self.indicator = indicator
