@@ -455,7 +455,7 @@ samplers_all_old = [ohlc_now_close_delta_sampler,
                     cs_tip_to_tip_size_sampler,
                     cs_body_size_sampler]
 
-plain_features = [
+samplers_plain = [
     ohlc_now_close_delta_sampler,
     ohlc_self_close_delta_sampler,
     volume_value_sampler,
@@ -478,7 +478,7 @@ plain_features = [
     large_constant_sampler,
 ]
 
-recursive_features = [
+samplers_recursive = [
     shifted_sampler,
     sum_sampler,
     diff_sampler,
@@ -497,9 +497,9 @@ recursive_features = [
     polynomial_comb_samper
 ]
 
-samplers_all = plain_features + recursive_features
+samplers_all = samplers_plain + samplers_recursive
 
-feature_set_sampler_for_param_range.feature_samplers = samplers_all
+feature_set_sampler_for_param_range.feature_samplers = samplers_plain
 
 
 fs_sampler_volume_value = FeatureSetSampler(samplers_volume_value)
