@@ -493,9 +493,11 @@ samplers_recursive = [
     cos_sampler,
     square_sampler,
     cube_sampler,
-    linear_comb_sampler,
-    polynomial_comb_samper
+    # linear_comb_sampler,
+    # polynomial_comb_samper
 ]
+
+# TODO: add random depth limit
 
 samplers_all = samplers_plain + samplers_recursive
 

@@ -182,7 +182,7 @@ class OHLCVValue(LookbackFeature):
         return self._period
 
     def compute_raw(self, dfs):
-        return dfs[self.period]
+        return dfs[self.period][self.mode]
 
 
 class ShiftedCloseValue(OHLCVValue):
