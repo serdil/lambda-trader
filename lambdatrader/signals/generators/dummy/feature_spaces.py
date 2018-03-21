@@ -455,7 +455,7 @@ samplers_all_old = [ohlc_now_close_delta_sampler,
                     cs_tip_to_tip_size_sampler,
                     cs_body_size_sampler]
 
-samplers_all = [
+plain_features = [
     ohlc_now_close_delta_sampler,
     ohlc_self_close_delta_sampler,
     volume_value_sampler,
@@ -474,6 +474,11 @@ samplers_all = [
     ohlcv_value_sampler,
     shifted_close_value_sampler,
     close_value_sampler,
+    small_constant_sampler,
+    large_constant_sampler,
+]
+
+recursive_features = [
     shifted_sampler,
     sum_sampler,
     diff_sampler,
@@ -488,11 +493,11 @@ samplers_all = [
     cos_sampler,
     square_sampler,
     cube_sampler,
-    small_constant_sampler,
-    large_constant_sampler,
     linear_comb_sampler,
     polynomial_comb_samper
 ]
+
+samplers_all = plain_features + recursive_features
 
 feature_set_sampler_for_param_range.feature_samplers = samplers_all
 
