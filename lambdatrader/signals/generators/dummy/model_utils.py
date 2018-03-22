@@ -104,6 +104,7 @@ class LearningTask:
         self.n_target_feat = None
         self.sel_ratio = None
         self.feat_sel_n_rounds = None
+        self.score_bag_interval_rounds = None
 
         self.feat_sampler = None
 
@@ -206,6 +207,9 @@ class LearningTask:
         self.select_features = True
         self.feat_sel_mode = self.FEAT_SEL_SCORE_BAG
         return self
+
+    def set_score_bag_interval_rounds(self, n_rounds=3):
+        self.score_bag_interval_rounds = n_rounds
 
     def set_feat_sel_n_target_feat(self, n_target_feat):
         self.n_target_feat = n_target_feat
@@ -416,7 +420,7 @@ class LearningTask:
                     best_features = [feat for feat, _ in feat_scores_sorted[:self.n_target_feat]]
                     best_fs = fs.compose_remove_duplicates(DFFeatureSet(features=best_features))
                     close_model = self._replace_model_feature_set(close_model, best_fs)
-                    if i != 0:
+                    if (i+1) % self.score_bag_interval_rounds == 0 and i != 0:
                         self._bprint('[close] round {} best'.format(i))
                         close_model.train()
 
@@ -434,8 +438,9 @@ class LearningTask:
                     best_features = [feat for feat, _ in feat_scores_sorted[:self.n_target_feat]]
                     best_fs = fs.compose_remove_duplicates(DFFeatureSet(features=best_features))
                     max_model = self._replace_model_feature_set(max_model, best_fs)
-                    self._bprint('[max] round {} best'.format(i))
-                    max_model.train()
+                    if (i+1) % self.score_bag_interval_rounds == 0 and i != 0:
+                        self._bprint('[max] round {} best'.format(i))
+                        max_model.train()
             else:
                 raise NotImplementedError
 

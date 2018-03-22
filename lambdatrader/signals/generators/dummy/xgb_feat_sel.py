@@ -208,5 +208,6 @@ lt.set_feat_sampler(fs_sampler_all)
 # lt.set_grow_shr_feat_sel()
 # lt.set_hier_feat_sel()
 lt.set_score_bag_feat_sel()
+lt.set_score_bag_interval_rounds(5)
 
 lt.execute()
