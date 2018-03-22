@@ -30,6 +30,18 @@ def prefix_df_col_names(df, prefix):
     return df
 
 
+def remove_name(df):
+    df.columns = [0]
+    return df
+
+
+def to_df(series_or_df):
+    if isinstance(series_or_df, pd.Series):
+        return series_or_df.to_frame(name=0)
+    else:
+        return series_or_df
+
+
 class DFFeatureSet:
 
     def __init__(self, features, sort=True):
@@ -136,7 +148,7 @@ class DummyFeature(LookbackFeature):
 
     def compute_raw(self, dfs):
         zero_series = pd.Series(np.zeros(len(dfs[M5])), index=dfs[M5].index)
-        return zero_series
+        return to_df(zero_series)
 
 
 class RandomFeature(LookbackFeature):
@@ -158,7 +170,7 @@ class RandomFeature(LookbackFeature):
 
     def compute_raw(self, dfs):
         random_series = pd.Series(np.random.rand(len(dfs[M5])), index=dfs[M5].index)
-        return random_series
+        return to_df(random_series)
 
 
 class OHLCVValue(LookbackFeature):
@@ -182,7 +194,7 @@ class OHLCVValue(LookbackFeature):
         return self._period
 
     def compute_raw(self, dfs):
-        return dfs[self.period][self.mode]
+        return to_df(dfs[self.period][self.mode])
 
 
 class ShiftedCloseValue(OHLCVValue):
@@ -202,7 +214,7 @@ class Shifted(LookbackFeature):
 
     @property
     def name(self):
-        return 'shifted_offset_{}_feature_{}'.format(self.offset, self.feature.name)
+        return 'shifted_offset_{}_feature_({})'.format(self.offset, self.feature.name)
 
     @property
     def lookback(self):
@@ -213,7 +225,7 @@ class Shifted(LookbackFeature):
         return self.feature.period
 
     def compute_raw(self, dfs):
-        return self.feature.compute_raw(dfs).shift(self.offset)
+        return to_df(self.feature.compute_raw(dfs).shift(self.offset))
 
 
 class BinaryOpFeature(LookbackFeature):
@@ -225,7 +237,7 @@ class BinaryOpFeature(LookbackFeature):
 
     @property
     def name(self):
-        return '{}_f1_{}_f2_{}'.format(self.op_name, self.f1.name, self.f2.name)
+        return 'binary_op_{}_f1_({})_f2_({})'.format(self.op_name, self.f1.name, self.f2.name)
 
     @property
     def op_name(self):
@@ -249,7 +261,7 @@ class Sum(BinaryOpFeature):
         return 'sum'
 
     def compute_raw(self, dfs):
-        return self.f1.compute_raw(dfs) + self.f2.compute_raw(dfs)
+        return to_df(remove_name(self.f1.compute_raw(dfs)) + remove_name(self.f2.compute_raw(dfs)))
 
 
 class Diff(BinaryOpFeature):
@@ -258,7 +270,7 @@ class Diff(BinaryOpFeature):
         return 'diff'
 
     def compute_raw(self, dfs):
-        return self.f1.compute_raw(dfs) - self.f2.compute_raw(dfs)
+        return to_df(remove_name(self.f1.compute_raw(dfs)) - remove_name(self.f2.compute_raw(dfs)))
 
 
 class Div(BinaryOpFeature):
@@ -267,7 +279,7 @@ class Div(BinaryOpFeature):
         return 'div'
 
     def compute_raw(self, dfs):
-        return self.f1.compute_raw(dfs) / self.f2.compute_raw(dfs)
+        return to_df(remove_name(self.f1.compute_raw(dfs)) / remove_name(self.f2.compute_raw(dfs)))
 
 
 class Mult(BinaryOpFeature):
@@ -276,7 +288,7 @@ class Mult(BinaryOpFeature):
         return 'mult'
 
     def compute_raw(self, dfs):
-        return self.f1.compute_raw(dfs) * self.f2.compute_raw(dfs)
+        return to_df(remove_name(self.f1.compute_raw(dfs)) * remove_name(self.f2.compute_raw(dfs)))
 
 
 class FeatureFeature(LookbackFeature):
@@ -296,7 +308,7 @@ class FeatureFeature(LookbackFeature):
         return self.feature.period
 
     def compute_raw(self, dfs):
-        return self.feature.compute_raw(dfs)
+        return to_df(self.feature.compute_raw(dfs))
 
 
 class NormDiff(FeatureFeature):
@@ -333,7 +345,7 @@ class UnaryOpFeature(LookbackFeature):
 
     @property
     def name(self):
-        return '{}_feature_{}'.format(self.op_name, self.feature.name)
+        return 'unary_op_{}_feature_({})'.format(self.op_name, self.feature.name)
 
     @property
     def op_name(self):
@@ -357,7 +369,7 @@ class Sin(UnaryOpFeature):
         return 'sin'
 
     def compute_raw(self, dfs):
-        return np.sin(self.feature.compute_raw(dfs))
+        return to_df(np.sin(self.feature.compute_raw(dfs)))
 
 
 class Cos(UnaryOpFeature):
@@ -366,7 +378,7 @@ class Cos(UnaryOpFeature):
         return 'cos'
 
     def compute_raw(self, dfs):
-        return np.cos(self.feature.compute_raw(dfs))
+        return to_df(np.cos(self.feature.compute_raw(dfs)))
 
 
 class Square(UnaryOpFeature):
@@ -376,7 +388,7 @@ class Square(UnaryOpFeature):
 
     def compute_raw(self, dfs):
         df = self.feature.compute_raw(dfs)
-        return df * df
+        return to_df(df * df)
 
 
 class Cube(UnaryOpFeature):
@@ -386,7 +398,7 @@ class Cube(UnaryOpFeature):
 
     def compute_raw(self, dfs):
         df = self.feature.compute_raw(dfs)
-        return df * df * df
+        return to_df(df * df * df)
 
 
 class Constant(LookbackFeature):
@@ -396,7 +408,7 @@ class Constant(LookbackFeature):
 
     @property
     def name(self):
-        return 'constant_{}'.format(self.constant)
+        return 'constant_({})'.format(self.constant)
 
     @property
     def lookback(self):
@@ -408,7 +420,7 @@ class Constant(LookbackFeature):
 
     def compute_raw(self, dfs):
         df = dfs[self.period]
-        return pandas.Series(self.constant, index=df.index)
+        return to_df(pandas.Series(self.constant, index=df.index))
 
 
 class OHLCVNowSelfDelta(LookbackFeature):
@@ -434,7 +446,7 @@ class OHLCVNowSelfDelta(LookbackFeature):
     def compute_raw(self, dfs):
         df = dfs[self.period]
         self_delta = df[self.mode].diff(self.offset) / df[self.mode]
-        return self_delta
+        return to_df(self_delta)
 
 
 class OHLCVNowCloseDelta(LookbackFeature):
@@ -461,7 +473,7 @@ class OHLCVNowCloseDelta(LookbackFeature):
     def compute_raw(self, dfs):
         df = dfs[self.period]
         close_delta = (df[OHLCV_CLOSE] - df[self.mode].shift(self.offset)) / df[OHLCV_CLOSE]
-        return close_delta
+        return to_df(close_delta)
 
 
 class OHLCVSelfCloseDelta(LookbackFeature):
@@ -491,7 +503,7 @@ class OHLCVSelfCloseDelta(LookbackFeature):
         shifted_close = close.shift(self.offset)
         shifted_mode = df[self.mode].shift(self.offset)
         self_close_delta = (shifted_close - shifted_mode) / shifted_close
-        return self_close_delta
+        return to_df(self_close_delta)
 
 
 class IndicatorValue(LookbackFeature):
@@ -523,7 +535,7 @@ class IndicatorValue(LookbackFeature):
         value = self.indicator.function()(df, *self.args).shift(self.offset)
         if self.output_col is not None:
             value = value.iloc[:,self.output_col:self.output_col+1]
-        return value
+        return to_df(value)
 
     def assert_output_col_max(self, max_n_outputs):
         if (self.output_col is not None and
@@ -563,7 +575,7 @@ class IndicatorSelfDelta(LookbackFeature):
         self_delta = (ind_values.diff(self.offset) / ind_values)
         if self.output_col is not None:
             self_delta = self_delta.iloc[:,self.output_col:self.output_col+1]
-        return self_delta
+        return to_df(self_delta)
 
     def assert_output_col_max(self, max_n_outputs):
         if (self.output_col is not None and
@@ -603,7 +615,7 @@ class IndicatorNowCloseDelta(LookbackFeature):
                        .rsub(df[OHLCV_CLOSE], axis=0).div(df[OHLCV_CLOSE], axis=0))
         if self.output_col is not None:
             close_delta = close_delta.iloc[:,self.output_col:self.output_col+1]
-        return close_delta
+        return to_df(close_delta)
 
     def assert_output_col_max(self, max_n_outputs):
         if (self.output_col is not None and
@@ -644,7 +656,7 @@ class IndicatorSelfCloseDelta(LookbackFeature):
                        .rsub(shifted_close, axis=0).div(shifted_close, axis=0))
         if self.output_col is not None:
             close_delta = close_delta.iloc[:,self.output_col:self.output_col+1]
-        return close_delta
+        return to_df(close_delta)
 
     def assert_output_col_max(self, max_n_outputs):
         if (self.output_col is not None and
@@ -743,7 +755,7 @@ class LinearFeatureCombination(LookbackFeature):
     def name(self):
         feature_names_str = join_list([f.name for f in self.features])
         coef_str = join_list(self.coef)
-        return 'linear_comb_features_{}_coef_{}'.format(feature_names_str, coef_str)
+        return 'linear_comb_features_({})_coef_{}'.format(feature_names_str, coef_str)
 
     @property
     def lookback(self):
@@ -756,9 +768,9 @@ class LinearFeatureCombination(LookbackFeature):
     def compute_raw(self, dfs):
         coef_dfs = [f.compute_raw(dfs) * coef for coef, f in zip(self.coef, self.features)]
         for df in coef_dfs:
-            df.columns = ['0']
+            remove_name(df)
         sum_df = sum(coef_dfs)
-        return sum_df
+        return to_df(sum_df)
 
 
 class PolynomialFeatureCombination(LookbackFeature):
@@ -774,7 +786,7 @@ class PolynomialFeatureCombination(LookbackFeature):
     def name(self):
         feature_names_str = join_list([f.name for f in self.features])
         exp_str = join_list(self.exp)
-        return 'polynomial_comp_features_{}_exp_{}'.format(feature_names_str, exp_str)
+        return 'polynomial_comb_features_({})_exp_{}'.format(feature_names_str, exp_str)
 
     @property
     def lookback(self):
@@ -787,9 +799,9 @@ class PolynomialFeatureCombination(LookbackFeature):
     def compute_raw(self, dfs):
         exp_dfs = [f.compute_raw(dfs) ** coef for coef, f in zip(self.exp, self.features)]
         for df in exp_dfs:
-            df.columns = ['0']
+            remove_name(df)
         mult_df = reduce(lambda a, b: a*b, exp_dfs)
-        return mult_df
+        return to_df(mult_df)
 
 
 class AbsValue(LookbackFeature):
@@ -798,7 +810,7 @@ class AbsValue(LookbackFeature):
 
     @property
     def name(self):
-        return 'abs_value_feature_{}'.format(self.feature.name)
+        return 'abs_value_feature_({})'.format(self.feature.name)
 
     @property
     def lookback(self):
@@ -810,7 +822,7 @@ class AbsValue(LookbackFeature):
 
     def compute_raw(self, dfs):
         df_abs = self.feature.compute_raw(dfs).abs()
-        return df_abs
+        return to_df(df_abs)
 
 
 class BBandsBandWidth(LinearFeatureCombination):
@@ -865,7 +877,7 @@ class IndicatorValueOnFeature(LookbackFeature):
     @property
     def name(self):
         return ('indicator_value_on_feature_'
-                'feature_{}_indicator_{}_args_{}_offset_{}_output_{}'
+                'feature_({})_indicator_{}_args_{}_offset_{}_output_{}'
                 .format(self.feature.name, self.indicator.name,
                         join_list(self.args), self.offset, self.output_col))
 
@@ -883,7 +895,7 @@ class IndicatorValueOnFeature(LookbackFeature):
         value = self.indicator.function()(ind_input, *self.args).shift(self.offset)
         if self.output_col is not None:
             value = value.iloc[:,self.output_col:self.output_col+1]
-        return value
+        return to_df(value)
 
     def assert_output_col_max(self, max_n_outputs):
         if (self.output_col is not None and
