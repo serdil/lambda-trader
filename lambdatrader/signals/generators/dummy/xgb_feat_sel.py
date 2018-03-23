@@ -115,13 +115,13 @@ feature_sampler = fs_sampler_all
 # feature_set = feature_sampler.sample(size=500)
 # feature_set = feature_sampler.sample(size=1000)
 
-num_features = 20
+num_features = 10
 
 feature_set = feature_sampler.sample(size=num_features)
 
 feat_sel_n_target = feature_sampler.sample(size=num_features)
-feat_sel_ratio = 0.90
-feat_sel_n_rounds = 10
+feat_sel_ratio = 0.70
+feat_sel_n_rounds = 100
 
 xgb_n_candles = 48
 value_set_close = DFFeatureSet(features=[CloseAvgReturn(n_candles=xgb_n_candles)])
@@ -143,7 +143,7 @@ xgb_params = {
     'base_score': 0,
     'eval_metric': 'rmse',
 
-    'eta': 0.03,
+    'eta': 0.003,
     'gamma':0,
     'max_depth': 4,
     'min_child_weight': 1,
@@ -205,9 +205,9 @@ lt = (LearningTask()
 # lt.set_feat_sampler(fs_sampler_all_old)
 lt.set_feat_sampler(fs_sampler_all)
 
-# lt.set_grow_shr_feat_sel()
+lt.set_grow_shr_feat_sel()
 # lt.set_hier_feat_sel()
-lt.set_score_bag_feat_sel()
-lt.set_score_bag_interval_rounds(5)
+# lt.set_score_bag_feat_sel()
+# lt.set_score_bag_interval_rounds(5)
 
 lt.execute()

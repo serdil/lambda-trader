@@ -343,27 +343,33 @@ class LearningTask:
                           .format(i), len(selected_features.features))
                     max_model = self._replace_model_feature_set(max_model, selected_features)
                     max_model.train()
+
             elif self.feat_sel_mode == self.FEAT_SEL_GROW_SHR:
                 self._bprint('[close] initial model')
                 close_model.train()
+                close_sel_score = float('-inf')
+                cur_features = self._get_model_feature_set(close_model)
                 for i in range(self.feat_sel_n_rounds):
-                    cur_features = self._get_model_feature_set(close_model)
                     cur_num_features = cur_features.num_features
                     num_new_features = int(self.n_target_feat / self.sel_ratio) - cur_num_features
                     new_features = self.feat_sampler.sample(size=num_new_features)
                     combined_features = fs.compose_remove_duplicates(cur_features, new_features)
                     close_model = self._replace_model_feature_set(close_model, combined_features)
-                    self._bprint('[close] selection round')
+                    self._bprint('[close] selection round {}'.format(i))
                     close_model.train()
-                    selected_features = close_model.select_features_by_number(self.n_target_feat)
-                    close_model = self._replace_model_feature_set(close_model, selected_features)
-                    self._bprint('[close] round {} result (num_features: {})'
-                                 .format(i, selected_features.num_features))
-                    close_model.train()
+                    if close_model.val_r2_score > close_sel_score:
+                        close_sel_score = close_model.val_r2_score
+                        selected_features = close_model.select_features_by_number(self.n_target_feat)
+                        close_model = self._replace_model_feature_set(close_model, selected_features)
+                        self._bprint('[close] round {} result (num_features: {})'
+                                     .format(i, selected_features.num_features))
+                        close_model.train()
+                        cur_features = self._get_model_feature_set(close_model)
                 self._bprint('[max] initial model')
                 max_model.train()
+                max_sel_score = float('-inf')
+                cur_features = self._get_model_feature_set(max_model)
                 for i in range(self.feat_sel_n_rounds):
-                    cur_features = self._get_model_feature_set(max_model)
                     cur_num_features = cur_features.num_features
                     num_new_features = int(self.n_target_feat / self.sel_ratio) - cur_num_features
                     new_features = self.feat_sampler.sample(size=num_new_features)
@@ -371,11 +377,15 @@ class LearningTask:
                     max_model = self._replace_model_feature_set(max_model, combined_features)
                     self._bprint('[max] selection round')
                     max_model.train()
-                    selected_features = max_model.select_features_by_number(self.n_target_feat)
-                    max_model = self._replace_model_feature_set(max_model, selected_features)
-                    self._bprint('[max] round {} result (num_features: {})'
-                                 .format(i, selected_features.num_features))
-                    max_model.train()
+                    if max_model.val_r2_score > max_sel_score:
+                        max_sel_score = max_model.val_r2_score
+                        selected_features = max_model.select_features_by_number(self.n_target_feat)
+                        max_model = self._replace_model_feature_set(max_model, selected_features)
+                        self._bprint('[max] round {} result (num_features: {})'
+                                     .format(i, selected_features.num_features))
+                        max_model.train()
+                        cur_features = self._get_model_feature_set(max_model)
+
             elif self.feat_sel_mode == self.FEAT_SEL_HIER:
                 num_features = int(self.n_target_feat / self.sel_ratio)
                 level_features = [[] for _ in range(self.feat_sel_n_rounds + 1)]
@@ -403,6 +413,7 @@ class LearningTask:
                             close_model.train()
                             selected_features = close_model.select_features_by_ratio(self.sel_ratio)
                             level_features[level+1].extend(selected_features.sample())
+
             elif self.feat_sel_mode == self.FEAT_SEL_SCORE_BAG:
                 self._bprint('score bag feature selection')
                 batch_size = self.n_target_feat
