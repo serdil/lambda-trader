@@ -78,6 +78,8 @@ xgb_training_pairs = ['BTC_XRP']; interleaved = False
 
 print('training pairs:', xgb_training_pairs)
 
+val_pairs = xgb_training_pairs
+# val_pairs = ['BTC_XRP']
 
 # xgb_split_date_range = SplitDateRanges.january_3_days_test_3_days_val_7_days_train()
 # xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_20_days_train()
@@ -189,9 +191,6 @@ lt = (LearningTask()
       .apply_defaults()
       .set_n_candles(xgb_n_candles)
       .set_train_val_test_date_ranges(xgb_split_date_range)
-      .set_train_pairs(xgb_training_pairs)
-      .set_val_pairs(xgb_training_pairs)
-      .set_test_pairs(xgb_training_pairs)
       .set_feature_set(feature_set)
       .set_xgb_n_rounds(num_round)
       .set_xgb_esr(early_stopping_rounds)
@@ -202,8 +201,18 @@ lt = (LearningTask()
       .set_feat_sel_sel_ratio(feat_sel_ratio)
       .set_feat_sel_n_rounds(feat_sel_n_rounds))
 
-# lt.set_feat_sampler(fs_sampler_all_old)
-lt.set_feat_sampler(fs_sampler_all)
+lt.set_train_pairs(xgb_training_pairs)\
+    .set_val_pairs(val_pairs)\
+    .set_test_pairs(val_pairs)
+
+lt.set_train_pairs_interleaved(True)\
+    .set_model_per_pair(True)
+
+# lt.set_train_pairs_interleaved(False)\
+#     .set_model_per_pair(True)
+
+lt.set_feat_sampler(fs_sampler_all_old)
+# lt.set_feat_sampler(fs_sampler_all)
 
 lt.set_grow_shr_feat_sel()
 # lt.set_hier_feat_sel()
