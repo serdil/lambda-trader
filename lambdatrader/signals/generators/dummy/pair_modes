@@ -1,15 +1,15 @@
-# training_interleaved=True model_per_pair=True
+# training_interleaved=True model_per_pair=True IMPLEMENTED
 
 ignore test_pairs
 train separate model on train_pairs for every model in val_pairs. validate on val_pair
 test on val_pairs
 
-# training_interleaved=True model_per_pair=False
+# training_interleaved=True model_per_pair=False IMPLEMENTED
 
 train single model on train_pairs, validate on val_pairs
 test on test_pairs
 
-# training_interleaved=False model_per_pair=True
+# training_interleaved=False model_per_pair=True IMPLEMENTED
 
 ignore train_pairs and test_pairs
 train separate model on val_pair for each pair in val_pairs. validate on val_pair

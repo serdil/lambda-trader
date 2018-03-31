@@ -261,71 +261,228 @@ class LearningTask:
         elif not self.train_pairs_interleaved and not self.model_per_pair:
             raise ArgumentError
 
-        c_train_dataset = DatasetDescriptor(pairs=self.train_pairs,
-                                            feature_set=self.feature_set,
-                                            value_set=self.close_value_set,
-                                            start_date=self.train_date_range.start,
-                                            end_date=self.train_date_range.end,
-                                            exchanges=(POLONIEX,),
-                                            interleaved=True)
-        c_val_dataset = DatasetDescriptor(pairs=self.val_pairs,
-                                          feature_set=self.feature_set,
-                                          value_set=self.close_value_set,
-                                          start_date=self.val_date_range.start,
-                                          end_date=self.val_date_range.end,
-                                          exchanges=(POLONIEX,),
-                                          interleaved=True)
-        c_test_dataset = DatasetDescriptor(pairs=self.test_pairs,
-                                           feature_set=self.feature_set,
-                                           value_set=self.close_value_set,
-                                           start_date=self.test_date_range.start,
-                                           end_date=self.test_date_range.end,
-                                           exchanges=(POLONIEX,), interleaved=True)
+        if self.train_pairs_interleaved and not self.model_per_pair:
+            c_train_dataset = DatasetDescriptor(pairs=self.train_pairs,
+                                                feature_set=self.feature_set,
+                                                value_set=self.close_value_set,
+                                                start_date=self.train_date_range.start,
+                                                end_date=self.train_date_range.end,
+                                                exchanges=(POLONIEX,),
+                                                interleaved=True)
+            c_val_dataset = DatasetDescriptor(pairs=self.val_pairs,
+                                              feature_set=self.feature_set,
+                                              value_set=self.close_value_set,
+                                              start_date=self.val_date_range.start,
+                                              end_date=self.val_date_range.end,
+                                              exchanges=(POLONIEX,),
+                                              interleaved=True)
+            c_test_dataset = DatasetDescriptor(pairs=self.test_pairs,
+                                               feature_set=self.feature_set,
+                                               value_set=self.close_value_set,
+                                               start_date=self.test_date_range.start,
+                                               end_date=self.test_date_range.end,
+                                               exchanges=(POLONIEX,), interleaved=True)
 
-        c_dataset = SplitDatasetDescriptor(c_train_dataset, c_val_dataset, c_test_dataset)
+            c_dataset = SplitDatasetDescriptor(c_train_dataset, c_val_dataset, c_test_dataset)
 
-        m_train_dataset = DatasetDescriptor(pairs=self.train_pairs,
-                                            feature_set=self.feature_set,
-                                            value_set=self.max_value_set,
-                                            start_date=self.train_date_range.start,
-                                            end_date=self.train_date_range.end,
-                                            exchanges=(POLONIEX,),
-                                            interleaved=True)
-        m_val_dataset = DatasetDescriptor(pairs=self.val_pairs,
-                                          feature_set=self.feature_set,
-                                          value_set=self.max_value_set,
-                                          start_date=self.val_date_range.start,
-                                          end_date=self.val_date_range.end,
-                                          exchanges=(POLONIEX,),
-                                          interleaved=True)
-        m_test_dataset = DatasetDescriptor(pairs=self.test_pairs,
-                                           feature_set=self.feature_set,
-                                           value_set=self.max_value_set,
-                                           start_date=self.test_date_range.start,
-                                           end_date=self.test_date_range.end,
-                                           exchanges=(POLONIEX,), interleaved=True)
+            m_train_dataset = DatasetDescriptor(pairs=self.train_pairs,
+                                                feature_set=self.feature_set,
+                                                value_set=self.max_value_set,
+                                                start_date=self.train_date_range.start,
+                                                end_date=self.train_date_range.end,
+                                                exchanges=(POLONIEX,),
+                                                interleaved=True)
+            m_val_dataset = DatasetDescriptor(pairs=self.val_pairs,
+                                              feature_set=self.feature_set,
+                                              value_set=self.max_value_set,
+                                              start_date=self.val_date_range.start,
+                                              end_date=self.val_date_range.end,
+                                              exchanges=(POLONIEX,),
+                                              interleaved=True)
+            m_test_dataset = DatasetDescriptor(pairs=self.test_pairs,
+                                               feature_set=self.feature_set,
+                                               value_set=self.max_value_set,
+                                               start_date=self.test_date_range.start,
+                                               end_date=self.test_date_range.end,
+                                               exchanges=(POLONIEX,), interleaved=True)
 
-        m_dataset = SplitDatasetDescriptor(m_train_dataset, m_val_dataset, m_test_dataset)
+            m_dataset = SplitDatasetDescriptor(m_train_dataset, m_val_dataset, m_test_dataset)
 
-        if self.model_to_use == self.MODEL_XGB:
-            close_model  = XGBSplitDatasetModel(
-                dataset_descriptor=c_dataset,
-                booster_params=self.xgb_booster_params,
-                num_round=self.xgb_n_rounds,
-                early_stopping_rounds=self.xgb_esr,
-                obj_name='close'
-            )
+            if self.model_to_use == self.MODEL_XGB:
+                close_model = XGBSplitDatasetModel(
+                    dataset_descriptor=c_dataset,
+                    booster_params=self.xgb_booster_params,
+                    num_round=self.xgb_n_rounds,
+                    early_stopping_rounds=self.xgb_esr,
+                    obj_name='close'
+                )
 
-            max_model = XGBSplitDatasetModel(
-                dataset_descriptor=m_dataset,
-                booster_params=self.xgb_booster_params,
-                num_round=self.xgb_n_rounds,
-                early_stopping_rounds=self.xgb_esr,
-                obj_name='max'
-            )
-        else:
-            raise NotImplementedError
+                max_model = XGBSplitDatasetModel(
+                    dataset_descriptor=m_dataset,
+                    booster_params=self.xgb_booster_params,
+                    num_round=self.xgb_n_rounds,
+                    early_stopping_rounds=self.xgb_esr,
+                    obj_name='max'
+                )
+            else:
+                raise NotImplementedError
 
+            self.select_features(close_model=close_model, max_model=max_model)
+            self.do_backtest(close_model=close_model, max_model=max_model)
+
+        elif self.train_pairs_interleaved and self.model_per_pair:
+            c_train_dataset = DatasetDescriptor(pairs=self.train_pairs,
+                                                feature_set=self.feature_set,
+                                                value_set=self.close_value_set,
+                                                start_date=self.train_date_range.start,
+                                                end_date=self.train_date_range.end,
+                                                exchanges=(POLONIEX,),
+                                                interleaved=True)
+
+            m_train_dataset = DatasetDescriptor(pairs=self.train_pairs,
+                                                feature_set=self.feature_set,
+                                                value_set=self.max_value_set,
+                                                start_date=self.train_date_range.start,
+                                                end_date=self.train_date_range.end,
+                                                exchanges=(POLONIEX,),
+                                                interleaved=True)
+            close_models = {}
+            max_models = {}
+
+            for pair in self.val_pairs:
+                c_val_dataset = DatasetDescriptor(pairs=pair,
+                                                  feature_set=self.feature_set,
+                                                  value_set=self.close_value_set,
+                                                  start_date=self.val_date_range.start,
+                                                  end_date=self.val_date_range.end,
+                                                  exchanges=(POLONIEX,),
+                                                  interleaved=True)
+                c_test_dataset = DatasetDescriptor(pairs=pair,
+                                                   feature_set=self.feature_set,
+                                                   value_set=self.close_value_set,
+                                                   start_date=self.test_date_range.start,
+                                                   end_date=self.test_date_range.end,
+                                                   exchanges=(POLONIEX,),
+                                                   interleaved=True)
+
+                c_dataset = SplitDatasetDescriptor(c_train_dataset, c_val_dataset, c_test_dataset)
+
+                m_val_dataset = DatasetDescriptor(pairs=pair,
+                                                  feature_set=self.feature_set,
+                                                  value_set=self.max_value_set,
+                                                  start_date=self.val_date_range.start,
+                                                  end_date=self.val_date_range.end,
+                                                  exchanges=(POLONIEX,),
+                                                  interleaved=True)
+                m_test_dataset = DatasetDescriptor(pairs=self.test_pairs,
+                                                   feature_set=self.feature_set,
+                                                   value_set=self.max_value_set,
+                                                   start_date=self.test_date_range.start,
+                                                   end_date=self.test_date_range.end,
+                                                   exchanges=(POLONIEX,), interleaved=True)
+
+                m_dataset = SplitDatasetDescriptor(m_train_dataset, m_val_dataset, m_test_dataset)
+
+                if self.model_to_use == self.MODEL_XGB:
+                    close_model = XGBSplitDatasetModel(
+                        dataset_descriptor=c_dataset,
+                        booster_params=self.xgb_booster_params,
+                        num_round=self.xgb_n_rounds,
+                        early_stopping_rounds=self.xgb_esr,
+                        obj_name='close'
+                    )
+
+                    max_model = XGBSplitDatasetModel(
+                        dataset_descriptor=m_dataset,
+                        booster_params=self.xgb_booster_params,
+                        num_round=self.xgb_n_rounds,
+                        early_stopping_rounds=self.xgb_esr,
+                        obj_name='max'
+                    )
+                    close_models[pair] = close_model
+                    max_models[pair] = max_model
+                else:
+                    raise NotImplementedError
+
+                self.select_features(close_model=close_model, max_model=max_model)
+            self.do_backtest(close_models=close_models, max_models=max_models)
+
+        elif not self.train_pairs_interleaved and self.model_per_pair:
+            close_models = {}
+            max_models = {}
+
+            for pair in self.val_pairs:
+                c_train_dataset = DatasetDescriptor(pairs=pair,
+                                                    feature_set=self.feature_set,
+                                                    value_set=self.close_value_set,
+                                                    start_date=self.train_date_range.start,
+                                                    end_date=self.train_date_range.end,
+                                                    exchanges=(POLONIEX,),
+                                                    interleaved=True)
+                c_val_dataset = DatasetDescriptor(pairs=pair,
+                                                  feature_set=self.feature_set,
+                                                  value_set=self.close_value_set,
+                                                  start_date=self.val_date_range.start,
+                                                  end_date=self.val_date_range.end,
+                                                  exchanges=(POLONIEX,),
+                                                  interleaved=True)
+                c_test_dataset = DatasetDescriptor(pairs=pair,
+                                                   feature_set=self.feature_set,
+                                                   value_set=self.close_value_set,
+                                                   start_date=self.test_date_range.start,
+                                                   end_date=self.test_date_range.end,
+                                                   exchanges=(POLONIEX,),
+                                                   interleaved=True)
+
+                c_dataset = SplitDatasetDescriptor(c_train_dataset, c_val_dataset, c_test_dataset)
+
+                m_train_dataset = DatasetDescriptor(pairs=pair,
+                                                    feature_set=self.feature_set,
+                                                    value_set=self.max_value_set,
+                                                    start_date=self.train_date_range.start,
+                                                    end_date=self.train_date_range.end,
+                                                    exchanges=(POLONIEX,),
+                                                    interleaved=True)
+                m_val_dataset = DatasetDescriptor(pairs=pair,
+                                                  feature_set=self.feature_set,
+                                                  value_set=self.max_value_set,
+                                                  start_date=self.val_date_range.start,
+                                                  end_date=self.val_date_range.end,
+                                                  exchanges=(POLONIEX,),
+                                                  interleaved=True)
+                m_test_dataset = DatasetDescriptor(pairs=self.test_pairs,
+                                                   feature_set=self.feature_set,
+                                                   value_set=self.max_value_set,
+                                                   start_date=self.test_date_range.start,
+                                                   end_date=self.test_date_range.end,
+                                                   exchanges=(POLONIEX,), interleaved=True)
+
+                m_dataset = SplitDatasetDescriptor(m_train_dataset, m_val_dataset, m_test_dataset)
+
+                if self.model_to_use == self.MODEL_XGB:
+                    close_model = XGBSplitDatasetModel(
+                        dataset_descriptor=c_dataset,
+                        booster_params=self.xgb_booster_params,
+                        num_round=self.xgb_n_rounds,
+                        early_stopping_rounds=self.xgb_esr,
+                        obj_name='close'
+                    )
+
+                    max_model = XGBSplitDatasetModel(
+                        dataset_descriptor=m_dataset,
+                        booster_params=self.xgb_booster_params,
+                        num_round=self.xgb_n_rounds,
+                        early_stopping_rounds=self.xgb_esr,
+                        obj_name='max'
+                    )
+                else:
+                    raise NotImplementedError
+
+                self.select_features(close_model=close_model, max_model=max_model)
+            self.do_backtest(close_models=close_models, max_models=max_models)
+
+
+    def select_features(self, close_model, max_model):
         if self.select_features:
             fs = FeatureSets
             if self.feat_sel_mode == self.FEAT_SEL_SHR:
@@ -455,33 +612,39 @@ class LearningTask:
             else:
                 raise NotImplementedError
 
-            signal_converter = CloseAvgReturnMaxReturnSignalConverter(c_thr=self.c_thr,
-                                                                      m_thr=self.m_thr,
-                                                                      n_candles=self.n_candles)
+    def do_backtest(self, close_model=None, max_model=None,
+                    close_models=None, max_models=None):
+        signal_converter = CloseAvgReturnMaxReturnSignalConverter(c_thr=self.c_thr,
+                                                                  m_thr=self.m_thr,
+                                                                  n_candles=self.n_candles)
+        models = [close_model, max_model]
+        pair_models = {}
+        if close_models:
+            for pair, close_model in close_models.items():
+                pair_models[pair] = [close_model, max_models[pair]]
 
-            models = [close_model, max_model]
+        pairs = self.test_pairs
 
-            pairs = self.test_pairs
+        start_date = self.test_date_range.start + self.n_candles * M5.seconds()
+        end_date = self.test_date_range.end
+        model_per_pair = self.model_per_pair
 
-            start_date = self.test_date_range.start + self.n_candles * M5.seconds()
-            end_date = self.test_date_range.end
-            model_per_pair = self.model_per_pair
-            pair_models = {}
-            models = models
+        signal_server = SignalServer(models=models,
+                                     signal_converter=signal_converter,
+                                     pairs=self.test_pairs,
+                                     pc_start_date=start_date,
+                                     pc_end_date=end_date,
+                                     model_per_pair=model_per_pair,
+                                     pair_models=pair_models)
 
-            signal_server = SignalServer(models=models, signal_converter=signal_converter,
-                                         pairs=self.test_pairs, pc_start_date=start_date,
-                                         pc_end_date=end_date, model_per_pair=model_per_pair,
-                                         pair_models=pair_models)
+        cs_store = ChunkCachingCandlestickStore.get_for_exchange(POLONIEX)
 
-            cs_store = ChunkCachingCandlestickStore.get_for_exchange(POLONIEX)
+        market_info = BacktestingMarketInfo(candlestick_store=cs_store)
 
-            market_info = BacktestingMarketInfo(candlestick_store=cs_store)
+        signal_generator = ModelPredSignalGenerator(market_info=market_info,
+                                                    signal_server=signal_server, pairs=pairs)
 
-            signal_generator = ModelPredSignalGenerator(market_info=market_info,
-                                                        signal_server=signal_server, pairs=pairs)
-
-            do_backtest(signal_generator, market_info, start_date, end_date)
+        do_backtest(signal_generator, market_info, start_date, end_date)
 
     @classmethod
     def _get_model_feature_set(cls, model):
