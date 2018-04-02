@@ -87,6 +87,9 @@ class LearningTask:
         self.feature_set = None
         self.n_candles = None
 
+        self.multi_pair_features = None
+        self.feature_pairs = None
+
         self.close_value_set = None
         self.max_value_set = None
 
@@ -247,6 +250,10 @@ class LearningTask:
         self.feat_sampler = feat_sampler
         return self
 
+    def set_multi_pair_features(self, feature_pairs):
+        self.multi_pair_features = True
+        self.feature_pairs = feature_pairs
+
     def execute(self):
         if self.train_pairs_interleaved and self.model_per_pair:
             self.test_pairs = None
@@ -265,20 +272,27 @@ class LearningTask:
                                                 start_date=self.train_date_range.start,
                                                 end_date=self.train_date_range.end,
                                                 exchanges=(POLONIEX,),
-                                                interleaved=True)
+                                                interleaved=True,
+                                                use_multi_pair_features=self.multi_pair_features,
+                                                feature_pairs=self.feature_pairs)
             c_val_dataset = DatasetDescriptor(pairs=self.val_pairs,
                                               feature_set=self.feature_set,
                                               value_set=self.close_value_set,
                                               start_date=self.val_date_range.start,
                                               end_date=self.val_date_range.end,
                                               exchanges=(POLONIEX,),
-                                              interleaved=True)
+                                              interleaved=True,
+                                              use_multi_pair_features=self.multi_pair_features,
+                                              feature_pairs=self.feature_pairs)
             c_test_dataset = DatasetDescriptor(pairs=self.test_pairs,
                                                feature_set=self.feature_set,
                                                value_set=self.close_value_set,
                                                start_date=self.test_date_range.start,
                                                end_date=self.test_date_range.end,
-                                               exchanges=(POLONIEX,), interleaved=True)
+                                               exchanges=(POLONIEX,),
+                                               interleaved=True,
+                                               use_multi_pair_features=self.multi_pair_features,
+                                               feature_pairs=self.feature_pairs)
 
             c_dataset = SplitDatasetDescriptor(c_train_dataset, c_val_dataset, c_test_dataset)
 
@@ -288,20 +302,27 @@ class LearningTask:
                                                 start_date=self.train_date_range.start,
                                                 end_date=self.train_date_range.end,
                                                 exchanges=(POLONIEX,),
-                                                interleaved=True)
+                                                interleaved=True,
+                                                use_multi_pair_features=self.multi_pair_features,
+                                                feature_pairs=self.feature_pairs)
             m_val_dataset = DatasetDescriptor(pairs=self.val_pairs,
                                               feature_set=self.feature_set,
                                               value_set=self.max_value_set,
                                               start_date=self.val_date_range.start,
                                               end_date=self.val_date_range.end,
                                               exchanges=(POLONIEX,),
-                                              interleaved=True)
+                                              interleaved=True,
+                                              use_multi_pair_features=self.multi_pair_features,
+                                              feature_pairs=self.feature_pairs)
             m_test_dataset = DatasetDescriptor(pairs=self.test_pairs,
                                                feature_set=self.feature_set,
                                                value_set=self.max_value_set,
                                                start_date=self.test_date_range.start,
                                                end_date=self.test_date_range.end,
-                                               exchanges=(POLONIEX,), interleaved=True)
+                                               exchanges=(POLONIEX,),
+                                               interleaved=True,
+                                               use_multi_pair_features=self.multi_pair_features,
+                                               feature_pairs=self.feature_pairs)
 
             m_dataset = SplitDatasetDescriptor(m_train_dataset, m_val_dataset, m_test_dataset)
 
@@ -335,7 +356,9 @@ class LearningTask:
                                                 start_date=self.train_date_range.start,
                                                 end_date=self.train_date_range.end,
                                                 exchanges=(POLONIEX,),
-                                                interleaved=True)
+                                                interleaved=True,
+                                                use_multi_pair_features=self.multi_pair_features,
+                                                feature_pairs=self.feature_pairs)
 
             m_train_dataset = DatasetDescriptor(pairs=self.train_pairs,
                                                 feature_set=self.feature_set,
@@ -343,7 +366,9 @@ class LearningTask:
                                                 start_date=self.train_date_range.start,
                                                 end_date=self.train_date_range.end,
                                                 exchanges=(POLONIEX,),
-                                                interleaved=True)
+                                                interleaved=True,
+                                                use_multi_pair_features=self.multi_pair_features,
+                                                feature_pairs=self.feature_pairs)
             close_models = {}
             max_models = {}
 
@@ -354,14 +379,18 @@ class LearningTask:
                                                   start_date=self.val_date_range.start,
                                                   end_date=self.val_date_range.end,
                                                   exchanges=(POLONIEX,),
-                                                  interleaved=True)
+                                                  interleaved=True,
+                                                  use_multi_pair_features=self.multi_pair_features,
+                                                  feature_pairs=self.feature_pairs)
                 c_test_dataset = DatasetDescriptor(pairs=pair,
                                                    feature_set=self.feature_set,
                                                    value_set=self.close_value_set,
                                                    start_date=self.test_date_range.start,
                                                    end_date=self.test_date_range.end,
                                                    exchanges=(POLONIEX,),
-                                                   interleaved=True)
+                                                   interleaved=True,
+                                                   use_multi_pair_features=self.multi_pair_features,
+                                                   feature_pairs=self.feature_pairs)
 
                 c_dataset = SplitDatasetDescriptor(c_train_dataset, c_val_dataset, c_test_dataset)
 
@@ -371,13 +400,18 @@ class LearningTask:
                                                   start_date=self.val_date_range.start,
                                                   end_date=self.val_date_range.end,
                                                   exchanges=(POLONIEX,),
-                                                  interleaved=True)
+                                                  interleaved=True,
+                                                  use_multi_pair_features=self.multi_pair_features,
+                                                  feature_pairs=self.feature_pairs)
                 m_test_dataset = DatasetDescriptor(pairs=self.test_pairs,
                                                    feature_set=self.feature_set,
                                                    value_set=self.max_value_set,
                                                    start_date=self.test_date_range.start,
                                                    end_date=self.test_date_range.end,
-                                                   exchanges=(POLONIEX,), interleaved=True)
+                                                   exchanges=(POLONIEX,),
+                                                   interleaved=True,
+                                                   use_multi_pair_features=self.multi_pair_features,
+                                                   feature_pairs=self.feature_pairs)
 
                 m_dataset = SplitDatasetDescriptor(m_train_dataset, m_val_dataset, m_test_dataset)
 
@@ -417,21 +451,27 @@ class LearningTask:
                                                     start_date=self.train_date_range.start,
                                                     end_date=self.train_date_range.end,
                                                     exchanges=(POLONIEX,),
-                                                    interleaved=True)
+                                                    interleaved=True,
+                                                    use_multi_pair_features=self.multi_pair_features,
+                                                    feature_pairs=self.feature_pairs)
                 c_val_dataset = DatasetDescriptor(pairs=pair,
                                                   feature_set=self.feature_set,
                                                   value_set=self.close_value_set,
                                                   start_date=self.val_date_range.start,
                                                   end_date=self.val_date_range.end,
                                                   exchanges=(POLONIEX,),
-                                                  interleaved=True)
+                                                  interleaved=True,
+                                                  use_multi_pair_features=self.multi_pair_features,
+                                                  feature_pairs=self.feature_pairs)
                 c_test_dataset = DatasetDescriptor(pairs=pair,
                                                    feature_set=self.feature_set,
                                                    value_set=self.close_value_set,
                                                    start_date=self.test_date_range.start,
                                                    end_date=self.test_date_range.end,
                                                    exchanges=(POLONIEX,),
-                                                   interleaved=True)
+                                                   interleaved=True,
+                                                   use_multi_pair_features=self.multi_pair_features,
+                                                   feature_pairs=self.feature_pairs)
 
                 c_dataset = SplitDatasetDescriptor(c_train_dataset, c_val_dataset, c_test_dataset)
 
@@ -441,20 +481,27 @@ class LearningTask:
                                                     start_date=self.train_date_range.start,
                                                     end_date=self.train_date_range.end,
                                                     exchanges=(POLONIEX,),
-                                                    interleaved=True)
+                                                    interleaved=True,
+                                                    use_multi_pair_features=self.multi_pair_features,
+                                                    feature_pairs=self.feature_pairs)
                 m_val_dataset = DatasetDescriptor(pairs=pair,
                                                   feature_set=self.feature_set,
                                                   value_set=self.max_value_set,
                                                   start_date=self.val_date_range.start,
                                                   end_date=self.val_date_range.end,
                                                   exchanges=(POLONIEX,),
-                                                  interleaved=True)
+                                                  interleaved=True,
+                                                  use_multi_pair_features=self.multi_pair_features,
+                                                  feature_pairs=self.feature_pairs)
                 m_test_dataset = DatasetDescriptor(pairs=self.test_pairs,
                                                    feature_set=self.feature_set,
                                                    value_set=self.max_value_set,
                                                    start_date=self.test_date_range.start,
                                                    end_date=self.test_date_range.end,
-                                                   exchanges=(POLONIEX,), interleaved=True)
+                                                   exchanges=(POLONIEX,),
+                                                   interleaved=True,
+                                                   use_multi_pair_features=self.multi_pair_features,
+                                                   feature_pairs=self.feature_pairs)
 
                 m_dataset = SplitDatasetDescriptor(m_train_dataset, m_val_dataset, m_test_dataset)
 

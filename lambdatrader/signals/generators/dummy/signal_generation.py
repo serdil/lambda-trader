@@ -8,6 +8,7 @@ import uuid
 # the signal server will get the required features for the datasets from models
 from typing import Optional
 
+import logging
 import numpy as np
 from pandas.core.base import DataError
 
@@ -53,6 +54,8 @@ class SignalServer:
                     # TODO tmp handling
                     if str(e).find('inputs are all NaN') >= 0:
                         pass
+                    else:
+                        raise e
         else:
             for model in self.models:
                 model.train()

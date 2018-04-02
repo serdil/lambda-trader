@@ -1,6 +1,7 @@
 import hashlib
 import os
 import time
+from collections import defaultdict
 
 import pandas as pd
 import xgboost as xgb
@@ -10,15 +11,15 @@ from sklearn.datasets import dump_svmlight_file
 from lambdatrader.candlestick_stores.sqlitestore import SQLiteCandlestickStore
 from lambdatrader.constants import M5, M15, H, H4, D
 from lambdatrader.exchanges.enums import POLONIEX, ExchangeEnum
-from lambdatrader.signals.data_analysis.df_features import LookbackFeature
+from lambdatrader.signals.data_analysis.df_features import LookbackFeature, prefix_df_col_names
 from lambdatrader.signals.data_analysis.utils import date_str_to_timestamp
 from lambdatrader.utilities.utils import get_project_directory
 
 
+# if use_multi_pair_features=True and feature_pairs=None, uses `pairs` as `feature_pairs`
 class DatasetDescriptor:
     def __init__(self, pairs, feature_set, value_set, start_date, end_date, exchanges=(POLONIEX,),
-                 interleaved=False):
-
+                 interleaved=False, use_multi_pair_features=False, feature_pairs=None):
         if pairs is None:
             pairs = SQLiteCandlestickStore.get_for_exchange(POLONIEX).get_pairs()
 
@@ -27,6 +28,9 @@ class DatasetDescriptor:
 
         if isinstance(exchanges, ExchangeEnum):
             exchanges = [exchanges]
+
+        if feature_pairs is None:
+            feature_pairs = pairs
 
         if len(exchanges) > 1:
             raise NotImplementedError('Multiple exchanges not implemented.')
@@ -38,6 +42,8 @@ class DatasetDescriptor:
             raise ValueError('There should be exactly 1 exchange if interleaved is False.')
 
         self.pairs = sorted(pairs)
+        self.use_multi_pair_features = use_multi_pair_features
+        self.feature_pairs = feature_pairs
         self.feature_set = feature_set
         self.value_set = value_set
         self.start_date = start_date
@@ -198,6 +204,8 @@ class DFDataset:
         value_set = descriptor.value_set
         pairs = descriptor.pairs
         interleaved = descriptor.interleaved
+        multi_pair = descriptor.use_multi_pair_features
+        feature_pairs = descriptor.feature_pairs
 
         if interleaved:
             datasets = []
@@ -209,7 +217,9 @@ class DFDataset:
                                                   start_date=start_date,
                                                   end_date=end_date,
                                                   exchanges=exchange,
-                                                  interleaved=False)
+                                                  interleaved=False,
+                                                  use_multi_pair_features=multi_pair,
+                                                  feature_pairs=feature_pairs)
                     ds = cls.compute_from_descriptor(pair_desc,
                                                      normalize=normalize,
                                                      error_on_missing=error_on_missing)
@@ -230,6 +240,15 @@ class DFDataset:
             if extended_end_date is not None:
                 extended_end_date = extended_end_date + value_set.get_lookforward()
 
+            if multi_pair:
+                pair_dfs = {}
+                for pair in feature_pairs:
+                    dfs_for_pair = cs_store.get_agg_period_dfs(pair,
+                                                               start_date=extended_start_date,
+                                                               end_date=extended_end_date,
+                                                               periods=[M5, M15, H, H4, D],
+                                                               error_on_missing=error_on_missing)
+                    pair_dfs[pair] = dfs_for_pair
             dfs = cs_store.get_agg_period_dfs(pair,
                                               start_date=extended_start_date,
                                               end_date=extended_end_date,
@@ -240,7 +259,7 @@ class DFDataset:
 
             feature_dfs = []
             feature_mapping = {}
-            reverse_feature_mapping = {}
+            reverse_feature_mapping = defaultdict(list)
 
             # print('start_date', pd.Timestamp(start_date, unit='s'))
             # print('end_date', pd.Timestamp(end_date, unit='s'))
@@ -257,17 +276,32 @@ class DFDataset:
                 # print('feature_start_date', pd.Timestamp(feature_start_date, unit='s'))
                 # print('feature_end_date', pd.Timestamp(feature_end_date, unit='s'))
 
-                dfs_for_feature = cls._get_df_slices(dfs, feature_start_date, feature_end_date)
-                feature_df = feature.compute(dfs_for_feature)
-                # print('feature_df start end', feature_df.index[0], feature_df.index[-1])
-                feature_dfs.append(feature_df)
-                for col_name in feature_df.columns.values:
-                    feature_mapping[col_name] = feature
-                reverse_feature_mapping[feature] = list(feature_df.columns.values)
+                if multi_pair:
+                    for selected_pair in feature_pairs:
+                        pair_dfs_for_feature = cls._get_pair_dfs_slices(pair_dfs,
+                                                                        feature_start_date,
+                                                                        feature_end_date)
+                        feature_df = feature.compute(pair_dfs=pair_dfs_for_feature,
+                                                     selected_pair=selected_pair)
+                        feature_df = prefix_df_col_names(df=feature_df, prefix=selected_pair)
+                        feature_dfs.append(feature_df)
+                        for col_name in feature_df.columns.values:
+                            feature_mapping[col_name] = feature
+                        reverse_feature_mapping[feature].extend(list(feature_df.columns.values))
+                else:
+                    dfs_for_feature = cls._get_df_slices(dfs, feature_start_date, feature_end_date)
+                    feature_df = feature.compute(pair_dfs={pair: dfs_for_feature},
+                                                 selected_pair=pair)
+                    # print('feature_df start end', feature_df.index[0], feature_df.index[-1])
+                    feature_dfs.append(feature_df)
+                    for col_name in feature_df.columns.values:
+                        feature_mapping[col_name] = feature
+                    reverse_feature_mapping[feature] = list(feature_df.columns.values)
 
             # feature_dfs = [f.compute(dfs) for f in feature_set.features]
 
-            value_dfs = [v.compute(dfs) for v in value_set.features]
+            value_dfs = [v.compute(pair_dfs={pair: dfs}, selected_pair=pair)
+                         for v in value_set.features]
 
             feature_df = feature_dfs[0].join(feature_dfs[1:], how='inner')
             value_df = value_dfs[0].join(value_dfs[1:], how='inner')
@@ -299,6 +333,13 @@ class DFDataset:
 
             return DFDataset(dfs, feature_df, value_df, feature_set, value_set,
                              feature_mapping, reverse_feature_mapping)
+
+    @classmethod
+    def _get_pair_dfs_slices(cls, pair_dfs, start_date, end_date):
+        new_pair_dfs = {}
+        for pair, dfs in pair_dfs.items():
+            new_pair_dfs[pair] = cls._get_df_slices(dfs, start_date, end_date)
+        return new_pair_dfs
 
     @classmethod
     def _get_df_slices(cls, dfs, start_date, end_date):

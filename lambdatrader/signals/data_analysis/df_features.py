@@ -94,7 +94,7 @@ class BaseFeature:
     def name(self):
         raise NotImplementedError
 
-    def compute(self, dfs):
+    def compute(self, pair_dfs, selected_pair):
         raise NotImplementedError
 
 
@@ -112,7 +112,8 @@ class LookbackFeature(BaseFeature):
     def period(self):
         raise NotImplementedError
 
-    def compute(self, dfs, normalize=True):
+    def compute(self, pair_dfs, selected_pair, normalize=True):
+        dfs = pair_dfs[selected_pair]
         raw_df = self.compute_raw(dfs)
         if normalize:
             return to_ffilled_df_with_name(dfs[M5].index, raw_df, self.name)

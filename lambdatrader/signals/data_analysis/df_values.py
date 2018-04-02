@@ -3,7 +3,9 @@ import pandas as pd
 
 from lambdatrader.constants import M5
 from lambdatrader.signals.data_analysis.constants import OHLCV_HIGH, OHLCV_CLOSE, OHLCV_LOW
-from lambdatrader.signals.data_analysis.df_features import BaseFeature, to_ffilled_df_with_name
+from lambdatrader.signals.data_analysis.df_features import (
+    BaseFeature, to_ffilled_df_with_name, to_df,
+)
 
 
 class LookforwardFeature(BaseFeature):
@@ -16,7 +18,15 @@ class LookforwardFeature(BaseFeature):
     def lookforward(self):
         raise NotImplementedError
 
-    def compute(self, dfs):
+    def compute(self, pair_dfs, selected_pair, normalize=True):
+        dfs = pair_dfs[selected_pair]
+        raw_df = self.compute_raw(dfs)
+        if normalize:
+            return to_ffilled_df_with_name(dfs[M5].index, raw_df, self.name)
+        else:
+            return raw_df
+
+    def compute_raw(self, dfs):
         raise NotImplementedError
 
 
@@ -30,7 +40,7 @@ class ValueFeature(LookforwardFeature):
     def lookforward(self):
         raise NotImplementedError
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         raise NotImplementedError
 
 
@@ -43,9 +53,9 @@ class DummyValue(ValueFeature):
     def lookforward(self):
         return 0
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         zero_series = pd.Series(np.zeros(len(dfs[M5])), index=dfs[M5].index)
-        return to_ffilled_df_with_name(dfs[M5].index, zero_series, self.name)
+        return zero_series
 
 
 class MaxReturn(ValueFeature):
@@ -62,11 +72,11 @@ class MaxReturn(ValueFeature):
     def lookforward(self):
         return self.n_candles * self.period.seconds()
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         df = dfs[self.period]
         max_returns = (df[OHLCV_HIGH].rolling(window=self.n_candles).max().shift(-self.n_candles) /
                        df[OHLCV_CLOSE]) - 1
-        return to_ffilled_df_with_name(dfs[M5].index, max_returns, self.name)
+        return max_returns
 
 
 class CloseReturn(ValueFeature):
@@ -83,11 +93,11 @@ class CloseReturn(ValueFeature):
     def lookforward(self):
         return self.n_candles * self.period.seconds()
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         df = dfs[self.period]
         close_returns = (df[OHLCV_CLOSE].diff(self.n_candles).shift(-self.n_candles) /
                          df[OHLCV_CLOSE])
-        return to_ffilled_df_with_name(dfs[M5].index, close_returns, self.name)
+        return close_returns
 
 
 class MinReturn(ValueFeature):
@@ -104,11 +114,11 @@ class MinReturn(ValueFeature):
     def lookforward(self):
         return self.n_candles * self.period.seconds()
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         df = dfs[self.period]
         min_returns = (df[OHLCV_LOW].rolling(window=self.n_candles).min().shift(-self.n_candles) /
                        df[OHLCV_CLOSE]) - 1
-        return to_ffilled_df_with_name(dfs[M5].index, min_returns, self.name)
+        return min_returns
 
 
 class CloseAvgReturn(ValueFeature):
@@ -125,8 +135,8 @@ class CloseAvgReturn(ValueFeature):
     def lookforward(self):
         return self.n_candles * self.period.seconds()
 
-    def compute(self, dfs):
+    def compute_raw(self, dfs):
         df = dfs[self.period]
         avg_returns = (df[OHLCV_CLOSE].rolling(window=self.n_candles).mean()
                        .shift(-self.n_candles) / df[OHLCV_CLOSE]) - 1
-        return to_ffilled_df_with_name(dfs[M5].index, avg_returns, self.name)
+        return avg_returns
