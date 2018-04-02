@@ -2,7 +2,7 @@ import random
 
 from lambdatrader.signals.data_analysis.df_features import DFFeatureSet
 from lambdatrader.signals.data_analysis.df_values import CloseAvgReturn, MaxReturn
-from lambdatrader.signals.data_analysis.factories import SplitDateRanges
+from lambdatrader.signals.data_analysis.factories import SplitDateRanges, FeatureSets
 from lambdatrader.signals.generators.dummy.feature_spaces import (
     fs_sampler_all, fs_sampler_ohlcv, fs_sampler_all_old,
 )
@@ -79,8 +79,8 @@ xgb_training_pairs = ['BTC_XRP']; interleaved = False
 
 print('training pairs:', xgb_training_pairs)
 
-# val_pairs = xgb_training_pairs
-val_pairs = ['BTC_XRP']
+val_pairs = xgb_training_pairs
+# val_pairs = ['BTC_XRP']
 
 # xgb_split_date_range = SplitDateRanges.january_3_days_test_3_days_val_7_days_train()
 # xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_20_days_train()
@@ -107,26 +107,34 @@ xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_1000_day
 # xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=200, t=500)
 
 # feature_sampler = ohlcv_sampler
-feature_sampler = fs_sampler_all
+# feature_sampler = fs_sampler_all
+feature_sampler = fs_sampler_all_old
 
-# feature_set = FeatureSets.get_all_periods_last_ten_ohlcv_now_delta()
+# select_features = True
+select_features = False
 
-# feature_set = feature_sampler.sample(size=5)
-# feature_set = feature_sampler.sample(size=10)
-# feature_set = feature_sampler.sample(size=20)
-# feature_set = feature_sampler.sample(size=100)
-# feature_set = feature_sampler.sample(size=500)
-# feature_set = feature_sampler.sample(size=1000)
+if select_features:
+    num_features = 10
 
-select_features = True
+    feature_set = feature_sampler.sample(size=num_features)
 
-num_features = 10
+    feat_sel_n_target = feature_sampler.sample(size=num_features)
+    feat_sel_ratio = 0.70
+    feat_sel_n_rounds = 10
 
-feature_set = feature_sampler.sample(size=num_features)
+else:
+    # feature_set = feature_sampler.sample(size=5)
+    # feature_set = feature_sampler.sample(size=10)
+    # feature_set = feature_sampler.sample(size=20)
+    feature_set = feature_sampler.sample(size=100)
+    # feature_set = feature_sampler.sample(size=500)
+    # feature_set = feature_sampler.sample(size=1000)
 
-feat_sel_n_target = feature_sampler.sample(size=num_features)
-feat_sel_ratio = 0.70
-feat_sel_n_rounds = 10
+    # feature_set = FeatureSets.get_all_periods_last_n_ohlcv_now_delta(5)
+    # feature_set = FeatureSets.get_all_periods_last_n_ohlcv_now_delta(10)
+
+    # feature_set = FeatureSets.get_all_periods_last_n_ohlcv_self_delta(5)
+    # feature_set = FeatureSets.get_all_periods_last_n_ohlcv_self_delta(10)
 
 xgb_n_candles = 48
 value_set_close = DFFeatureSet(features=[CloseAvgReturn(n_candles=xgb_n_candles)])
