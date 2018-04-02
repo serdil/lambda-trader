@@ -325,7 +325,8 @@ class LearningTask:
                 raise NotImplementedError
 
             self.do_feature_selection(close_model=close_model, max_model=max_model)
-            self.do_backtest(close_model=close_model, max_model=max_model)
+            self.do_backtest(test_pairs=self.test_pairs,
+                             close_model=close_model, max_model=max_model)
 
         elif self.train_pairs_interleaved and self.model_per_pair:
             c_train_dataset = DatasetDescriptor(pairs=self.train_pairs,
@@ -402,7 +403,8 @@ class LearningTask:
                     raise NotImplementedError
 
                 self.do_feature_selection(close_model=close_model, max_model=max_model)
-            self.do_backtest(close_models=close_models, max_models=max_models)
+            self.do_backtest(test_pairs=self.val_pairs,
+                             close_models=close_models, max_models=max_models)
 
         elif not self.train_pairs_interleaved and self.model_per_pair:
             close_models = {}
@@ -476,7 +478,8 @@ class LearningTask:
                     raise NotImplementedError
 
                 self.do_feature_selection(close_model=close_model, max_model=max_model)
-            self.do_backtest(close_models=close_models, max_models=max_models)
+            self.do_backtest(test_pairs=self.val_pairs,
+                             close_models=close_models, max_models=max_models)
 
     def do_feature_selection(self, close_model, max_model):
         if self.select_features:
@@ -608,7 +611,7 @@ class LearningTask:
             else:
                 raise NotImplementedError
 
-    def do_backtest(self, close_model=None, max_model=None,
+    def do_backtest(self, test_pairs=None, close_model=None, max_model=None,
                     close_models=None, max_models=None):
         signal_converter = CloseAvgReturnMaxReturnSignalConverter(c_thr=self.c_thr,
                                                                   m_thr=self.m_thr,
@@ -619,7 +622,7 @@ class LearningTask:
             for pair, close_model in close_models.items():
                 pair_models[pair] = [close_model, max_models[pair]]
 
-        pairs = self.test_pairs
+        pairs = test_pairs
 
         start_date = self.test_date_range.start + self.n_candles * M5.seconds()
         end_date = self.test_date_range.end
@@ -627,7 +630,7 @@ class LearningTask:
 
         signal_server = SignalServer(models=models,
                                      signal_converter=signal_converter,
-                                     pairs=self.test_pairs,
+                                     pairs=pairs,
                                      pc_start_date=start_date,
                                      pc_end_date=end_date,
                                      model_per_pair=model_per_pair,

@@ -124,9 +124,9 @@ if select_features:
 
 else:
     # feature_set = feature_sampler.sample(size=5)
-    # feature_set = feature_sampler.sample(size=10)
+    feature_set = feature_sampler.sample(size=10)
     # feature_set = feature_sampler.sample(size=20)
-    feature_set = feature_sampler.sample(size=100)
+    # feature_set = feature_sampler.sample(size=100)
     # feature_set = feature_sampler.sample(size=500)
     # feature_set = feature_sampler.sample(size=1000)
 
