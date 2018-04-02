@@ -118,6 +118,8 @@ feature_sampler = fs_sampler_all
 # feature_set = feature_sampler.sample(size=500)
 # feature_set = feature_sampler.sample(size=1000)
 
+select_features = True
+
 num_features = 10
 
 feature_set = feature_sampler.sample(size=num_features)
@@ -195,12 +197,9 @@ lt = (LearningTask()
       .set_feature_set(feature_set)
       .set_xgb_n_rounds(num_round)
       .set_xgb_esr(early_stopping_rounds)
-      .set_c_thr(xgb_c_thr)
-      .set_m_thr(xgb_m_thr)
       .set_xgb_booster_params(xgb_params)
-      .set_feat_sel_n_target_feat(num_features)
-      .set_feat_sel_sel_ratio(feat_sel_ratio)
-      .set_feat_sel_n_rounds(feat_sel_n_rounds))
+      .set_c_thr(xgb_c_thr)
+      .set_m_thr(xgb_m_thr))
 
 lt.set_train_pairs(xgb_training_pairs)\
     .set_val_pairs(val_pairs)\
@@ -212,12 +211,17 @@ lt.set_train_pairs_interleaved(True)\
 # lt.set_train_pairs_interleaved(False)\
 #     .set_model_per_pair(True)
 
-lt.set_feat_sampler(fs_sampler_all_old)
-# lt.set_feat_sampler(fs_sampler_all)
+if select_features:
+    lt.set_feat_sel_n_target_feat(num_features)\
+        .set_feat_sel_sel_ratio(feat_sel_ratio)\
+        .set_feat_sel_n_rounds(feat_sel_n_rounds)
 
-lt.set_grow_shr_feat_sel()
-# lt.set_hier_feat_sel()
-# lt.set_score_bag_feat_sel()
-# lt.set_score_bag_interval_rounds(5)
+    lt.set_feat_sampler(fs_sampler_all_old)
+    # lt.set_feat_sampler(fs_sampler_all)
+
+    lt.set_grow_shr_feat_sel()
+    # lt.set_hier_feat_sel()
+    # lt.set_score_bag_feat_sel()
+    # lt.set_score_bag_interval_rounds(5)
 
 lt.execute()
