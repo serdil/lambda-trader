@@ -7,6 +7,7 @@ from lambdatrader.signals.generators.dummy.feature_spaces import (
     fs_sampler_all, fs_sampler_ohlcv, fs_sampler_all_old,
 )
 from lambdatrader.signals.generators.dummy.model_utils import LearningTask
+from lambdatrader.signals.generators.factories import Pairs
 
 random.seed(0)
 # random.seed(1)
@@ -78,8 +79,8 @@ xgb_training_pairs = ['BTC_XRP']; interleaved = False
 
 print('training pairs:', xgb_training_pairs)
 
-val_pairs = xgb_training_pairs
-# val_pairs = ['BTC_XRP']
+# val_pairs = xgb_training_pairs
+val_pairs = ['BTC_XRP']
 
 # xgb_split_date_range = SplitDateRanges.january_3_days_test_3_days_val_7_days_train()
 # xgb_split_date_range = SplitDateRanges.january_20_days_test_20_days_val_20_days_train()
@@ -123,7 +124,7 @@ feature_set = feature_sampler.sample(size=num_features)
 
 feat_sel_n_target = feature_sampler.sample(size=num_features)
 feat_sel_ratio = 0.70
-feat_sel_n_rounds = 100
+feat_sel_n_rounds = 10
 
 xgb_n_candles = 48
 value_set_close = DFFeatureSet(features=[CloseAvgReturn(n_candles=xgb_n_candles)])
@@ -145,8 +146,8 @@ xgb_params = {
     'base_score': 0,
     'eval_metric': 'rmse',
 
-    'eta': 0.003,
-    'gamma':0,
+    'eta': 0.01,
+    'gamma': 0,
     'max_depth': 4,
     'min_child_weight': 1,
     'max_delta_step': 0,

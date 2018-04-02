@@ -248,9 +248,6 @@ class LearningTask:
         return self
 
     def execute(self):
-        if not self.train_pairs_interleaved or self.model_per_pair:
-            raise NotImplementedError
-
         if self.train_pairs_interleaved and self.model_per_pair:
             self.test_pairs = None
         elif self.train_pairs_interleaved and not self.model_per_pair:
@@ -327,7 +324,7 @@ class LearningTask:
             else:
                 raise NotImplementedError
 
-            self.select_features(close_model=close_model, max_model=max_model)
+            self.do_feature_selection(close_model=close_model, max_model=max_model)
             self.do_backtest(close_model=close_model, max_model=max_model)
 
         elif self.train_pairs_interleaved and self.model_per_pair:
@@ -404,7 +401,7 @@ class LearningTask:
                 else:
                     raise NotImplementedError
 
-                self.select_features(close_model=close_model, max_model=max_model)
+                self.do_feature_selection(close_model=close_model, max_model=max_model)
             self.do_backtest(close_models=close_models, max_models=max_models)
 
         elif not self.train_pairs_interleaved and self.model_per_pair:
@@ -478,11 +475,10 @@ class LearningTask:
                 else:
                     raise NotImplementedError
 
-                self.select_features(close_model=close_model, max_model=max_model)
+                self.do_feature_selection(close_model=close_model, max_model=max_model)
             self.do_backtest(close_models=close_models, max_models=max_models)
 
-
-    def select_features(self, close_model, max_model):
+    def do_feature_selection(self, close_model, max_model):
         if self.select_features:
             fs = FeatureSets
             if self.feat_sel_mode == self.FEAT_SEL_SHR:
