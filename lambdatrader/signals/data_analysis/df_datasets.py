@@ -329,6 +329,9 @@ class DFDataset:
             feature_df = feature_df.loc[start_date_timestamp:end_date_timestamp]
             value_df = value_df.loc[start_date_timestamp:end_date_timestamp]
 
+            # TODO sort these out
+            value_df = value_df.reindex(feature_df.index)
+
             # print('dataset comp time: {:.3f}s'.format(time.time() - comp_start_time))
 
             return DFDataset(dfs, feature_df, value_df, feature_set, value_set,
@@ -536,6 +539,12 @@ class XGBDMatrixDataset:
                                      .add_reverse_feature_mapping()
                                      .get())
 
+        if len(x) != len(y):
+            print('PREDS LABELS SIZE', len(x), len(y))
+            print('X:')
+            print(x)
+            print('Y:')
+            print(y)
         dmatrix = xgb.DMatrix(data=x, label=y, feature_names=feature_names)
         return XGBDMatrixDataset(descriptor=descriptor, dmatrix=dmatrix,
                                  feature_names=feature_names,
