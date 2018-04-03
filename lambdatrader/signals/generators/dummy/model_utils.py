@@ -403,7 +403,7 @@ class LearningTask:
                                                   interleaved=True,
                                                   use_multi_pair_features=self.multi_pair_features,
                                                   feature_pairs=self.feature_pairs)
-                m_test_dataset = DatasetDescriptor(pairs=self.test_pairs,
+                m_test_dataset = DatasetDescriptor(pairs=pair,
                                                    feature_set=self.feature_set,
                                                    value_set=self.max_value_set,
                                                    start_date=self.test_date_range.start,
@@ -493,7 +493,7 @@ class LearningTask:
                                                   interleaved=True,
                                                   use_multi_pair_features=self.multi_pair_features,
                                                   feature_pairs=self.feature_pairs)
-                m_test_dataset = DatasetDescriptor(pairs=self.test_pairs,
+                m_test_dataset = DatasetDescriptor(pairs=pair,
                                                    feature_set=self.feature_set,
                                                    value_set=self.max_value_set,
                                                    start_date=self.test_date_range.start,

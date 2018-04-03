@@ -17,7 +17,7 @@ from lambdatrader.models.tradesignal import (
     TradeSignal, PriceEntry, PriceTakeProfitSuccessExit, TimeoutStopLossFailureExit,
 )
 from lambdatrader.signals.data_analysis.df_datasets import (
-    DFDataset, SingleValueDatasetDescriptor,
+    DFDataset, SingleValueDatasetDescriptor, DatasetDescriptor,
 )
 from lambdatrader.signals.data_analysis.df_values import CloseAvgReturn, MaxReturn, CloseReturn
 from lambdatrader.signals.data_analysis.factories import ValueSets
@@ -78,13 +78,15 @@ class SignalServer:
                 for model in models:
                     model_dd = model.dataset_descriptor.training
                     feature_set = model_dd.feature_set
-                    dd = SingleValueDatasetDescriptor(
+                    dd = DatasetDescriptor(
                         pairs=[pair],
                         feature_set=feature_set,
                         value_set=ValueSets.dummy(),
                         start_date=self.pc_start_date,
                         end_date=self.pc_end_date,
-                        interleaved=False
+                        interleaved=False,
+                        use_multi_pair_features=model_dd.use_multi_pair_features,
+                        feature_pairs=model_dd.feature_pairs
                     )
                     df = (DFDataset.
                           compute_from_descriptor(descriptor=dd,

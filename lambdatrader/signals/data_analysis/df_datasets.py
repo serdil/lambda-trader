@@ -266,6 +266,7 @@ class DFDataset:
             # print('extended_start_date', pd.Timestamp(extended_start_date, unit='s'))
             # print('extended_end_date', pd.Timestamp(extended_end_date, unit='s'))
 
+            print('computing features...')
             for feature in feature_set.features:
                 feature_start_date = start_date
                 feature_end_date = end_date
@@ -538,13 +539,6 @@ class XGBDMatrixDataset:
                                      .add_feature_mapping()
                                      .add_reverse_feature_mapping()
                                      .get())
-
-        if len(x) != len(y):
-            print('PREDS LABELS SIZE', len(x), len(y))
-            print('X:')
-            print(x)
-            print('Y:')
-            print(y)
         dmatrix = xgb.DMatrix(data=x, label=y, feature_names=feature_names)
         return XGBDMatrixDataset(descriptor=descriptor, dmatrix=dmatrix,
                                  feature_names=feature_names,
