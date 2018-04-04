@@ -252,6 +252,9 @@ class LearningTask:
 
     def set_multi_pair_features(self, feature_pairs):
         self.multi_pair_features = True
+        self.set_feature_pairs(feature_pairs)
+
+    def set_feature_pairs(self, feature_pairs):
         self.feature_pairs = feature_pairs
 
     def execute(self):

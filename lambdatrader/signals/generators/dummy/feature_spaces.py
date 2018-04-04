@@ -149,6 +149,7 @@ ohlc_now_close_delta_sampler = ParamRangeFeatureSampler(
     {
         'mode': ParameterRange.set([OHLCV_OPEN, OHLCV_HIGH, OHLCV_LOW, OHLCV_CLOSE]),
         'offset': ParameterRange.int_range(0, 50),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -157,6 +158,7 @@ ohlc_self_close_delta_sampler = ParamRangeFeatureSampler(
     {
         'mode': ParameterRange.set([OHLCV_OPEN, OHLCV_HIGH, OHLCV_LOW, OHLCV_CLOSE]),
         'offset': ParameterRange.int_range(0, 50),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -165,6 +167,7 @@ volume_value_sampler = ParamRangeFeatureSampler(
     {
         'mode': ParameterRange.set([OHLCV_VOLUME]),
         'offset': ParameterRange.int_range(0, 50),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -173,6 +176,7 @@ sma_self_close_delta_sampler = ParamRangeFeatureSampler(
     {
         'timeperiod': ParameterRange.int_range(2, 50),
         'offset': ParameterRange.int_range(0, 10),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -181,6 +185,7 @@ sma_now_close_delta_sampler = ParamRangeFeatureSampler(
     {
         'timeperiod': ParameterRange.int_range(2, 50),
         'offset': ParameterRange.int_range(0, 10),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -189,6 +194,7 @@ cs_pattern_sampler = ParamRangeFeatureSampler(
     {
         'pattern_indicator': ParameterRange.set(PAT_REC_INDICATORS),
         'offset': ParameterRange.int_range(0, 10),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -200,7 +206,8 @@ bbands_self_close_delta_sampler = ParamRangeFeatureSampler(
         'nbdevdn': ParameterRange.int_range(1, 10),
         'matype': ParameterRange.int_range(0, 3),
         'offset': ParameterRange.int_range(0, 10),
-        'output_col': ParameterRange.int_range(0, 2)
+        'output_col': ParameterRange.int_range(0, 2),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -212,7 +219,8 @@ bbands_now_close_delta_sampler = ParamRangeFeatureSampler(
         'nbdevdn': ParameterRange.int_range(1, 10),
         'matype': ParameterRange.int_range(0, 3),
         'offset': ParameterRange.int_range(0, 10),
-        'output_col': ParameterRange.int_range(0, 2)
+        'output_col': ParameterRange.int_range(0, 2),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -221,6 +229,7 @@ rsi_value_sampler = ParamRangeFeatureSampler(
     {
         'timeperiod': ParameterRange.int_range(2, 50),
         'offset': ParameterRange.int_range(0, 10),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -231,7 +240,8 @@ macd_value_sampler = ParamRangeFeatureSampler(
         'slowperiod': ParameterRange.int_range(2, 50),
         'signalperiod': ParameterRange.int_range(2, 50),
         'offset': ParameterRange.int_range(0, 10),
-        'output_col': ParameterRange.int_range(0, 2)
+        'output_col': ParameterRange.int_range(0, 2),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -243,6 +253,7 @@ bbands_band_width_sampler = ParamRangeFeatureSampler(
         'nbdevdn': ParameterRange.int_range(1, 10),
         'matype': ParameterRange.int_range(0, 3),
         'offset': ParameterRange.int_range(0, 10),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -250,6 +261,7 @@ cs_tip_to_tip_size_sampler = ParamRangeFeatureSampler(
     CandlestickTipToTipSize,
     {
         'offset': ParameterRange.int_range(0, 50),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -257,6 +269,7 @@ cs_body_size_sampler = ParamRangeFeatureSampler(
     CandlestickBodySize,
     {
         'offset': ParameterRange.int_range(0, 50),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -265,6 +278,7 @@ volume_now_close_delta_sampler = ParamRangeFeatureSampler(
     {
         'mode': ParameterRange.set([OHLCV_VOLUME]),
         'offset': ParameterRange.int_range(0, 50),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -273,6 +287,7 @@ volume_self_close_delta_sampler = ParamRangeFeatureSampler(
     {
         'mode': ParameterRange.set([OHLCV_VOLUME]),
         'offset': ParameterRange.int_range(0, 50),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -281,6 +296,7 @@ ohlcv_value_sampler = ParamRangeFeatureSampler(
     {
         'mode': ParameterRange.set([OHLCV_OPEN, OHLCV_HIGH, OHLCV_LOW, OHLCV_CLOSE, OHLCV_VOLUME]),
         'offset': ParameterRange.int_range(0, 50),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -288,12 +304,14 @@ shifted_close_value_sampler = ParamRangeFeatureSampler(
     ShiftedCloseValue,
     {
         'offset': ParameterRange.int_range(0, 50),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
 close_value_sampler = ParamRangeFeatureSampler(
     CloseValue,
     {
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 

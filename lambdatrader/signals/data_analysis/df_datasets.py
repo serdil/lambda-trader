@@ -1,7 +1,7 @@
 import hashlib
 import os
 import time
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 import pandas as pd
 import xgboost as xgb
@@ -153,9 +153,8 @@ class SplitDatasetDescriptor:
 
 class DFDataset:
 
-    def __init__(self, dfs, feature_df, value_df, feature_set, value_set,
+    def __init__(self, feature_df, value_df, feature_set, value_set,
                  feature_mapping, reverse_feature_mapping):
-        self.dfs = dfs
         self.feature_df = feature_df
         self.value_df = value_df
 
@@ -240,20 +239,20 @@ class DFDataset:
             if extended_end_date is not None:
                 extended_end_date = extended_end_date + value_set.get_lookforward()
 
-            if multi_pair:
-                pair_dfs = {}
-                for pair in feature_pairs:
-                    dfs_for_pair = cs_store.get_agg_period_dfs(pair,
+            pair_dfs = OrderedDict()
+            pair_dfs[pair] = cs_store.get_agg_period_dfs(pair,
+                                                         start_date=extended_start_date,
+                                                         end_date=extended_end_date,
+                                                         periods=[M5, M15, H, H4, D],
+                                                         error_on_missing=error_on_missing)
+            for feature_pair in feature_pairs:
+                if feature_pair not in pair_dfs:
+                    dfs_for_pair = cs_store.get_agg_period_dfs(feature_pair,
                                                                start_date=extended_start_date,
                                                                end_date=extended_end_date,
                                                                periods=[M5, M15, H, H4, D],
                                                                error_on_missing=error_on_missing)
-                    pair_dfs[pair] = dfs_for_pair
-            dfs = cs_store.get_agg_period_dfs(pair,
-                                              start_date=extended_start_date,
-                                              end_date=extended_end_date,
-                                              periods=[M5, M15, H, H4, D],
-                                              error_on_missing=error_on_missing)
+                    pair_dfs[feature_pair] = dfs_for_pair
 
             comp_start_time = time.time()
 
@@ -277,11 +276,12 @@ class DFDataset:
                 # print('feature_start_date', pd.Timestamp(feature_start_date, unit='s'))
                 # print('feature_end_date', pd.Timestamp(feature_end_date, unit='s'))
 
+                pair_dfs_for_feature = cls._get_pair_dfs_slices(pair_dfs,
+                                                                feature_start_date,
+                                                                feature_end_date)
+
                 if multi_pair:
                     for selected_pair in feature_pairs:
-                        pair_dfs_for_feature = cls._get_pair_dfs_slices(pair_dfs,
-                                                                        feature_start_date,
-                                                                        feature_end_date)
                         feature_df = feature.compute(pair_dfs=pair_dfs_for_feature,
                                                      selected_pair=selected_pair)
                         feature_df = prefix_df_col_names(df=feature_df, prefix=selected_pair)
@@ -290,8 +290,7 @@ class DFDataset:
                             feature_mapping[col_name] = feature
                         reverse_feature_mapping[feature].extend(list(feature_df.columns.values))
                 else:
-                    dfs_for_feature = cls._get_df_slices(dfs, feature_start_date, feature_end_date)
-                    feature_df = feature.compute(pair_dfs={pair: dfs_for_feature},
+                    feature_df = feature.compute(pair_dfs_for_feature,
                                                  selected_pair=pair)
                     # print('feature_df start end', feature_df.index[0], feature_df.index[-1])
                     feature_dfs.append(feature_df)
@@ -301,7 +300,7 @@ class DFDataset:
 
             # feature_dfs = [f.compute(dfs) for f in feature_set.features]
 
-            value_dfs = [v.compute(pair_dfs={pair: dfs}, selected_pair=pair)
+            value_dfs = [v.compute(pair_dfs, selected_pair=pair)
                          for v in value_set.features]
 
             feature_df = feature_dfs[0].join(feature_dfs[1:], how='inner')
@@ -335,12 +334,12 @@ class DFDataset:
 
             # print('dataset comp time: {:.3f}s'.format(time.time() - comp_start_time))
 
-            return DFDataset(dfs, feature_df, value_df, feature_set, value_set,
+            return DFDataset(feature_df, value_df, feature_set, value_set,
                              feature_mapping, reverse_feature_mapping)
 
     @classmethod
     def _get_pair_dfs_slices(cls, pair_dfs, start_date, end_date):
-        new_pair_dfs = {}
+        new_pair_dfs = OrderedDict()
         for pair, dfs in pair_dfs.items():
             new_pair_dfs[pair] = cls._get_df_slices(dfs, start_date, end_date)
         return new_pair_dfs
@@ -375,7 +374,7 @@ class DFDataset:
         value_dfs = [ds.value_df for ds in datasets]
         feature_df = pd.concat(feature_dfs).sort_index()
         value_df = pd.concat(value_dfs).sort_index()
-        return DFDataset(dfs=None, feature_df=feature_df, value_df=value_df,
+        return DFDataset(feature_df=feature_df, value_df=value_df,
                          feature_set=None, value_set=None, feature_mapping=feature_mapping,
                          reverse_feature_mapping=reverse_feature_mapping)
 

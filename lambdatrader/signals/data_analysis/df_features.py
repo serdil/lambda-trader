@@ -1,4 +1,6 @@
 import random
+from collections import OrderedDict
+from itertools import islice
 from operator import attrgetter
 
 import numpy as np
@@ -100,6 +102,12 @@ class BaseFeature:
 
 class LookbackFeature(BaseFeature):
 
+    def __init__(self, pair_index=None, pair_name=None):
+        if pair_index is not None and pair_name is not None:
+            raise ArgumentError
+        self.pair_index = pair_index
+        self.pair_name = pair_name
+
     @property
     def name(self):
         raise NotImplementedError
@@ -112,11 +120,27 @@ class LookbackFeature(BaseFeature):
     def period(self):
         raise NotImplementedError
 
-    def compute(self, pair_dfs, selected_pair, normalize=True):
-        dfs = pair_dfs[selected_pair]
+    def set_pair_index_pair_name(self, pair_index=None, pair_name=None):
+        self.pair_index = pair_index
+        self.pair_name = pair_name
+
+    def compute(self, pair_dfs: OrderedDict, selected_pair, normalize=True):
+        if self.pair_index:
+            index_mod = self.pair_index % len(pair_dfs)
+            item = next(islice(pair_dfs.items(), index_mod, None))
+            dfs = item[1]
+            pair_name = item[0]
+        elif self.pair_name:
+            dfs = pair_dfs[self.pair_name]
+            pair_name = self.pair_name
+        else:
+            dfs = pair_dfs[selected_pair]
+            pair_name = selected_pair
         raw_df = self.compute_raw(dfs)
         if normalize:
-            return to_ffilled_df_with_name(dfs[M5].index, raw_df, self.name)
+            return to_ffilled_df_with_name(index=dfs[M5].index,
+                                           series_or_df=raw_df,
+                                           name='{}:{}'.format(pair_name, self.name))
         else:
             return raw_df
 
@@ -133,6 +157,7 @@ class LookbackFeature(BaseFeature):
 class DummyFeature(LookbackFeature):
 
     def __init__(self, period=M5):
+        super().__init__()
         self._period = period
 
     @property
@@ -155,6 +180,7 @@ class DummyFeature(LookbackFeature):
 class RandomFeature(LookbackFeature):
 
     def __init__(self, period=M5):
+        super().__init__()
         self._period = period
 
     @property
@@ -175,7 +201,8 @@ class RandomFeature(LookbackFeature):
 
 
 class OHLCVValue(LookbackFeature):
-    def __init__(self, mode, offset, period=M5):
+    def __init__(self, mode, offset, period=M5, pair_index=None, pair_name=None):
+        super().__init__(pair_index, pair_name)
         self.mode = mode
         self.offset = offset
         self._period = period
@@ -199,17 +226,21 @@ class OHLCVValue(LookbackFeature):
 
 
 class ShiftedCloseValue(OHLCVValue):
-    def __init__(self, offset=0, period=M5):
+    def __init__(self, offset=0, period=M5, pair_index=None, pair_name=None):
         super().__init__(mode=OHLCV_CLOSE, offset=offset, period=period)
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
 
 
 class CloseValue(ShiftedCloseValue):
-    def __init__(self, period=M5):
+    def __init__(self, period=M5, pair_index=None, pair_name=None):
         super().__init__(offset=0, period=period)
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
 
 
 class Shifted(LookbackFeature):
-    def __init__(self, feature: LookbackFeature, offset=0, period=None):
+    def __init__(self, feature: LookbackFeature, offset=0, period=None, pair_index=None,
+                 pair_name=None):
+        super().__init__(pair_index, pair_name)
         self.feature = feature
         self.offset = offset
 
@@ -230,7 +261,8 @@ class Shifted(LookbackFeature):
 
 
 class BinaryOpFeature(LookbackFeature):
-    def __init__(self, f1, f2, period=None):
+    def __init__(self, f1, f2, period=None, pair_index=None, pair_name=None):
+        super().__init__(pair_index, pair_name)
         self.assert_periods_equal(f1, f2)
 
         self.f1 = f1
@@ -293,7 +325,8 @@ class Mult(BinaryOpFeature):
 
 
 class FeatureFeature(LookbackFeature):
-    def __init__(self, feature, period=None):
+    def __init__(self, feature, period=None, pair_index=None, pair_name=None):
+        super().__init__(pair_index, pair_name)
         self.feature = feature
 
     @property
@@ -313,35 +346,40 @@ class FeatureFeature(LookbackFeature):
 
 
 class NormDiff(FeatureFeature):
-    def __init__(self, f1, f2, period=None):
+    def __init__(self, f1, f2, period=None, pair_index=None, pair_name=None):
         self.assert_periods_equal(f1, f2)
 
         diff = Diff(f1, f2)
         diff_div = Div(diff, f1)
         super().__init__(diff_div)
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
 
 
 class ShiftedNormDiff(NormDiff):
-    def __init__(self, f1, f2, offset, period=None):
+    def __init__(self, f1, f2, offset, period=None, pair_index=None, pair_name=None):
         self.assert_periods_equal(f1, f2)
 
         shifted_f2 = Shifted(f2, offset=offset)
         super().__init__(f1, shifted_f2)
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
 
 
 class ShiftedSelfNormDiff(ShiftedNormDiff):
-    def __init__(self, feature, offset, period=None):
+    def __init__(self, feature, offset, period=None, pair_index=None, pair_name=None):
         super().__init__(feature, feature, offset=offset)
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
 
 
 class ConstMult(FeatureFeature):
-    def __init__(self, feature, constant, period=None):
+    def __init__(self, feature, constant, period=None, pair_index=None, pair_name=None):
         const_mult = Mult(feature, Constant(constant, period=feature.period))
         super().__init__(const_mult)
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
 
 
 class UnaryOpFeature(LookbackFeature):
-    def __init__(self, feature, period=None):
+    def __init__(self, feature, period=None, pair_index=None, pair_name=None):
+        super().__init__(pair_index, pair_name)
         self.feature = feature
 
     @property
@@ -403,7 +441,8 @@ class Cube(UnaryOpFeature):
 
 
 class Constant(LookbackFeature):
-    def __init__(self, constant, period=M5):
+    def __init__(self, constant, period=M5, pair_index=None, pair_name=None):
+        super().__init__(pair_index, pair_name)
         self.constant = constant
         self._period = period
 
@@ -425,7 +464,8 @@ class Constant(LookbackFeature):
 
 
 class OHLCVNowSelfDelta(LookbackFeature):
-    def __init__(self, mode, offset, period=M5):
+    def __init__(self, mode, offset, period=M5, pair_index=None, pair_name=None):
+        super().__init__(pair_index, pair_name)
         self.mode = mode
         self.offset = offset
         self._period = period
@@ -452,7 +492,8 @@ class OHLCVNowSelfDelta(LookbackFeature):
 
 class OHLCVNowCloseDelta(LookbackFeature):
 
-    def __init__(self, mode, offset, period=M5):
+    def __init__(self, mode, offset, period=M5, pair_index=None, pair_name=None):
+        super().__init__(pair_index, pair_name)
         self.mode = mode
         self.offset = offset
         self._period = period
@@ -479,7 +520,8 @@ class OHLCVNowCloseDelta(LookbackFeature):
 
 class OHLCVSelfCloseDelta(LookbackFeature):
 
-    def __init__(self, mode, offset, period=M5):
+    def __init__(self, mode, offset, period=M5, pair_index=None, pair_name=None):
+        super().__init__(pair_index, pair_name)
         self.mode = mode
         self.offset = offset
         self._period = period
@@ -509,7 +551,9 @@ class OHLCVSelfCloseDelta(LookbackFeature):
 
 class IndicatorValue(LookbackFeature):
 
-    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5, output_col=None):
+    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5, output_col=None,
+                 pair_index=None, pair_name=None):
+        super().__init__(pair_index, pair_name)
         self.indicator = indicator
         self.args = args
         self.offset = offset
@@ -548,7 +592,9 @@ class IndicatorValue(LookbackFeature):
 
 class IndicatorSelfDelta(LookbackFeature):
 
-    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5, output_col=None):
+    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5, output_col=None,
+                 pair_index=None, pair_name=None):
+        super().__init__(pair_index, pair_name)
         self.indicator = indicator
         self.args = args
         self.offset = offset
@@ -588,7 +634,9 @@ class IndicatorSelfDelta(LookbackFeature):
 
 class IndicatorNowCloseDelta(LookbackFeature):
 
-    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5, output_col=None):
+    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5, output_col=None,
+                 pair_index=None, pair_name=None):
+        super().__init__(pair_index, pair_name)
         self.indicator = indicator
         self.args = args
         self.offset = offset
@@ -628,7 +676,9 @@ class IndicatorNowCloseDelta(LookbackFeature):
 
 class IndicatorSelfCloseDelta(LookbackFeature):
 
-    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5, output_col=None):
+    def __init__(self, indicator, args, offset, longest_timeperiod, period=M5, output_col=None,
+                 pair_index=None, pair_name=None):
+        super().__init__(pair_index, pair_name)
         self.indicator = indicator
         self.args = args
         self.offset = offset
@@ -669,32 +719,35 @@ class IndicatorSelfCloseDelta(LookbackFeature):
 
 class MACDValue(IndicatorValue):
     def __init__(self, fastperiod=12, slowperiod=26, signalperiod=9, offset=0, period=M5,
-                 output_col=None):
+                 output_col=None, pair_index=None, pair_name=None):
         longest_timeperiod = max(fastperiod, slowperiod, signalperiod)
         super().__init__(IndicatorEnum.MACD,
                          [fastperiod, slowperiod, signalperiod],
                          offset, longest_timeperiod, period, output_col)
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
         self.assert_output_col_max(3)
 
 
 class RSIValue(IndicatorValue):
-    def __init__(self, timeperiod=14, offset=0, period=M5):
+    def __init__(self, timeperiod=14, offset=0, period=M5, pair_index=None, pair_name=None):
         longest_timeperiod = timeperiod
         super().__init__(IndicatorEnum.RSI, [timeperiod], offset, longest_timeperiod, period)
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
 
 
 class BBandsNowCloseDelta(IndicatorNowCloseDelta):
     def __init__(self, timeperiod=5, nbdevup=2, nbdevdn=2, matype=0, offset=0, period=M5,
-                 output_col=None):
+                 output_col=None, pair_index=None, pair_name=None):
         longest_timeperiod = timeperiod
         super().__init__(IndicatorEnum.BBANDS, [timeperiod, nbdevup, nbdevdn, matype],
                          offset, longest_timeperiod, period, output_col)
         self.assert_output_col_max(3)
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
 
 
 class SymmetricBBandsNowCloseDelta(BBandsNowCloseDelta):
     def __init__(self, timeperiod=5, nbdev=2, matype=0, offset=0, period=M5,
-                 output_col=None):
+                 output_col=None, pair_index=None, pair_name=None):
         super().__init__(timeperiod=timeperiod,
                          nbdevup=nbdev,
                          nbdevdn=nbdev,
@@ -702,20 +755,22 @@ class SymmetricBBandsNowCloseDelta(BBandsNowCloseDelta):
                          offset=offset,
                          period=period,
                          output_col=output_col)
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
 
 
 class BBandsSelfCloseDelta(IndicatorSelfCloseDelta):
     def __init__(self, timeperiod=5, nbdevup=2, nbdevdn=2, matype=0, offset=0, period=M5,
-                 output_col=None):
+                 output_col=None, pair_index=None, pair_name=None):
         longest_timeperiod = timeperiod
         super().__init__(IndicatorEnum.BBANDS, [timeperiod, nbdevup, nbdevdn, matype],
                          offset, longest_timeperiod, period, output_col)
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
         self.assert_output_col_max(3)
 
 
 class SymmetricBBandsSelfCloseDelta(BBandsSelfCloseDelta):
     def __init__(self, timeperiod=5, nbdev=2, matype=0, offset=0, period=M5,
-                 output_col=None):
+                 output_col=None, pair_index=None, pair_name=None):
         super().__init__(timeperiod=timeperiod,
                          nbdevup=nbdev,
                          nbdevdn=nbdev,
@@ -723,28 +778,37 @@ class SymmetricBBandsSelfCloseDelta(BBandsSelfCloseDelta):
                          offset=offset,
                          period=period,
                          output_col=output_col)
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
 
 
 class CandlestickPattern(IndicatorValue):
-    def __init__(self, pattern_indicator: IndicatorEnum, offset=0, period=M5):
+    def __init__(self, pattern_indicator: IndicatorEnum, offset=0, period=M5,
+                 pair_index=None, pair_name=None):
         longest_timeperiod = 25
         super().__init__(pattern_indicator, [], offset, longest_timeperiod, period)
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
 
 
 class SMASelfCloseDelta(IndicatorSelfCloseDelta):
-    def __init__(self, timeperiod=30, offset=0, period=M5):
+    def __init__(self, timeperiod=30, offset=0, period=M5,
+                 pair_index=None, pair_name=None):
         longest_timeperiod = timeperiod
         super().__init__(IndicatorEnum.SMA, [timeperiod], offset, longest_timeperiod, period)
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
 
 
 class SMANowCloseDelta(IndicatorNowCloseDelta):
-    def __init__(self, timeperiod=30, offset=0, period=M5):
+    def __init__(self, timeperiod=30, offset=0, period=M5,
+                 pair_index=None, pair_name=None):
         longest_timeperiod = timeperiod
         super().__init__(IndicatorEnum.SMA, [timeperiod], offset, longest_timeperiod, period)
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
 
 
 class LinearFeatureCombination(LookbackFeature):
-    def __init__(self, features: List[LookbackFeature], coef: List[float], period=None):
+    def __init__(self, features: List[LookbackFeature], coef: List[float], period=None,
+                 pair_index=None, pair_name=None):
+        super().__init__(pair_index, pair_name)
         self.assert_periods_equal(*features)
 
         if len(features) != len(coef):
@@ -775,7 +839,9 @@ class LinearFeatureCombination(LookbackFeature):
 
 
 class PolynomialFeatureCombination(LookbackFeature):
-    def __init__(self, features: List[LookbackFeature], exp: List[float], period=None):
+    def __init__(self, features: List[LookbackFeature], exp: List[float], period=None,
+                 pair_index=None, pair_name=None):
+        super().__init__(pair_index, pair_name)
         self.assert_periods_equal(*features)
 
         if len(features) != len(exp):
@@ -806,7 +872,8 @@ class PolynomialFeatureCombination(LookbackFeature):
 
 
 class AbsValue(LookbackFeature):
-    def __init__(self, feature: LookbackFeature, period=None):
+    def __init__(self, feature: LookbackFeature, period=None, pair_index=None, pair_name=None):
+        super().__init__(pair_index, pair_name)
         self.feature = feature
 
     @property
@@ -827,7 +894,8 @@ class AbsValue(LookbackFeature):
 
 
 class BBandsBandWidth(LinearFeatureCombination):
-    def __init__(self, timeperiod=5, nbdevup=2, nbdevdn=2, matype=0, offset=0, period=M5):
+    def __init__(self, timeperiod=5, nbdevup=2, nbdevdn=2, matype=0, offset=0, period=M5,
+                 pair_index=None, pair_name=None):
         lower_band_delta = BBandsSelfCloseDelta(timeperiod=timeperiod,
                                                 nbdevup=nbdevup,
                                                 nbdevdn=nbdevdn,
@@ -844,29 +912,37 @@ class BBandsBandWidth(LinearFeatureCombination):
                                                 output_col=0)
         super().__init__(features=[lower_band_delta, upper_band_delta],
                          coef=[1, -1])
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
 
 
 class CandlestickTipToTipSize(LinearFeatureCombination):
-    def __init__(self, offset=0, period=M5):
+    def __init__(self, offset=0, period=M5,
+                 pair_index=None, pair_name=None):
         low_delta = OHLCVSelfCloseDelta(mode=OHLCV_LOW, offset=offset, period=period)
         high_delta = OHLCVSelfCloseDelta(mode=OHLCV_HIGH, offset=offset, period=period)
         super().__init__(features=[low_delta, high_delta],
                          coef=[1, -1])
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
 
 
 class CandlestickBodySize(AbsValue):
-    def __init__(self, offset=0, period=M5):
+    def __init__(self, offset=0, period=M5,
+                 pair_index=None, pair_name=None):
         close_delta = OHLCVSelfCloseDelta(mode=OHLCV_CLOSE, offset=offset, period=period)
         open_delta = OHLCVSelfCloseDelta(mode=OHLCV_OPEN, offset=offset, period=period)
         close_minus_open = LinearFeatureCombination(features=[close_delta, open_delta],
                                                     coef=[1, -1])
         super().__init__(feature=close_minus_open)
+        self.set_pair_index_pair_name(pair_index=pair_index, pair_name=pair_name)
 
 
 class IndicatorValueOnFeature(LookbackFeature):
 
     def __init__(self, feature,
-                 indicator, args, offset, longest_timeperiod, output_col=None, period=None):
+                 indicator, args, offset, longest_timeperiod, output_col=None, period=None,
+                 pair_index=None, pair_name=None):
+        super().__init__(pair_index=pair_index, pair_name=pair_name)
+
         self.feature = feature
 
         self.indicator = indicator
