@@ -85,7 +85,8 @@ class ParamRangeFeatureSampler(BaseFeatureSampler):
     def _get_kwargs(self, period):
         kwargs = {'period': period}
         for param_name, param_range in self.parameter_ranges.items():
-            kwargs[param_name] = param_range.sample(period=period)
+            if param_range is not None:
+                kwargs[param_name] = param_range.sample(period=period)
         return kwargs
 
 
@@ -144,13 +145,15 @@ class FeatureSetSampler:
 
 feature_set_sampler_for_param_range = FeatureSetSampler(feature_samplers=[])
 
+select_pair = True
+
 
 ohlc_now_close_delta_sampler = ParamRangeFeatureSampler(
     OHLCVNowCloseDelta,
     {
         'mode': ParameterRange.set([OHLCV_OPEN, OHLCV_HIGH, OHLCV_LOW, OHLCV_CLOSE]),
         'offset': ParameterRange.int_range(0, 50),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -159,7 +162,7 @@ ohlc_self_close_delta_sampler = ParamRangeFeatureSampler(
     {
         'mode': ParameterRange.set([OHLCV_OPEN, OHLCV_HIGH, OHLCV_LOW, OHLCV_CLOSE]),
         'offset': ParameterRange.int_range(0, 50),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -168,7 +171,7 @@ volume_value_sampler = ParamRangeFeatureSampler(
     {
         'mode': ParameterRange.set([OHLCV_VOLUME]),
         'offset': ParameterRange.int_range(0, 50),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -177,7 +180,7 @@ sma_self_close_delta_sampler = ParamRangeFeatureSampler(
     {
         'timeperiod': ParameterRange.int_range(2, 50),
         'offset': ParameterRange.int_range(0, 10),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -186,7 +189,7 @@ sma_now_close_delta_sampler = ParamRangeFeatureSampler(
     {
         'timeperiod': ParameterRange.int_range(2, 50),
         'offset': ParameterRange.int_range(0, 10),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -195,7 +198,7 @@ cs_pattern_sampler = ParamRangeFeatureSampler(
     {
         'pattern_indicator': ParameterRange.set(PAT_REC_INDICATORS),
         'offset': ParameterRange.int_range(0, 10),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -208,7 +211,7 @@ bbands_self_close_delta_sampler = ParamRangeFeatureSampler(
         'matype': ParameterRange.int_range(0, 3),
         'offset': ParameterRange.int_range(0, 10),
         'output_col': ParameterRange.int_range(0, 2),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -221,7 +224,7 @@ bbands_now_close_delta_sampler = ParamRangeFeatureSampler(
         'matype': ParameterRange.int_range(0, 3),
         'offset': ParameterRange.int_range(0, 10),
         'output_col': ParameterRange.int_range(0, 2),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -230,7 +233,7 @@ rsi_value_sampler = ParamRangeFeatureSampler(
     {
         'timeperiod': ParameterRange.int_range(2, 50),
         'offset': ParameterRange.int_range(0, 10),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -242,7 +245,7 @@ macd_value_sampler = ParamRangeFeatureSampler(
         'signalperiod': ParameterRange.int_range(2, 50),
         'offset': ParameterRange.int_range(0, 10),
         'output_col': ParameterRange.int_range(0, 2),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -254,7 +257,7 @@ bbands_band_width_sampler = ParamRangeFeatureSampler(
         'nbdevdn': ParameterRange.int_range(1, 10),
         'matype': ParameterRange.int_range(0, 3),
         'offset': ParameterRange.int_range(0, 10),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -262,7 +265,7 @@ cs_tip_to_tip_size_sampler = ParamRangeFeatureSampler(
     CandlestickTipToTipSize,
     {
         'offset': ParameterRange.int_range(0, 50),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -270,7 +273,7 @@ cs_body_size_sampler = ParamRangeFeatureSampler(
     CandlestickBodySize,
     {
         'offset': ParameterRange.int_range(0, 50),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -284,7 +287,7 @@ volume_now_close_delta_sampler = ParamRangeFeatureSampler(
     {
         'mode': ParameterRange.set([OHLCV_VOLUME]),
         'offset': ParameterRange.int_range(0, 50),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -293,7 +296,7 @@ volume_self_close_delta_sampler = ParamRangeFeatureSampler(
     {
         'mode': ParameterRange.set([OHLCV_VOLUME]),
         'offset': ParameterRange.int_range(0, 50),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -302,7 +305,7 @@ ohlcv_value_sampler = ParamRangeFeatureSampler(
     {
         'mode': ParameterRange.set([OHLCV_OPEN, OHLCV_HIGH, OHLCV_LOW, OHLCV_CLOSE, OHLCV_VOLUME]),
         'offset': ParameterRange.int_range(0, 50),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -310,14 +313,14 @@ shifted_close_value_sampler = ParamRangeFeatureSampler(
     ShiftedCloseValue,
     {
         'offset': ParameterRange.int_range(0, 50),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
 close_value_sampler = ParamRangeFeatureSampler(
     CloseValue,
     {
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -326,7 +329,7 @@ shifted_sampler = ParamRangeFeatureSampler(
     {
         'feature': ParameterRange.features(feature_set_sampler_for_param_range),
         'offset': ParameterRange.int_range(0, 50),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -335,7 +338,7 @@ sum_sampler = ParamRangeFeatureSampler(
     {
         'f1': ParameterRange.features(feature_set_sampler_for_param_range),
         'f2': ParameterRange.features(feature_set_sampler_for_param_range),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -344,7 +347,7 @@ diff_sampler = ParamRangeFeatureSampler(
     {
         'f1': ParameterRange.features(feature_set_sampler_for_param_range),
         'f2': ParameterRange.features(feature_set_sampler_for_param_range),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -353,7 +356,7 @@ div_sampler = ParamRangeFeatureSampler(
     {
         'f1': ParameterRange.features(feature_set_sampler_for_param_range),
         'f2': ParameterRange.features(feature_set_sampler_for_param_range),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -362,7 +365,7 @@ mult_sampler = ParamRangeFeatureSampler(
     {
         'f1': ParameterRange.features(feature_set_sampler_for_param_range),
         'f2': ParameterRange.features(feature_set_sampler_for_param_range),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -371,7 +374,7 @@ norm_diff_sampler = ParamRangeFeatureSampler(
     {
         'f1': ParameterRange.features(feature_set_sampler_for_param_range),
         'f2': ParameterRange.features(feature_set_sampler_for_param_range),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -381,7 +384,7 @@ shifted_norm_diff_sampler = ParamRangeFeatureSampler(
         'f1': ParameterRange.features(feature_set_sampler_for_param_range),
         'f2': ParameterRange.features(feature_set_sampler_for_param_range),
         'offset': ParameterRange.int_range(0, 50),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -390,7 +393,7 @@ shifted_self_norm_diff_sampler = ParamRangeFeatureSampler(
     {
         'feature': ParameterRange.features(feature_set_sampler_for_param_range),
         'offset': ParameterRange.int_range(0, 50),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -399,7 +402,7 @@ small_const_mult_sampler = ParamRangeFeatureSampler(
     {
         'feature': ParameterRange.features(feature_set_sampler_for_param_range),
         'constant': ParameterRange.float_range(-10, 10),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -408,7 +411,7 @@ large_const_mult_sampler = ParamRangeFeatureSampler(
     {
         'feature': ParameterRange.features(feature_set_sampler_for_param_range),
         'constant': ParameterRange.float_range(-10000, 10000),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -416,7 +419,7 @@ sin_sampler = ParamRangeFeatureSampler(
     Sin,
     {
         'feature': ParameterRange.features(feature_set_sampler_for_param_range),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -424,7 +427,7 @@ cos_sampler = ParamRangeFeatureSampler(
     Cos,
     {
         'feature': ParameterRange.features(feature_set_sampler_for_param_range),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -432,7 +435,7 @@ square_sampler = ParamRangeFeatureSampler(
     Square,
     {
         'feature': ParameterRange.features(feature_set_sampler_for_param_range),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -440,7 +443,7 @@ cube_sampler = ParamRangeFeatureSampler(
     Cube,
     {
         'feature': ParameterRange.features(feature_set_sampler_for_param_range),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -448,7 +451,7 @@ small_constant_sampler = ParamRangeFeatureSampler(
     Constant,
     {
         'constant': ParameterRange.float_range(-10, 10),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
@@ -456,7 +459,7 @@ large_constant_sampler = ParamRangeFeatureSampler(
     Constant,
     {
         'constant': ParameterRange.float_range(-10000, 10000),
-        'pair_index': ParameterRange.int_range(0, 100),
+        'pair_index': ParameterRange.int_range(0, 100) if select_pair else None,
     }
 )
 
