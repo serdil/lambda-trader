@@ -125,17 +125,7 @@ class LookbackFeature(BaseFeature):
         self.pair_name = pair_name
 
     def compute(self, pair_dfs: OrderedDict, selected_pair, normalize=True):
-        if self.pair_index:
-            index_mod = self.pair_index % len(pair_dfs)
-            item = next(islice(pair_dfs.items(), index_mod, None))
-            dfs = item[1]
-            pair_name = item[0]
-        elif self.pair_name:
-            dfs = pair_dfs[self.pair_name]
-            pair_name = self.pair_name
-        else:
-            dfs = pair_dfs[selected_pair]
-            pair_name = selected_pair
+        _, pair_name, dfs = self.effective_pair_ind_name_dfs(pair_dfs, selected_pair)
         raw_df = self.compute_raw(dfs)
         if normalize:
             return to_ffilled_df_with_name(index=dfs[M5].index,
@@ -143,6 +133,29 @@ class LookbackFeature(BaseFeature):
                                            name='{}:{}'.format(pair_name, self.name))
         else:
             return raw_df
+
+    def effective_pair_ind_name_dfs(self, pair_dfs, selected_pair):
+        pairs = list(pair_dfs.keys())
+        if self.pair_index:
+            ind = self.pair_index % len(pair_dfs)
+            name = pairs[ind]
+            dfs = pair_dfs[pairs[ind]]
+        elif self.pair_name:
+            ind = pairs.index(self.pair_name)
+            name = self.pair_name
+            dfs = pair_dfs[self.pair_name]
+        else:
+            ind = pairs.index(selected_pair)
+            name = selected_pair
+            dfs = pair_dfs[selected_pair]
+        return ind, name, dfs
+
+    @staticmethod
+    def pair_ind(pair_dfs, selected_pair):
+        for i, pair in enumerate(pair_dfs.keys()):
+            if pair == selected_pair:
+                return i
+        raise KeyError
 
     def compute_raw(self, dfs):
         raise NotImplementedError
@@ -152,6 +165,68 @@ class LookbackFeature(BaseFeature):
         expected_period = features[0].period
         if not all((f.period is expected_period for f in features)):
             raise ArgumentError
+
+
+class IsPair(LookbackFeature):
+
+    def __init__(self, target_pair_ind, period=M5):
+        super().__init__()
+        self.target_pair_ind = target_pair_ind
+        self._period = period
+
+    @property
+    def name(self):
+        return 'is_pair_{}'.format(self.target_pair_ind)
+
+    @property
+    def lookback(self):
+        return 0
+
+    @property
+    def period(self):
+        return self._period
+
+    def compute(self, pair_dfs: OrderedDict, selected_pair, normalize=True):
+        dfs = pair_dfs[selected_pair]
+        pair_ind = self.pair_ind(pair_dfs, selected_pair)
+        value = 1 if pair_ind == self.target_pair_ind else 0
+        df = pandas.Series(value, dtype=np.dtype('int'), index=dfs[M5].index)
+        return to_ffilled_df_with_name(index=dfs[M5].index,
+                                       series_or_df=df,
+                                       name=self.name)
+
+    def compute_raw(self, dfs):
+        pass
+
+
+class WhichPair(LookbackFeature):
+
+    def __init__(self, period=M5):
+        super().__init__()
+        self._period = period
+
+    @property
+    def name(self):
+        return 'which_pair'
+
+    @property
+    def lookback(self):
+        return 0
+
+    @property
+    def period(self):
+        return self._period
+
+    def compute(self, pair_dfs: OrderedDict, selected_pair, normalize=True):
+        dfs = pair_dfs[selected_pair]
+        value = self.pair_ind(pair_dfs, selected_pair)
+        df = pandas.Series(value, dtype=np.dtype('int'), index=dfs[M5].index)
+        return to_ffilled_df_with_name(index=dfs[M5].index,
+                                       series_or_df=df,
+                                       name=self.name)
+
+    def compute_raw(self, dfs):
+        pass
 
 
 class DummyFeature(LookbackFeature):

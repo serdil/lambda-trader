@@ -240,11 +240,8 @@ class DFDataset:
                 extended_end_date = extended_end_date + value_set.get_lookforward()
 
             pair_dfs = OrderedDict()
-            pair_dfs[pair] = cs_store.get_agg_period_dfs(pair,
-                                                         start_date=extended_start_date,
-                                                         end_date=extended_end_date,
-                                                         periods=[M5, M15, H, H4, D],
-                                                         error_on_missing=error_on_missing)
+            if not feature_pairs:
+                feature_pairs = [pair]
             for feature_pair in feature_pairs:
                 if feature_pair not in pair_dfs:
                     dfs_for_pair = cs_store.get_agg_period_dfs(feature_pair,

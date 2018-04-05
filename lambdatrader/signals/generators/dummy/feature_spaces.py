@@ -12,6 +12,7 @@ from lambdatrader.signals.data_analysis.df_features import (
     BBandsBandWidth, CandlestickTipToTipSize, CandlestickBodySize, LinearFeatureCombination,
     PolynomialFeatureCombination, ShiftedCloseValue, CloseValue, Shifted, Sum, Diff, Div, Mult,
     NormDiff, ShiftedNormDiff, ConstMult, Sin, Cos, Square, Cube, Constant, ShiftedSelfNormDiff,
+    WhichPair,
 )
 from lambdatrader.signals.data_analysis.factories import FeatureSets
 
@@ -273,6 +274,11 @@ cs_body_size_sampler = ParamRangeFeatureSampler(
     }
 )
 
+which_pair_sampler = ParamRangeFeatureSampler(
+    WhichPair,
+    {}
+)
+
 volume_now_close_delta_sampler = ParamRangeFeatureSampler(
     OHLCVNowCloseDelta,
     {
@@ -319,7 +325,8 @@ shifted_sampler = ParamRangeFeatureSampler(
     Shifted,
     {
         'feature': ParameterRange.features(feature_set_sampler_for_param_range),
-        'offset': ParameterRange.int_range(0, 50)
+        'offset': ParameterRange.int_range(0, 50),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -327,7 +334,8 @@ sum_sampler = ParamRangeFeatureSampler(
     Sum,
     {
         'f1': ParameterRange.features(feature_set_sampler_for_param_range),
-        'f2': ParameterRange.features(feature_set_sampler_for_param_range)
+        'f2': ParameterRange.features(feature_set_sampler_for_param_range),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -335,7 +343,8 @@ diff_sampler = ParamRangeFeatureSampler(
     Diff,
     {
         'f1': ParameterRange.features(feature_set_sampler_for_param_range),
-        'f2': ParameterRange.features(feature_set_sampler_for_param_range)
+        'f2': ParameterRange.features(feature_set_sampler_for_param_range),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -343,7 +352,8 @@ div_sampler = ParamRangeFeatureSampler(
     Div,
     {
         'f1': ParameterRange.features(feature_set_sampler_for_param_range),
-        'f2': ParameterRange.features(feature_set_sampler_for_param_range)
+        'f2': ParameterRange.features(feature_set_sampler_for_param_range),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -351,7 +361,8 @@ mult_sampler = ParamRangeFeatureSampler(
     Mult,
     {
         'f1': ParameterRange.features(feature_set_sampler_for_param_range),
-        'f2': ParameterRange.features(feature_set_sampler_for_param_range)
+        'f2': ParameterRange.features(feature_set_sampler_for_param_range),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -359,7 +370,8 @@ norm_diff_sampler = ParamRangeFeatureSampler(
     NormDiff,
     {
         'f1': ParameterRange.features(feature_set_sampler_for_param_range),
-        'f2': ParameterRange.features(feature_set_sampler_for_param_range)
+        'f2': ParameterRange.features(feature_set_sampler_for_param_range),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -368,7 +380,8 @@ shifted_norm_diff_sampler = ParamRangeFeatureSampler(
     {
         'f1': ParameterRange.features(feature_set_sampler_for_param_range),
         'f2': ParameterRange.features(feature_set_sampler_for_param_range),
-        'offset': ParameterRange.int_range(0, 50)
+        'offset': ParameterRange.int_range(0, 50),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -376,7 +389,8 @@ shifted_self_norm_diff_sampler = ParamRangeFeatureSampler(
     ShiftedSelfNormDiff,
     {
         'feature': ParameterRange.features(feature_set_sampler_for_param_range),
-        'offset': ParameterRange.int_range(0, 50)
+        'offset': ParameterRange.int_range(0, 50),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -384,7 +398,8 @@ small_const_mult_sampler = ParamRangeFeatureSampler(
     ConstMult,
     {
         'feature': ParameterRange.features(feature_set_sampler_for_param_range),
-        'constant': ParameterRange.float_range(-10, 10)
+        'constant': ParameterRange.float_range(-10, 10),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -392,49 +407,56 @@ large_const_mult_sampler = ParamRangeFeatureSampler(
     ConstMult,
     {
         'feature': ParameterRange.features(feature_set_sampler_for_param_range),
-        'constant': ParameterRange.float_range(-10000, 10000)
+        'constant': ParameterRange.float_range(-10000, 10000),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
 sin_sampler = ParamRangeFeatureSampler(
     Sin,
     {
-        'feature': ParameterRange.features(feature_set_sampler_for_param_range)
+        'feature': ParameterRange.features(feature_set_sampler_for_param_range),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
 cos_sampler = ParamRangeFeatureSampler(
     Cos,
     {
-        'feature': ParameterRange.features(feature_set_sampler_for_param_range)
+        'feature': ParameterRange.features(feature_set_sampler_for_param_range),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
 square_sampler = ParamRangeFeatureSampler(
     Square,
     {
-        'feature': ParameterRange.features(feature_set_sampler_for_param_range)
+        'feature': ParameterRange.features(feature_set_sampler_for_param_range),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
 cube_sampler = ParamRangeFeatureSampler(
     Cube,
     {
-        'feature': ParameterRange.features(feature_set_sampler_for_param_range)
+        'feature': ParameterRange.features(feature_set_sampler_for_param_range),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
 small_constant_sampler = ParamRangeFeatureSampler(
     Constant,
     {
-        'constant': ParameterRange.float_range(-10, 10)
+        'constant': ParameterRange.float_range(-10, 10),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
 large_constant_sampler = ParamRangeFeatureSampler(
     Constant,
     {
-        'constant': ParameterRange.float_range(-10000, 10000)
+        'constant': ParameterRange.float_range(-10000, 10000),
+        'pair_index': ParameterRange.int_range(0, 100),
     }
 )
 
@@ -471,7 +493,8 @@ samplers_all_old = [ohlc_now_close_delta_sampler,
                     macd_value_sampler,
                     bbands_band_width_sampler,
                     cs_tip_to_tip_size_sampler,
-                    cs_body_size_sampler]
+                    cs_body_size_sampler,
+                    which_pair_sampler]
 
 samplers_plain = [
     ohlc_now_close_delta_sampler,
