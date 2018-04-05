@@ -145,7 +145,8 @@ class FeatureSetSampler:
 
 feature_set_sampler_for_param_range = FeatureSetSampler(feature_samplers=[])
 
-select_pair = True
+# select_pair = True
+select_pair = False
 
 
 ohlc_now_close_delta_sampler = ParamRangeFeatureSampler(

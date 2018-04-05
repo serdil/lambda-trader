@@ -32,10 +32,10 @@ random.seed(0)
 # xgb_training_pairs = random.sample(Pairs.all_pairs(), 3); interleaved = True
 # xgb_training_pairs = random.sample(Pairs.all_pairs(), 1); interleaved = True
 # xgb_training_pairs = Pairs.n_pairs(); interleaved = True
-# xgb_training_pairs = ['BTC_ETH']; interleaved = False
+xgb_training_pairs = ['BTC_ETH']; interleaved = False
 # xgb_training_pairs = ['BTC_XMR']; interleaved = False
 # xgb_training_pairs = ['BTC_LTC']; interleaved = False
-xgb_training_pairs = ['BTC_XRP']; interleaved = False
+# xgb_training_pairs = ['BTC_XRP']; interleaved = False
 # xgb_training_pairs = ['BTC_STR']; interleaved = False
 # xgb_training_pairs = ['BTC_RADS']; interleaved = False
 # xgb_training_pairs = ['BTC_RIC']; interleaved = False
@@ -48,7 +48,7 @@ xgb_training_pairs = ['BTC_XRP']; interleaved = False
 # xgb_training_pairs = ['BTC_ZRX']; interleaved = False
 # xgb_training_pairs = ['BTC_NAUT']; interleaved = False
 
-xgb_training_pairs.append('USDT_BTC')
+# xgb_training_pairs.append('USDT_BTC')
 # xgb_training_pairs.extend(['BTC_LTC'])
 # xgb_training_pairs.extend(['BTC_LTC', 'BTC_XMR', 'BTC_DASH'])
 # xgb_training_pairs.extend(['USDT_BTC', 'BTC_LTC', 'BTC_XMR', 'BTC_DASH'])
@@ -89,7 +89,8 @@ xgb_training_pairs = list(set(xgb_training_pairs))
 print('training pairs:', xgb_training_pairs)
 
 # val_pairs = xgb_training_pairs
-val_pairs = ['BTC_XRP']
+# val_pairs = ['BTC_XRP']
+val_pairs = ['BTC_ETH']
 
 # multi_pair_features = False
 multi_pair_features = True
@@ -154,8 +155,8 @@ xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(2
 # xgb_split_date_range = SplitDateRanges.jan_n_days_test_m_days_val_k_days_train(20, v=500, t=500)
 
 # feature_sampler = ohlcv_sampler
-feature_sampler = fs_sampler_all
-# feature_sampler = fs_sampler_all_old
+# feature_sampler = fs_sampler_all
+feature_sampler = fs_sampler_all_old
 
 # select_features = True
 select_features = False
@@ -171,14 +172,14 @@ if select_features:
 
 else:
     # feature_set = feature_sampler.sample(size=5)
-    # feature_set = feature_sampler.sample(size=10)
+    feature_set = feature_sampler.sample(size=10)
     # feature_set = feature_sampler.sample(size=20)
     # feature_set = feature_sampler.sample(size=100)
     # feature_set = feature_sampler.sample(size=500)
     # feature_set = feature_sampler.sample(size=1000)
 
     # feature_set = FeatureSets.get_all_periods_last_n_ohlcv_now_delta(1)
-    feature_set = FeatureSets.get_all_periods_last_n_ohlcv_now_delta(5)
+    # feature_set = FeatureSets.get_all_periods_last_n_ohlcv_now_delta(5)
     # feature_set = FeatureSets.get_all_periods_last_n_ohlcv_now_delta(10)
 
     # feature_set = FeatureSets.get_all_periods_last_n_ohlcv_self_delta(5)
@@ -216,12 +217,12 @@ xgb_params = {
 
     'eta': 0.01,
     'gamma': 0,
-    'max_depth': 6,
+    'max_depth': 2,
     'min_child_weight': 1,
     'max_delta_step': 0,
-    'subsample': 0.01,
-    'colsample_bytree': 0.5,
-    'colsample_bylevel': 0.5,
+    'subsample': 0.1,
+    'colsample_bytree': 1,
+    'colsample_bylevel': 1,
     'tree_method': 'exact',
     'sketch_eps': 0.03,
     'scale_pos_weight': 1,
