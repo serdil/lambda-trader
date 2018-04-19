@@ -88,9 +88,9 @@ xgb_training_pairs = ['BTC_ETH']; interleaved = False
 xgb_training_pairs = list(set(xgb_training_pairs))
 print('training pairs:', xgb_training_pairs)
 
-# val_pairs = xgb_training_pairs
+val_pairs = xgb_training_pairs
 # val_pairs = ['BTC_XRP']
-val_pairs = ['BTC_ETH']
+# val_pairs = ['BTC_ETH']
 
 # multi_pair_features = False
 multi_pair_features = True
@@ -189,6 +189,11 @@ else:
     #     feature_sampler.sample(size=10),
     #     FeatureSets.get_all_periods_last_n_ohlcv_now_delta(5)
     # )
+
+    feature_set = FeatureSets.compose_remove_duplicates(
+        feature_set,
+        FeatureSets.get_all_periods_last_n_ohlcv_self_delta(1)
+    )
 
     feature_set = FeatureSets.compose_remove_duplicates(
         feature_set,
